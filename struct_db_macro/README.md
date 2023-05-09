@@ -1,0 +1,1 @@
+A procedural macro for struct_db

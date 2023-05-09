@@ -1,0 +1,40 @@
+[package]
+name = "struct_db"
+version = "0.1.0"
+authors = ["Your Name <vincent@herlemont.fr>"]
+edition = "2018"
+description = "Embedded database that maintains coherence between Rust types and stored data with minimal boilerplate."
+license = "MIT"
+repository = "https://github.com/vincent-herlemont/struct_db"
+readme = "README.md"
+build = "build.rs"
+
+[workspace]
+members = ["struct_db_macro"]
+
+[dependencies]
+redb = "0.16.0" # TODO make it optional when IndexDB is implemented
+struct_db_macro = { version = "0.1.0", path = "struct_db_macro" }
+thiserror = "1.0"
+
+# TODO: make it optional when custom serialization is implemented
+serde = { version = "1.0", features = ["derive"] }
+bincode = { version = "2.0.0-rc.3", features = ["serde"] }
+
+# Optional error handling support usefull debugging
+eyre = { version = "0.6", optional = true }
+color-eyre = { version = "0.6", optional = true }
+
+[dev-dependencies]
+assert_fs = "1.0"
+serial_test = { version = "2.0", features = ["file_locks"] }
+shortcut_assert_fs = { version = "0.1.0", path = "../shortcut_assert_fs" }
+skeptic = "0.13"
+color-eyre = { version = "0.6" }
+
+[features]
+default = []
+eyre_support = ["eyre", "color-eyre"]
+
+[build-dependencies]
+skeptic = "0.13"

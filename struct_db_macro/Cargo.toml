@@ -1,0 +1,17 @@
+[package]
+name = "struct_db_macro"
+version = "0.1.0"
+authors = ["Your Name <vincent@herlemont.fr>"]
+edition = "2018"
+description = "A procedural macro for struct_db"
+license = "MIT"
+repository = "https://github.com/vincent-herlemont/struct_db"
+readme = "README.md"
+
+[lib]
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
