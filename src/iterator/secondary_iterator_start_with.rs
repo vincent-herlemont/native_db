@@ -1,11 +1,11 @@
-use crate::common::get;
+use crate::common::unwrap_item;
 use crate::SDBItem;
 use redb::ReadableTable;
 use std::marker::PhantomData;
 
-/// Same as [`Iterator`] but only returns values with secondary keys that start with the given
+/// Same as [`PrimaryIterator`](crate::PrimaryIterator) but only returns values with secondary keys that start with the given
 /// prefix.
-pub struct IteratorStartWithByKey<
+pub struct SecondaryIteratorStartWith<
     'a,
     'txn,
     'db,
@@ -19,7 +19,7 @@ pub struct IteratorStartWithByKey<
 }
 
 impl<'a, 'txn, 'db, T: SDBItem, MT: ReadableTable<&'static [u8], &'static [u8]>> Iterator
-    for IteratorStartWithByKey<'a, 'txn, 'db, T, MT>
+    for SecondaryIteratorStartWith<'a, 'txn, 'db, T, MT>
 {
     type Item = T;
 
@@ -29,7 +29,7 @@ impl<'a, 'txn, 'db, T: SDBItem, MT: ReadableTable<&'static [u8], &'static [u8]>>
                 let k = k.value();
                 if k.starts_with(self.start_with) {
                     let key: Vec<u8> = v.value().into();
-                    get(self.main_table.get(&*key).unwrap())
+                    unwrap_item(self.main_table.get(&*key).unwrap())
                 } else {
                     None
                 }

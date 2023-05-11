@@ -77,8 +77,8 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     ///   }
     ///   txn.commit().unwrap(); // /!\ Don't forget to commit
     /// }
-    pub fn insert<T: SDBItem>(&mut self, txn: &'txn Transaction<'db>, s: T) -> Result<()> {
-        let (watcher_request, binary_value) = self.internal_insert(txn, s)?;
+    pub fn insert<T: SDBItem>(&mut self, txn: &'txn Transaction<'db>, item: T) -> Result<()> {
+        let (watcher_request, binary_value) = self.internal_insert(txn, item)?;
         let event = Event::new_insert(binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
@@ -87,14 +87,14 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     fn internal_insert<T: SDBItem>(
         &mut self,
         txn: &'txn Transaction<'db>,
-        s: T,
+        item: T,
     ) -> Result<(WatcherRequest, BinaryValue)> {
         let schema = T::struct_db_schema();
         let table_name = schema.table_name;
 
-        let primary_key_value = s.struct_db_primary_key();
-        let keys = s.struct_db_keys();
-        let value = s.struct_db_bincode_encode_to_vec();
+        let primary_key_value = item.struct_db_primary_key();
+        let secondary_keys = item.struct_db_keys();
+        let value = item.struct_db_bincode_encode_to_vec();
         let already_exists;
         {
             self.open_table(txn, table_name)?;
@@ -104,7 +104,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
                 .is_some();
         }
 
-        for (secondary_table_name, key_value) in &keys {
+        for (secondary_table_name, key_value) in &secondary_keys {
             self.open_table(txn, secondary_table_name)?;
             let secondary_table = self.opened_tables.get_mut(secondary_table_name).unwrap();
             let result =
@@ -118,7 +118,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         }
 
         Ok((
-            WatcherRequest::new(table_name, primary_key_value, keys),
+            WatcherRequest::new(table_name, primary_key_value, secondary_keys),
             BinaryValue(value),
         ))
     }
@@ -170,11 +170,11 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     pub fn update<T: SDBItem>(
         &mut self,
         txn: &'txn Transaction<'db>,
-        from: T,
-        to: T,
+        old_item: T,
+        updated_item: T,
     ) -> Result<()> {
-        let (_, old_binary_value) = self.internal_remove(txn, from)?;
-        let (watcher_request, new_binary_value) = self.internal_insert(txn, to)?;
+        let (_, old_binary_value) = self.internal_remove(txn, old_item)?;
+        let (watcher_request, new_binary_value) = self.internal_insert(txn, updated_item)?;
 
         let event = Event::new_update(old_binary_value, new_binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
@@ -223,8 +223,8 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     ///   let data:Option<Data> = tables.primary_get(&txn, &1u32.to_be_bytes()).unwrap();
     ///   assert_eq!(data, None);
     /// }
-    pub fn remove<T: SDBItem>(&mut self, txn: &'txn Transaction<'db>, s: T) -> Result<()> {
-        let (watcher_request, binary_value) = self.internal_remove(txn, s)?;
+    pub fn remove<T: SDBItem>(&mut self, txn: &'txn Transaction<'db>, item: T) -> Result<()> {
+        let (watcher_request, binary_value) = self.internal_remove(txn, item)?;
         let event = Event::new_delete(binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
@@ -233,14 +233,14 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     fn internal_remove<T: SDBItem>(
         &mut self,
         txn: &'txn Transaction<'db>,
-        s: T,
+        item: T,
     ) -> Result<(WatcherRequest, BinaryValue)> {
         let schema = T::struct_db_schema();
         let table_name = schema.table_name;
 
-        let primary_key_value = s.struct_db_primary_key();
-        let keys = s.struct_db_keys();
-        let value = s.struct_db_bincode_encode_to_vec();
+        let primary_key_value = item.struct_db_primary_key();
+        let keys = item.struct_db_keys();
+        let value = item.struct_db_bincode_encode_to_vec();
         {
             self.open_table(txn, table_name)?;
             let table = self.opened_tables.get_mut(table_name).unwrap();

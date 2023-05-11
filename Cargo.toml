@@ -1,20 +1,22 @@
 [package]
 name = "struct_db"
-version = "0.1.0"
-authors = ["Your Name <vincent@herlemont.fr>"]
+version = "0.2.0"
+authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
 edition = "2018"
-description = "Embedded database that maintains coherence between Rust types and stored data with minimal boilerplate."
+description = "Embedded database that maintains coherence between Rust types and stored data with minimal boilerplate"
 license = "MIT"
 repository = "https://github.com/vincent-herlemont/struct_db"
 readme = "README.md"
 build = "build.rs"
+keywords = ["embedded", "database", "persistence", "key-value-store", "lmdb"]
+categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
 [workspace]
 members = ["struct_db_macro"]
 
 [dependencies]
-redb = "0.16.0" # TODO make it optional when IndexDB is implemented
-struct_db_macro = { version = "0.1.0", path = "struct_db_macro" }
+redb = "0.17.0" # TODO make it optional when IndexDB is implemented
+struct_db_macro = { version = "0.2.0", path = "struct_db_macro" }
 thiserror = "1.0"
 
 # TODO: make it optional when custom serialization is implemented
@@ -28,7 +30,7 @@ color-eyre = { version = "0.6", optional = true }
 [dev-dependencies]
 assert_fs = "1.0"
 serial_test = { version = "2.0", features = ["file_locks"] }
-shortcut_assert_fs = { version = "0.1.0", path = "../shortcut_assert_fs" }
+shortcut_assert_fs = { version = "0.1.0" }
 skeptic = "0.13"
 color-eyre = { version = "0.6" }
 

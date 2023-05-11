@@ -1,7 +1,8 @@
-use crate::common::get;
-use crate::Iterator;
+use crate::common::unwrap_item;
+use crate::PrimaryIterator;
 use crate::{
-    IteratorByKey, IteratorStartWith, IteratorStartWithByKey, KeyDefinition, Result, SDBItem,
+    KeyDefinition, PrimaryIteratorStartWith, Result, SDBItem, SecondaryIterator,
+    SecondaryIteratorStartWith,
 };
 use redb::ReadableTable as RedbReadableTable;
 use std::marker::PhantomData;
@@ -59,13 +60,13 @@ pub trait ReadableTable<'db, 'txn> {
     fn primary_get<T: SDBItem>(
         &mut self,
         txn: &'txn Self::Transaction<'db>,
-        key: &[u8],
+        value: &[u8],
     ) -> Result<Option<T>> {
         let table_name = T::struct_db_schema().table_name;
         self.open_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
-        let value = table.get(key)?;
-        Ok(get(value))
+        let item = table.get(value)?;
+        Ok(unwrap_item(item))
     }
 
     /// Iterate over all the values of the table.
@@ -106,7 +107,7 @@ pub trait ReadableTable<'db, 'txn> {
     fn primary_iter<'a, T: SDBItem>(
         &'a mut self,
         txn: &'txn Self::Transaction<'db>,
-    ) -> Result<Iterator<'_, 'txn, 'db, T>>
+    ) -> Result<PrimaryIterator<'_, 'txn, 'db, T>>
     where
         'db: 'a,
         'txn: 'a,
@@ -123,8 +124,8 @@ pub trait ReadableTable<'db, 'txn> {
     fn primary_iter_range<'a, 'b, T>(
         &'a mut self,
         txn: &'txn Self::Transaction<'db>,
-        range: impl RangeBounds<&'a [u8]> + 'a,
-    ) -> Result<Iterator<'_, 'txn, 'db, T>>
+        range_value: impl RangeBounds<&'a [u8]> + 'a,
+    ) -> Result<PrimaryIterator<'_, 'txn, 'db, T>>
     where
         T: SDBItem,
         'db: 'a,
@@ -133,8 +134,8 @@ pub trait ReadableTable<'db, 'txn> {
         let table_name = T::struct_db_schema().table_name;
         self.open_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
-        let range = table.range::<&'_ [u8]>(range)?;
-        Ok(Iterator {
+        let range = table.range::<&'_ [u8]>(range_value)?;
+        Ok(PrimaryIterator {
             range,
             _marker: PhantomData,
         })
@@ -149,8 +150,8 @@ pub trait ReadableTable<'db, 'txn> {
     fn primary_iter_start_with<'a, T>(
         &'a mut self,
         txn: &'txn Self::Transaction<'db>,
-        prefix: &'a [u8],
-    ) -> Result<IteratorStartWith<'_, 'txn, 'db, T>>
+        prefix_value: &'a [u8],
+    ) -> Result<PrimaryIteratorStartWith<'_, 'txn, 'db, T>>
     where
         T: SDBItem,
         'db: 'a,
@@ -159,10 +160,10 @@ pub trait ReadableTable<'db, 'txn> {
         let table_name = T::struct_db_schema().table_name;
         self.open_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
-        let range = table.range::<&'_ [u8]>(prefix..)?;
-        Ok(IteratorStartWith {
+        let range = table.range::<&'_ [u8]>(prefix_value..)?;
+        Ok(PrimaryIteratorStartWith {
             range,
-            start_with: prefix,
+            start_with: prefix_value,
             _marker: PhantomData,
         })
     }
@@ -214,15 +215,15 @@ pub trait ReadableTable<'db, 'txn> {
     fn secondary_get<T: SDBItem>(
         &mut self,
         txn: &'txn Self::Transaction<'db>,
-        key_definition: impl KeyDefinition,
-        key: &[u8],
+        key_def: impl KeyDefinition,
+        value: &[u8],
     ) -> Result<Option<T>> {
-        let table_name = key_definition.secondary_table_name();
+        let table_name = key_def.secondary_table_name();
 
-        let key: Vec<u8> = {
+        let primary_key: Vec<u8> = {
             self.open_table(txn, table_name)?;
             let table = self.get_table(table_name).unwrap();
-            let value = table.get(key)?;
+            let value = table.get(value)?;
             if let Some(value) = value {
                 value.value().into()
             } else {
@@ -230,9 +231,9 @@ pub trait ReadableTable<'db, 'txn> {
             }
         };
 
-        Ok(Some(self.primary_get(txn, &key)?.ok_or(
+        Ok(Some(self.primary_get(txn, &primary_key)?.ok_or(
             crate::Error::PrimaryKeyNotFound {
-                secondary_key: key.to_vec(),
+                primary_key: primary_key.to_vec(),
             },
         )?))
     }
@@ -246,10 +247,10 @@ pub trait ReadableTable<'db, 'txn> {
     /// - See tests/09_iterator.rs for more examples.
     fn secondary_iter<'a, T: SDBItem>(
         &mut self,
-        key_definition: impl KeyDefinition,
         txn: &'txn Self::Transaction<'db>,
-    ) -> Result<IteratorByKey<'_, 'txn, 'db, T, Self::Table>> {
-        self.secondary_iter_range(txn, key_definition, ..)
+        key_def: impl KeyDefinition,
+    ) -> Result<SecondaryIterator<'_, 'txn, 'db, T, Self::Table>> {
+        self.secondary_iter_range(txn, key_def, ..)
     }
 
     /// Iterate over all the values of the table that start with the given prefix.
@@ -262,23 +263,23 @@ pub trait ReadableTable<'db, 'txn> {
     fn secondary_iter_range<'a, 'b, T>(
         &'a mut self,
         txn: &'txn Self::Transaction<'db>,
-        key_definition: impl KeyDefinition,
-        range: impl RangeBounds<&'b [u8]> + 'b,
-    ) -> Result<IteratorByKey<'_, 'txn, 'db, T, Self::Table>>
+        key_def: impl KeyDefinition,
+        range_value: impl RangeBounds<&'b [u8]> + 'b,
+    ) -> Result<SecondaryIterator<'_, 'txn, 'db, T, Self::Table>>
     where
         T: SDBItem,
         'a: 'b,
     {
         let main_table_name = T::struct_db_schema().table_name;
         self.open_table(txn, main_table_name)?;
-        let secondary_table_name = key_definition.secondary_table_name();
+        let secondary_table_name = key_def.secondary_table_name();
         self.open_table(txn, secondary_table_name)?;
 
         let main_table = self.get_table(main_table_name).unwrap();
         let secondary_table = self.get_table(secondary_table_name).unwrap();
-        let range = secondary_table.range::<&'_ [u8]>(range)?;
+        let range = secondary_table.range::<&'_ [u8]>(range_value)?;
 
-        Ok(IteratorByKey {
+        Ok(SecondaryIterator {
             range,
             main_table,
             _marker: PhantomData,
@@ -295,25 +296,25 @@ pub trait ReadableTable<'db, 'txn> {
     fn secondary_iter_start_with<'a, 'b, T>(
         &'a mut self,
         txn: &'txn Self::Transaction<'db>,
-        key_definition: impl KeyDefinition,
-        prefix: &'b [u8],
-    ) -> Result<IteratorStartWithByKey<'a, 'txn, 'db, T, Self::Table>>
+        key_def: impl KeyDefinition,
+        prefix_value: &'b [u8],
+    ) -> Result<SecondaryIteratorStartWith<'a, 'txn, 'db, T, Self::Table>>
     where
         T: SDBItem,
         'b: 'a,
     {
         let main_table_name = T::struct_db_schema().table_name;
         self.open_table(txn, main_table_name)?;
-        let secondary_table_name = key_definition.secondary_table_name();
+        let secondary_table_name = key_def.secondary_table_name();
         self.open_table(txn, secondary_table_name)?;
 
         let main_table = self.get_table(main_table_name).unwrap();
         let secondary_table = self.get_table(secondary_table_name).unwrap();
-        let range = secondary_table.range::<&'_ [u8]>(prefix..)?;
+        let range = secondary_table.range::<&'_ [u8]>(prefix_value..)?;
 
-        Ok(IteratorStartWithByKey {
+        Ok(SecondaryIteratorStartWith {
             range,
-            start_with: prefix,
+            start_with: prefix_value,
             main_table,
             _marker: PhantomData,
         })
@@ -352,7 +353,7 @@ pub trait ReadableTable<'db, 'txn> {
     ///   let len = tables.len::<Data>(&txn_read).unwrap();
     ///   assert_eq!(len, 1);
     /// }
-    fn len<T: SDBItem>(&mut self, txn: &'txn Self::Transaction<'db>) -> Result<usize> {
+    fn len<T: SDBItem>(&mut self, txn: &'txn Self::Transaction<'db>) -> Result<u64> {
         let table_name = T::struct_db_schema().table_name;
         self.open_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();

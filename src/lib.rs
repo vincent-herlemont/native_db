@@ -16,17 +16,17 @@
 //! - Initialize schema
 //!    - [`Db::add_schema(`](crate::Db::add_schema)[`<your_item>::struct_db_schema()`](crate::SDBItem::struct_db_schema)`)` initializes a schema.
 //! - Transactions
-//!    - [`db.transaction()`](crate::Db::transaction) starts a read-write transaction.
-//!    - [`db.read_transaction()`](crate::Db::read_transaction) starts a read-only transaction.
-//! - Tables
-//!    - [`transaction.tables()`](crate::Transaction::tables) returns a [`Tables`](crate::Tables)
-//!    - [`read_only_transaction::tables()`](crate::ReadOnlyTransaction::tables) returns a [`ReadOnlyTables`](crate::ReadOnlyTables).
+//!    - [`db.transaction()`](crate::Db::transaction) starts a [`read-write transaction`](crate::Transaction).
+//!    - [`db.read_transaction()`](crate::Db::read_transaction) starts a [`read-only transaction`](crate::ReadOnlyTransaction).
+//! - Tables (`txn` is a [`Transaction`](crate::Transaction) and `read_only_txn` a [`ReadOnlyTransaction`](crate::ReadOnlyTransaction))
+//!    - [`txn.tables()`](crate::Transaction::tables) returns a [`Tables`](crate::Tables)
+//!    - [`read_only_txn.tables()`](crate::ReadOnlyTransaction::tables) returns a [`ReadOnlyTables`](crate::ReadOnlyTables).
 //! - Write operations
 //!    - [`tables.insert(&txn,<item>)`](crate::Tables::insert) inserts an item into the database.
 //!    - [`tables.update(&txn,<old_item>, <new_item>)`](crate::Tables::update) updates an item in the database.
 //!    - [`tables.remove(&txn,<item>)`](crate::Tables::remove) removes an item from the database.
 //!    - [`tables.migrate::<old_type, new_type>(&txn)`](crate::Tables::migrate) migrates the schema from `old_type` to `new_type`.
-//! - Read operations by
+//! - Read operations
 //!    - Primary key
 //!       - [`tables.primary_get(&txn,<value>)`](crate::ReadableTable::primary_get) get an item.
 //!       - [`tables.primary_iter(&txn)`](crate::ReadableTable::primary_iter) iterate all items.
@@ -55,59 +55,62 @@
 //!
 //! #[derive(Serialize, Deserialize, PartialEq, Debug)]
 //! #[struct_db(
-//!     fn_primary_key(p_key),
-//!     fn_secondary_key(s_key),
+//! fn_primary_key(p_key),  // required
+//! fn_secondary_key(s_key),  // optional
+//! // ... other fn_secondary_key ...
 //! )]
 //! struct Data(u32, String);
 //!
 //! impl Data {
-//!     // `p_key` returns the primary key of the `Data` struct as a vector of bytes.
-//!     // In this case, it is the big-endian byte representation of the `i32` value.
-//!     // Using big-endian representation for the primary key maintains a consistent
-//!     // lexicographical ordering of the keys, which is useful for ordered key-value
-//!     // stores and efficient range queries.
-//!    pub fn p_key(&self) -> Vec<u8> {
-//!        self.0.to_be_bytes().to_vec()
+//!   // Returns primary key as big-endian bytes for consistent lexicographical ordering.
+//!   pub fn p_key(&self) -> Vec<u8> {
+//!     self.0.to_be_bytes().to_vec()
+//!   }
+//!
+//!   // Generates a secondary key combining the String field and the big-endian bytes of
+//!   // the primary key for versatile queries.
+//!   pub fn s_key(&self) -> Vec<u8> {
+//!     let mut s_key = self.1.as_bytes().to_vec();
+//!     s_key.extend_from_slice(&self.p_key().as_slice());
+//!     s_key
+//!   }
+//!  }
+//!
+//!  fn main() {
+//!   let mut db = Db::init_tmp("my_db_example").unwrap();
+//!   // Initialize the schema
+//!   db.add_schema(Data::struct_db_schema());
+//!
+//!   // Insert data
+//!   let txn = db.transaction().unwrap();
+//!   {
+//!     let mut tables = txn.tables();
+//!     tables.insert(&txn, Data(1,"red".to_string())).unwrap();
+//!     tables.insert(&txn, Data(2,"red".to_string())).unwrap();
+//!     tables.insert(&txn, Data(3,"blue".to_string())).unwrap();
+//!   }
+//!   txn.commit().unwrap();
+//!    
+//!   let txn_read = db.read_transaction().unwrap();
+//!   let mut tables = txn_read.tables();
+//!    
+//!   // Retrieve data with p_key=3
+//!   let retrieve_data: Data = tables.primary_get(&txn_read, &3_u32.to_be_bytes()).unwrap().unwrap();
+//!   println!("data p_key='3' : {:?}", retrieve_data);
+//!    
+//!    // Iterate data with s_key="red" String
+//!    for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
+//!      println!("data s_key='1': {:?}", item);
 //!    }
-//!   
-//!     // `s_key` generates a secondary key for the `Data` struct as a vector of bytes.
-//!     // The secondary key consists of the big-endian byte representation of the `i32` value
-//!     // (the primary key) followed by the String field. This combined key allows for more
-//!     // versatile querying options.
-//!    pub fn s_key(&self) -> Vec<u8> {
-//!        let mut p_key = self.p_key();
-//!        p_key.extend(self.1.as_bytes());
-//!        p_key
+//!    
+//!    // Remove data
+//!    let txn = db.transaction().unwrap();
+//!    {
+//!      let mut tables = txn.tables();
+//!      tables.remove(&txn, retrieve_data).unwrap();
 //!    }
-//! }
-//!
-//! fn main() {
-//!     let mut db = Db::init_tmp("my_db_example").unwrap();
-//!     // Initialize the schema
-//!     db.add_schema(Data::struct_db_schema());
-//!
-//!     let data = Data(1,"test".to_string());
-//!     // Insert data
-//!     let txn = db.transaction().unwrap();
-//!     {
-//!       let mut tables = txn.tables();
-//!       tables.insert(&txn, data).unwrap();
-//!     }
-//!     txn.commit().unwrap();
-//!
-//!     // Get data
-//!     let txn_read = db.read_transaction().unwrap();
-//!     let retrieve_data: Data = txn_read.tables().primary_get(&txn_read, &1_u32.to_be_bytes()).unwrap().unwrap();
-//!     assert_eq!(&retrieve_data, &Data(1,"test".to_string()));
-//!   
-//!     // Remove data
-//!     let txn = db.transaction().unwrap();
-//!     {
-//!       let mut tables = txn.tables();
-//!       tables.remove(&txn, retrieve_data).unwrap();
-//!     }
-//!     txn.commit().unwrap();
-//! }
+//!    txn.commit().unwrap();
+//!  }
 //! ```
 
 mod common;
@@ -151,11 +154,11 @@ pub enum Error {
     #[error("Table definition not found {table}")]
     TableDefinitionNotFound { table: String },
 
-    #[error("Key not found {key:?}")]
-    KeyNotFound { key: Vec<u8> },
+    #[error("Key not found {value:?}")]
+    KeyNotFound { value: Vec<u8> },
 
-    #[error("Primary key associated with the secondary key not found {secondary_key:?}")]
-    PrimaryKeyNotFound { secondary_key: Vec<u8> },
+    #[error("Primary key associated with the secondary key not found {primary_key:?}")]
+    PrimaryKeyNotFound { primary_key: Vec<u8> },
 
     #[error("Duplicate key for \"{key_name}\"")]
     DuplicateKey { key_name: &'static str },

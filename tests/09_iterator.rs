@@ -219,7 +219,7 @@ fn test_iter_by_key() {
     {
         let mut tables = txn.tables();
         let result: Vec<Item> = tables
-            .secondary_iter(ItemKey::secondary_key_1, &txn)
+            .secondary_iter(&txn, ItemKey::secondary_key_1)
             .unwrap()
             .collect();
 
@@ -255,7 +255,7 @@ fn test_double_ended_iter_by_key() {
     {
         let mut tables = txn.tables();
         let iter = tables
-            .secondary_iter(ItemKey::secondary_key_1, &txn)
+            .secondary_iter(&txn, ItemKey::secondary_key_1)
             .unwrap();
         let result: Vec<Item> = iter.rev().collect();
 

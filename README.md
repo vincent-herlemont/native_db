@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/struct_db?style=flat-square)](https://crates.io/crates/struct_db)
 
-Goal: Embedded database that maintains coherence between Rust types and stored data with minimal boilerplate, enjoy 😌🍃.
+Provides a simple, fast, and embedded database solution, focusing on maintaining coherence between Rust types and stored data with minimal boilerplate. It supports multiple indexes, real-time watch with filters, schema migration, enjoy 😌🍃.
 
 # Features
 
@@ -37,59 +37,62 @@ use struct_db::*;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[struct_db(
-    fn_primary_key(p_key),
-    fn_secondary_key(s_key),
+    fn_primary_key(p_key),  // required
+    fn_secondary_key(s_key),  // optional
+    // ... other fn_secondary_key ...
 )]
 struct Data(u32, String);
 
 impl Data {
-    // `p_key` returns the primary key of the `Data` struct as a vector of bytes.
-    // In this case, it is the big-endian byte representation of the `i32` value.
-    // Using big-endian representation for the primary key maintains a consistent
-    // lexicographical ordering of the keys, which is useful for ordered key-value
-    // stores and efficient range queries.
-   pub fn p_key(&self) -> Vec<u8> {
-       self.0.to_be_bytes().to_vec()
+  // Returns primary key as big-endian bytes for consistent lexicographical ordering.
+  pub fn p_key(&self) -> Vec<u8> {
+    self.0.to_be_bytes().to_vec()
+  }
+
+  // Generates a secondary key combining the String field and the big-endian bytes of
+  // the primary key for versatile queries.
+  pub fn s_key(&self) -> Vec<u8> {
+    let mut s_key = self.1.as_bytes().to_vec();
+    s_key.extend_from_slice(&self.p_key().as_slice());
+    s_key
+  }
+ }
+
+ fn main() {
+  let mut db = Db::init_tmp("my_db_example").unwrap();
+  // Initialize the schema
+  db.add_schema(Data::struct_db_schema());
+
+  // Insert data
+  let txn = db.transaction().unwrap();
+  {
+    let mut tables = txn.tables();
+    tables.insert(&txn, Data(1,"red".to_string())).unwrap();
+    tables.insert(&txn, Data(2,"red".to_string())).unwrap();
+    tables.insert(&txn, Data(3,"blue".to_string())).unwrap();
+  }
+  txn.commit().unwrap();
+   
+  let txn_read = db.read_transaction().unwrap();
+  let mut tables = txn_read.tables();
+   
+  // Retrieve data with p_key=3 
+  let retrieve_data: Data = tables.primary_get(&txn_read, &3_u32.to_be_bytes()).unwrap().unwrap();
+  println!("data p_key='3' : {:?}", retrieve_data);
+   
+   // Iterate data with s_key="red" String
+   for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
+     println!("data s_key='1': {:?}", item);
    }
-  
-    // `s_key` generates a secondary key for the `Data` struct as a vector of bytes.
-    // The secondary key consists of the big-endian byte representation of the `i32` value
-    // (the primary key) followed by the String field. This combined key allows for more
-    // versatile querying options.
-   pub fn s_key(&self) -> Vec<u8> {
-       let mut p_key = self.p_key();
-       p_key.extend(self.1.as_bytes());
-       p_key
+   
+   // Remove data
+   let txn = db.transaction().unwrap();
+   {
+     let mut tables = txn.tables();
+     tables.remove(&txn, retrieve_data).unwrap();
    }
-}
-
-fn main() {
-    let mut db = Db::init_tmp("my_db").unwrap();
-    // Initialize the schema
-    db.add_schema(Data::struct_db_schema());
-
-    let data = Data(1,"test".to_string());
-    // Insert data
-    let txn = db.transaction().unwrap();
-    {
-      let mut tables = txn.tables();
-      tables.insert(&txn, data).unwrap();
-    }
-    txn.commit().unwrap();
-
-    // Get data
-    let txn_read = db.read_transaction().unwrap();
-    let retrieve_data: Data = txn_read.tables().primary_get(&txn_read, &1_u32.to_be_bytes()).unwrap().unwrap();
-    assert_eq!(&retrieve_data, &Data(1,"test".to_string()));
-  
-    // Remove data
-    let txn = db.transaction().unwrap();
-    {
-      let mut tables = txn.tables();
-      tables.remove(&txn, retrieve_data).unwrap();
-    }
-    txn.commit().unwrap();
-}
+   txn.commit().unwrap();
+ }
 ```
 
 # Roadmap
@@ -102,6 +105,6 @@ The following features are planned before the 1.0 release
 - Stable release of [redb](https://github.com/cberner/redb) or implement another stable storage engine(s) for Linux, macOS, Windows, Android, iOS.
 - Add support for [IndexDB](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.IdbDatabase.html) (WebBrowser).
 - Add support for custom serialization/deserialization logic.
-
+- Add CI for Linux, macOS, Windows, Android, iOS, WebBrowser.
 
 

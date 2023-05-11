@@ -244,10 +244,10 @@ impl Db {
     /// }
     pub fn primary_watch<T: SDBItem>(
         &self,
-        key: Option<&[u8]>,
+        value: Option<&[u8]>,
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
-        let table_filter = watch::TableFilter::new_primary(table_name.as_bytes(), key);
+        let table_filter = watch::TableFilter::new_primary(table_name.as_bytes(), value);
         self.watch_generic(table_filter)
     }
 
@@ -280,11 +280,11 @@ impl Db {
     /// - Similar to [`watch`](#method.watch) but with a secondary key.
     pub fn secondary_watch<T: SDBItem>(
         &self,
-        key: impl KeyDefinition,
+        key_def: impl KeyDefinition,
         value: Option<&[u8]>,
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
-        let table_filter = watch::TableFilter::new_secondary(table_name.as_bytes(), key, value);
+        let table_filter = watch::TableFilter::new_secondary(table_name.as_bytes(), key_def, value);
         self.watch_generic(table_filter)
     }
 
@@ -298,12 +298,15 @@ impl Db {
     /// - Similar to [`watch`](#method.watch) but with a secondary key and a prefix.
     pub fn secondary_watch_start_with<T: SDBItem>(
         &self,
-        key: impl KeyDefinition,
-        prefix: &[u8],
+        key_def: impl KeyDefinition,
+        prefix_value: &[u8],
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
-        let table_filter =
-            watch::TableFilter::new_secondary_start_with(table_name.as_bytes(), key, prefix);
+        let table_filter = watch::TableFilter::new_secondary_start_with(
+            table_name.as_bytes(),
+            key_def,
+            prefix_value,
+        );
         self.watch_generic(table_filter)
     }
 
