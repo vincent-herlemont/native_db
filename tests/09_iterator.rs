@@ -38,7 +38,7 @@ fn test_iter() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -71,7 +71,7 @@ fn test_iter_many_items_to_be_bytes() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -111,7 +111,7 @@ fn test_double_ended_iter() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -146,7 +146,7 @@ fn test_iter_range() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -205,7 +205,7 @@ fn test_iter_by_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -241,7 +241,7 @@ fn test_double_ended_iter_by_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -277,7 +277,7 @@ fn test_double_ended_iter_by_key_range() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -358,7 +358,7 @@ fn test_start_with_scenario() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(ItemFlag::struct_db_schema());
+    db.define::<ItemFlag>();
 
     let txn = db.transaction().unwrap();
     {
@@ -432,7 +432,7 @@ fn test_start_with_by_key_scenario_write_txn() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(ItemIdFlag::struct_db_schema());
+    db.define::<ItemIdFlag>();
 
     let txn = db.transaction().unwrap();
     {
@@ -494,7 +494,7 @@ fn test_start_with_by_key_scenario_readonly_txn() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(ItemIdFlag::struct_db_schema());
+    db.define::<ItemIdFlag>();
 
     let txn = db.transaction().unwrap();
     {
@@ -556,7 +556,7 @@ fn test_txn_write_iter() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -588,7 +588,7 @@ fn test_txn_write_iter_range() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -647,7 +647,7 @@ fn test_txn_write_start_with_scenario() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(ItemFlag::struct_db_schema());
+    db.define::<ItemFlag>();
 
     let txn = db.transaction().unwrap();
     {

@@ -29,7 +29,7 @@ impl Debug for Batch {
             write!(
                 f,
                 "({}, {:?}), ",
-                String::from_utf8_lossy(&watcher_request.primary_key_value),
+                String::from_utf8_lossy(&watcher_request.primary_key),
                 event
             )?;
         }

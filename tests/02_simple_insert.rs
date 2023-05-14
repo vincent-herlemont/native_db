@@ -27,7 +27,7 @@ fn test_insert_my_item() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     txn.tables().insert(&txn, item).unwrap();

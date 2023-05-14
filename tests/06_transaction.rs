@@ -21,7 +21,7 @@ fn test_transaction_obj_1() {
     let tf = tests::init();
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let item = Item {
         id: 1,
@@ -64,8 +64,8 @@ fn test_transaction_obj_1_and_obj_2() {
     let tf = tests::init();
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
-    db.add_schema(Item::struct_db_schema());
-    db.add_schema(Item2::struct_db_schema());
+    db.define::<Item>();
+    db.define::<Item2>();
 
     let item_1 = Item {
         id: 1,
@@ -107,7 +107,7 @@ fn test_transaction_fail() {
     let tf = tests::init();
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let item_1 = Item {
         id: 1,

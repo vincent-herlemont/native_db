@@ -8,14 +8,14 @@ pub fn struct_db(args: TokenStream, input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     let struct_name = &ast.ident;
 
-    let fn_primary_key_value: RefCell<Option<Ident>> = RefCell::new(None);
-    let fn_secondary_keys_values: RefCell<HashSet<Ident>> = RefCell::new(HashSet::new());
+    let fn_primary_key_def: RefCell<Option<Ident>> = RefCell::new(None);
+    let fn_secondary_keys_def: RefCell<HashSet<Ident>> = RefCell::new(HashSet::new());
 
     let simple_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("fn_primary_key") {
             meta.parse_nested_meta(|meta| {
                 if let Some(iden) = meta.path.get_ident() {
-                    *fn_primary_key_value.borrow_mut() = Some(iden.clone());
+                    *fn_primary_key_def.borrow_mut() = Some(iden.clone());
                 }
                 Ok(())
             })?;
@@ -23,7 +23,7 @@ pub fn struct_db(args: TokenStream, input: TokenStream) -> TokenStream {
         if meta.path.is_ident("fn_secondary_key") {
             meta.parse_nested_meta(|meta| {
                 if let Some(iden) = meta.path.get_ident() {
-                    let mut fn_secondary_keys_values = fn_secondary_keys_values.borrow_mut();
+                    let mut fn_secondary_keys_values = fn_secondary_keys_def.borrow_mut();
                     fn_secondary_keys_values.insert(iden.clone());
                 }
                 Ok(())
@@ -37,12 +37,12 @@ pub fn struct_db(args: TokenStream, input: TokenStream) -> TokenStream {
 
     // Value of the table:
     let table_name = struct_name.to_string().to_lowercase();
-    let primary_key_function_value = fn_primary_key_value
+    let primary_key_function_value = fn_primary_key_def
         .borrow()
         .clone()
         .expect("fn_primary_key is required");
     let primary_key_name = primary_key_function_value.to_string().to_lowercase();
-    let fn_secondary_keys_name = fn_secondary_keys_values.borrow().clone();
+    let fn_secondary_keys_name = fn_secondary_keys_def.borrow().clone();
 
     let fn_secondary_keys_name = fn_secondary_keys_name
         .iter()

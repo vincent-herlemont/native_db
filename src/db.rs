@@ -39,7 +39,7 @@ impl Db {
         })
     }
 
-    /// Initializes a table using the given schema.
+    /// Defines a table using the given schema.
     ///
     /// # Example
     /// ```
@@ -54,9 +54,10 @@ impl Db {
     /// fn main() {
     ///    let mut db = Db::init_tmp("my_db_as").unwrap();
     ///    // Initialize the table
-    ///    db.add_schema(Data::struct_db_schema());
+    ///    db.define::<Data>();
     /// }
-    pub fn add_schema(&mut self, schema: crate::Schema) {
+    pub fn define<T: SDBItem>(&mut self) {
+        let schema = T::struct_db_schema();
         let main_table_name = schema.table_name;
         let main_table_definition = redb::TableDefinition::new(main_table_name);
         self.table_definitions
@@ -86,7 +87,7 @@ impl Db {
     ///
     /// fn main() {
     ///   let mut db = Db::init_tmp("my_db_t").unwrap();
-    ///   db.add_schema(Data::struct_db_schema());
+    ///   db.define::<Data>();
     ///
     ///   // Use transaction to insert a new data
     ///   let mut txn = db.transaction().unwrap();
@@ -145,7 +146,7 @@ impl Db {
     ///
     /// fn main() {
     ///  let mut db = Db::init_tmp("my_db_rt").unwrap();
-    ///  db.add_schema(Data::struct_db_schema());
+    ///  db.define::<Data>();
     ///  
     ///  // Insert a new data
     ///  let mut txn = db.transaction().unwrap();
@@ -220,7 +221,7 @@ impl Db {
     ///
     /// fn main() {
     ///  let mut db = Db::init_tmp("my_db").unwrap();
-    ///  db.add_schema(Data::struct_db_schema());
+    ///  db.define::<Data>();
     ///
     ///  // None you will receive all the events from Data.
     ///  let (event_receiver, _id) = db.primary_watch::<Data>(None).unwrap();
@@ -244,10 +245,10 @@ impl Db {
     /// }
     pub fn primary_watch<T: SDBItem>(
         &self,
-        value: Option<&[u8]>,
+        key: Option<&[u8]>,
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
-        let table_filter = watch::TableFilter::new_primary(table_name.as_bytes(), value);
+        let table_filter = watch::TableFilter::new_primary(table_name.as_bytes(), key);
         self.watch_generic(table_filter)
     }
 
@@ -261,16 +262,16 @@ impl Db {
     /// - Similar to [`watch`](#method.watch) but with a prefix.
     pub fn primary_watch_start_with<T: SDBItem>(
         &self,
-        prefix: &[u8],
+        key_prefix: &[u8],
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
         let table_filter =
-            watch::TableFilter::new_primary_start_with(table_name.as_bytes(), prefix);
+            watch::TableFilter::new_primary_start_with(table_name.as_bytes(), key_prefix);
         self.watch_generic(table_filter)
     }
 
     /// Watches for changes in the specified table for the given secondary key.
-    /// If the argument `value` is `None` you will receive all the events from the table.
+    /// If the argument `key` is `None` you will receive all the events from the table.
     /// Otherwise you will receive only the events for the given secondary key.
     ///
     /// To unregister the watcher you need to call [`unwatch`](Db::unwatch)
@@ -281,10 +282,10 @@ impl Db {
     pub fn secondary_watch<T: SDBItem>(
         &self,
         key_def: impl KeyDefinition,
-        value: Option<&[u8]>,
+        key: Option<&[u8]>,
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
-        let table_filter = watch::TableFilter::new_secondary(table_name.as_bytes(), key_def, value);
+        let table_filter = watch::TableFilter::new_secondary(table_name.as_bytes(), key_def, key);
         self.watch_generic(table_filter)
     }
 
@@ -299,13 +300,13 @@ impl Db {
     pub fn secondary_watch_start_with<T: SDBItem>(
         &self,
         key_def: impl KeyDefinition,
-        prefix_value: &[u8],
+        key_prefix: &[u8],
     ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
         let table_filter = watch::TableFilter::new_secondary_start_with(
             table_name.as_bytes(),
             key_def,
-            prefix_value,
+            key_prefix,
         );
         self.watch_generic(table_filter)
     }

@@ -21,7 +21,7 @@ fn remove() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(O::struct_db_schema());
+    db.define::<O>();
 
     // Insert the item
     let tx = db.transaction().unwrap();

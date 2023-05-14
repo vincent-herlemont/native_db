@@ -34,26 +34,26 @@ impl Watchers {
             if filter.table_name == request.table_name {
                 match &filter.key_filter {
                     KeyFilter::Primary(value) => {
-                        if let Some(value) = &value {
-                            if value == &request.primary_key_value {
+                        if let Some(key) = &value {
+                            if key == &request.primary_key {
                                 event_senders.push(Arc::clone(event_sender));
                             }
                         } else {
                             event_senders.push(Arc::clone(event_sender));
                         }
                     }
-                    KeyFilter::PrimaryStartWith(start_with) => {
-                        if request.primary_key_value.starts_with(start_with) {
+                    KeyFilter::PrimaryStartWith(key_prefix) => {
+                        if request.primary_key.starts_with(key_prefix) {
                             event_senders.push(Arc::clone(event_sender));
                         }
                     }
-                    KeyFilter::Secondary(key, value) => {
-                        for (request_secondary_key, request_secondary_key_value) in
+                    KeyFilter::Secondary(key_def, key) => {
+                        for (request_secondary_key_def, request_secondary_key) in
                             &request.secondary_keys_value
                         {
-                            if key == request_secondary_key.as_bytes() {
-                                if let Some(value) = &value {
-                                    if value == request_secondary_key_value {
+                            if key_def == request_secondary_key_def.as_bytes() {
+                                if let Some(value) = &key {
+                                    if value == request_secondary_key {
                                         event_senders.push(Arc::clone(event_sender));
                                     }
                                 } else {
@@ -62,12 +62,12 @@ impl Watchers {
                             }
                         }
                     }
-                    KeyFilter::SecondaryStartWith(key, start_with) => {
-                        for (request_secondary_key, request_secondary_key_value) in
+                    KeyFilter::SecondaryStartWith(key_def, key_prefix) => {
+                        for (request_secondary_key_def, request_secondary_key) in
                             &request.secondary_keys_value
                         {
-                            if key == request_secondary_key.as_bytes() {
-                                if request_secondary_key_value.starts_with(start_with) {
+                            if key_def == request_secondary_key_def.as_bytes() {
+                                if request_secondary_key.starts_with(key_prefix) {
                                     event_senders.push(Arc::clone(event_sender));
                                 }
                             }

@@ -31,14 +31,14 @@ impl TableFilter {
 
     pub(crate) fn new_secondary<K: KeyDefinition>(
         table_name: &'static [u8],
-        key: K,
-        value: Option<&[u8]>,
+        key_def: K,
+        key: Option<&[u8]>,
     ) -> Self {
         Self {
             table_name,
             key_filter: KeyFilter::Secondary(
-                key.secondary_table_name().as_bytes().to_vec(),
-                value.map(|v| v.to_vec()),
+                key_def.secondary_table_name().as_bytes().to_vec(),
+                key.map(|v| v.to_vec()),
             ),
         }
     }

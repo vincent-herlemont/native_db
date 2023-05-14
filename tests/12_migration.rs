@@ -3,11 +3,13 @@ mod tests;
 use serde::{Deserialize, Serialize};
 use struct_db::*;
 
+type Item = ItemV1;
+
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[struct_db(fn_primary_key(p_key))]
-struct Av1(u32);
+struct ItemV0(u32);
 
-impl Av1 {
+impl ItemV0 {
     pub fn p_key(&self) -> Vec<u8> {
         self.0.to_be_bytes().to_vec()
     }
@@ -15,16 +17,19 @@ impl Av1 {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[struct_db(fn_primary_key(p_key))]
-struct Av2(String);
+struct ItemV1(String);
 
-impl Av2 {
+impl ItemV1 {
+    pub fn new(s: &str) -> Self {
+        Self(s.to_string())
+    }
     pub fn p_key(&self) -> Vec<u8> {
         self.0.as_bytes().to_vec()
     }
 }
 
-impl From<Av1> for Av2 {
-    fn from(av1: Av1) -> Self {
+impl From<ItemV0> for ItemV1 {
+    fn from(av1: ItemV0) -> Self {
         Self(av1.0.to_string())
     }
 }
@@ -35,10 +40,10 @@ fn migration() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Av1::struct_db_schema());
-    db.add_schema(Av2::struct_db_schema());
+    db.define::<ItemV0>();
+    db.define::<ItemV1>();
 
-    let a = Av1(42);
+    let a = ItemV0(42);
 
     let txn = db.transaction().unwrap();
     {
@@ -52,21 +57,21 @@ fn migration() {
     {
         let mut tables = txn.tables();
         let a1 = tables
-            .primary_get::<Av1>(&txn, &a.p_key())
+            .primary_get::<ItemV0>(&txn, &a.p_key())
             .unwrap()
             .unwrap();
         assert_eq!(a, a1);
     }
     txn.commit().unwrap();
 
-    let (recv_av1, _id) = db.primary_watch::<Av1>(None).unwrap();
-    let (recv_av2, _id) = db.primary_watch::<Av2>(None).unwrap();
+    let (recv_av1, _id) = db.primary_watch::<ItemV0>(None).unwrap();
+    let (recv_av2, _id) = db.primary_watch::<ItemV1>(None).unwrap();
 
     // Migrate
     let txn = db.transaction().unwrap();
     {
         let mut tables = txn.tables();
-        tables.migrate::<Av1, Av2>(&txn).unwrap();
+        tables.migrate::<ItemV0, ItemV1>(&txn).unwrap();
     }
     txn.commit().unwrap();
 
@@ -79,15 +84,15 @@ fn migration() {
     let txn = db.read_transaction().unwrap();
     {
         let mut tables = txn.tables();
-        let len_av1 = tables.len::<Av1>(&txn).unwrap();
+        let len_av1 = tables.len::<ItemV0>(&txn).unwrap();
         assert_eq!(len_av1, 0);
-        let len_av2 = tables.len::<Av2>(&txn).unwrap();
+        let len_av2 = tables.len::<Item>(&txn).unwrap();
         assert_eq!(len_av2, 1);
 
         let a2 = tables
-            .primary_get::<Av2>(&txn, "42".as_bytes())
+            .primary_get::<Item>(&txn, "42".as_bytes())
             .unwrap()
             .unwrap();
-        assert_eq!(a2, Av2("42".to_string()));
+        assert_eq!(a2, Item::new("42"));
     }
 }

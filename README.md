@@ -2,17 +2,17 @@
 
 [![Crates.io](https://img.shields.io/crates/v/struct_db?style=flat-square)](https://crates.io/crates/struct_db)
 
-Provides a simple, fast, and embedded database solution, focusing on maintaining coherence between Rust types and stored data with minimal boilerplate. It supports multiple indexes, real-time watch with filters, schema migration, enjoy 😌🍃.
+Provides a drop-in, fast, and embedded database solution, focusing on maintaining coherence between Rust types and stored data with minimal boilerplate. It supports multiple indexes, real-time watch with filters, schema migration, enjoy 😌🍃.
 
 # Features
 
 - Fast as the storage engine you choose ([redb](https://github.com/cberner/redb), _[IndexDB](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.IdbDatabase.html) [planned*](#roadmap)_).
 - Embedded database (Linux, macOS, Windows, Android, iOS, _WebBrowser WASM [planned*](#roadmap)_).
-- Support multiple indexes (unique secondary keys).
+- Support multiple indexes ([unique secondary keys](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.secondary_get)).
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
-- Query data (`get`, `watch`, `iter` etc.) using explicit type or type inference. 
-- Real-time subscription with filters for `insert`, `update` and `delete` operations.
-- Schema migration using native Rust coercion.
+- [Query data](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.primary_get) (`get`, `watch`, `iter` etc.) using explicit type or type inference. 
+- [Real-time subscription](https://docs.rs/struct_db/latest/struct_db/struct.Db.html#method.primary_watch) with filters for `insert`, `update` and `delete` operations.
+- [Schema migration](https://docs.rs/struct_db/latest/struct_db/struct.Tables.html#method.migrate) using native Rust coercion.
 - Fully ACID-compliant transactions.
 - _Add your own serialization/deserialization logic [planned*](#roadmap) (e.g: zero-copy)._
 - Thread-safe.
@@ -61,7 +61,7 @@ impl Data {
  fn main() {
   let mut db = Db::init_tmp("my_db_example").unwrap();
   // Initialize the schema
-  db.add_schema(Data::struct_db_schema());
+  db.define::<Data>();
 
   // Insert data
   let txn = db.transaction().unwrap();
@@ -80,18 +80,18 @@ impl Data {
   let retrieve_data: Data = tables.primary_get(&txn_read, &3_u32.to_be_bytes()).unwrap().unwrap();
   println!("data p_key='3' : {:?}", retrieve_data);
    
-   // Iterate data with s_key="red" String
-   for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
-     println!("data s_key='1': {:?}", item);
-   }
+  // Iterate data with s_key="red" String
+  for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
+    println!("data s_key='1': {:?}", item);
+  }
    
-   // Remove data
-   let txn = db.transaction().unwrap();
-   {
-     let mut tables = txn.tables();
-     tables.remove(&txn, retrieve_data).unwrap();
-   }
-   txn.commit().unwrap();
+  // Remove data
+  let txn = db.transaction().unwrap();
+  {
+    let mut tables = txn.tables();
+    tables.remove(&txn, retrieve_data).unwrap();
+  }
+  txn.commit().unwrap();
  }
 ```
 
@@ -100,11 +100,10 @@ impl Data {
 The following features are planned before the 1.0 release
 
 - Stabilize the wording, if you have any suggestion follow [this issue](https://github.com/vincent-herlemont/struct_db/issues/1) 🙏.
-- Add benchmarks tests.
+- Add benchmarks tests. 
 - Add documentation.
 - Stable release of [redb](https://github.com/cberner/redb) or implement another stable storage engine(s) for Linux, macOS, Windows, Android, iOS.
 - Add support for [IndexDB](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.IdbDatabase.html) (WebBrowser).
 - Add support for custom serialization/deserialization logic.
 - Add CI for Linux, macOS, Windows, Android, iOS, WebBrowser.
-
 

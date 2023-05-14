@@ -67,7 +67,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// fn main() {
     ///   let mut db = Db::init_tmp("my_db_t_insert").unwrap();
     ///   // Initialize the table
-    ///   db.add_schema(Data::struct_db_schema());
+    ///   db.define::<Data>();
     ///   
     ///   // Insert a new data
     ///   let mut txn = db.transaction().unwrap();
@@ -92,7 +92,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         let schema = T::struct_db_schema();
         let table_name = schema.table_name;
 
-        let primary_key_value = item.struct_db_primary_key();
+        let primary_key = item.struct_db_primary_key();
         let secondary_keys = item.struct_db_keys();
         let value = item.struct_db_bincode_encode_to_vec();
         let already_exists;
@@ -100,15 +100,15 @@ impl<'db, 'txn> Tables<'db, 'txn> {
             self.open_table(txn, table_name)?;
             let table = self.opened_tables.get_mut(table_name).unwrap();
             already_exists = table
-                .insert(&primary_key_value.as_slice(), &value.as_slice())?
+                .insert(&primary_key.as_slice(), &value.as_slice())?
                 .is_some();
         }
 
-        for (secondary_table_name, key_value) in &secondary_keys {
+        for (secondary_table_name, key) in &secondary_keys {
             self.open_table(txn, secondary_table_name)?;
             let secondary_table = self.opened_tables.get_mut(secondary_table_name).unwrap();
             let result =
-                secondary_table.insert(&key_value.as_slice(), &primary_key_value.as_slice())?;
+                secondary_table.insert(&key.as_slice(), &primary_key.as_slice())?;
             if result.is_some() && !already_exists {
                 return Err(crate::Error::DuplicateKey {
                     key_name: secondary_table_name,
@@ -118,7 +118,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         }
 
         Ok((
-            WatcherRequest::new(table_name, primary_key_value, secondary_keys),
+            WatcherRequest::new(table_name, primary_key, secondary_keys),
             BinaryValue(value),
         ))
     }
@@ -141,7 +141,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// fn main() {
     ///   let mut db = Db::init_tmp("my_db_t_update").unwrap();
     ///   // Initialize the table
-    ///   db.add_schema(Data::struct_db_schema());
+    ///   db.define::<Data>();
     ///   
     ///   // Insert a new data
     ///   let mut txn = db.transaction().unwrap();
@@ -199,7 +199,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// fn main() {
     ///   let mut db = Db::init_tmp("my_db_t_remove").unwrap();
     ///   // Initialize the table
-    ///   db.add_schema(Data::struct_db_schema());
+    ///   db.define::<Data>();
     ///   
     ///   // Insert a new data
     ///   let mut txn = db.transaction().unwrap();
@@ -238,13 +238,13 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         let schema = T::struct_db_schema();
         let table_name = schema.table_name;
 
-        let primary_key_value = item.struct_db_primary_key();
+        let primary_key = item.struct_db_primary_key();
         let keys = item.struct_db_keys();
         let value = item.struct_db_bincode_encode_to_vec();
         {
             self.open_table(txn, table_name)?;
             let table = self.opened_tables.get_mut(table_name).unwrap();
-            table.remove(&primary_key_value.as_slice())?;
+            table.remove(&primary_key.as_slice())?;
         }
 
         for (secondary_table_name, value) in &keys {
@@ -254,7 +254,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         }
 
         Ok((
-            WatcherRequest::new(table_name, primary_key_value, keys),
+            WatcherRequest::new(table_name, primary_key, keys),
             BinaryValue(value),
         ))
     }
@@ -267,11 +267,14 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// ```
     /// use serde::{Deserialize, Serialize};
     /// use struct_db::*;
+    ///
+    /// type Data = DataV2;
+    ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
     /// #[struct_db(fn_primary_key(p_key))]
-    /// struct Av1(u32);
+    /// struct DataV1(u32);
     ///
-    /// impl Av1 {
+    /// impl DataV1 {
     ///     pub fn p_key(&self) -> Vec<u8> {
     ///         self.0.to_be_bytes().to_vec()
     ///     }
@@ -279,67 +282,57 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
     /// #[struct_db(fn_primary_key(p_key))]
-    /// struct Av2(String);
+    /// struct DataV2(String);
     ///
-    /// impl Av2 {
+    /// impl DataV2 {
     ///     pub fn p_key(&self) -> Vec<u8> {
     ///         self.0.as_bytes().to_vec()
     ///     }
     /// }
     ///
-    /// impl From<Av1> for Av2 {
-    ///     fn from(av1: Av1) -> Self {
+    /// impl From<DataV1> for DataV2 {
+    ///     fn from(av1: DataV1) -> Self {
     ///         Self(av1.0.to_string())
     ///     }
     /// }
     ///
     /// fn main() {
-    ///    let mut db = Db::init_tmp("my_db_t_migration").unwrap();
-    ///    
-    ///    db.add_schema(Av1::struct_db_schema());
-    ///    db.add_schema(Av2::struct_db_schema());
-    ///    
-    ///    let a = Av1(42);
-    ///    
-    ///    let txn = db.transaction().unwrap();
-    ///    {
-    ///    let mut tables = txn.tables();
-    ///    tables.insert(&txn, a.clone()).unwrap();
-    ///    }
-    ///    txn.commit().unwrap();
-    ///    
-    ///    let (recv_av1, _id) = db.primary_watch::<Av1>(None).unwrap();
-    ///    let (recv_av2, _id) = db.primary_watch::<Av2>(None).unwrap();
-    ///    
-    ///    // Migrate
-    ///    let txn = db.transaction().unwrap();
-    ///    {
-    ///       let mut tables = txn.tables();
-    ///       tables.migrate::<Av1, Av2>(&txn).unwrap();
-    ///    }
-    ///    txn.commit().unwrap();
-    ///    
-    ///    // Check migration
-    ///    let txn = db.read_transaction().unwrap();
-    ///    {
-    ///        let mut tables = txn.tables();
-    ///        let len_av1 = tables.len::<Av1>(&txn).unwrap();
-    ///        assert_eq!(len_av1, 0);
-    ///        let len_av2 = tables.len::<Av2>(&txn).unwrap();
-    ///        assert_eq!(len_av2, 1);
-    ///    
-    ///        let a2 = tables.primary_get::<Av2>(&txn, "42".as_bytes()).unwrap().unwrap();
-    ///        assert_eq!(a2, Av2("42".to_string()));
-    ///    }
+    ///   let mut db = Db::init_tmp("my_db_t_migration").unwrap();
+    ///
+    ///   db.define::<DataV1>();
+    ///   db.define::<DataV2>();
+    ///
+    ///   let data = DataV1(42);
+    ///
+    ///   let txn = db.transaction().unwrap();
+    ///   {
+    ///     let mut tables = txn.tables();
+    ///     tables.insert(&txn, data).unwrap();
+    ///   }
+    ///   txn.commit().unwrap();
+    ///
+    ///   // Migrate
+    ///   let txn = db.transaction().unwrap();
+    ///   {
+    ///     let mut tables = txn.tables();
+    ///     tables.migrate::<DataV1, DataV2>(&txn).unwrap();
+    ///   }
+    ///   txn.commit().unwrap();
+    ///
+    ///   // Check migration
+    ///   let txn = db.read_transaction().unwrap();
+    ///   let mut tables = txn.tables();
+    ///   let data = tables.primary_get::<Data>(&txn, "42".as_bytes()).unwrap().unwrap();
+    ///   println!("migrated data: {:?}", data);
     /// }
-    pub fn migrate<TO, TN>(&mut self, txn: &'txn Transaction<'db>) -> Result<()>
+    pub fn migrate<OldType, NewType>(&mut self, txn: &'txn Transaction<'db>) -> Result<()>
     where
-        TO: SDBItem + Clone,
-        TN: SDBItem + From<TO>,
+        OldType: SDBItem + Clone,
+        NewType: SDBItem + From<OldType>,
     {
-        let find_all_old: Vec<TO> = self.primary_iter(txn).unwrap().collect();
+        let find_all_old: Vec<OldType> = self.primary_iter(txn).unwrap().collect();
         for old in find_all_old {
-            let new: TN = old.clone().into();
+            let new: NewType = old.clone().into();
             self.internal_insert(txn, new)?;
             self.internal_remove(txn, old)?;
         }

@@ -34,7 +34,7 @@ fn watch_one_primary_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
+    db.define::<A>();
 
     let a = A(1);
 
@@ -64,7 +64,7 @@ fn watch_all_primary_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
+    db.define::<A>();
 
     let a1 = A(1);
     let a2 = A(2);
@@ -95,7 +95,7 @@ fn watch_multithreading() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
+    db.define::<A>();
 
     let db = Arc::new(db);
     let dba = Arc::clone(&db);
@@ -154,8 +154,8 @@ fn watch_outside() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
-    db.add_schema(B::struct_db_schema());
+    db.define::<A>();
+    db.define::<B>();
 
     let (recv, _) = db.primary_watch::<B>(Some(&a.p_key())).unwrap();
 
@@ -198,7 +198,7 @@ fn watch_one_secondary_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A1K::struct_db_schema());
+    db.define::<A1K>();
 
     let a = A1K(1, "a".to_string());
 
@@ -230,7 +230,7 @@ fn watch_all_secondary_keys() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A1K::struct_db_schema());
+    db.define::<A1K>();
 
     let a1 = A1K(1, "a".to_string());
     let a2 = A1K(2, "b".to_string());
@@ -262,7 +262,7 @@ fn unwatch() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
+    db.define::<A>();
 
     let a = A(1);
 
@@ -311,7 +311,7 @@ fn watch_start_with() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(C::struct_db_schema());
+    db.define::<C>();
 
     let c1 = C("a_1".to_string());
     let c2 = C("a_2".to_string());
@@ -347,7 +347,7 @@ fn watch_start_with_by_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A1K::struct_db_schema());
+    db.define::<A1K>();
 
     let a1 = A1K(1, "a_1".to_string());
     let a2 = A1K(2, "a_2".to_string());
@@ -383,7 +383,7 @@ fn watch_all_delete() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
+    db.define::<A>();
 
     let a = A(1);
 
@@ -422,7 +422,7 @@ fn watch_all_update() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(A::struct_db_schema());
+    db.define::<A>();
 
     let a1 = A(1);
     let a2 = A(2);

@@ -76,7 +76,7 @@ fn test_insert_duplicate_key() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     let mut tables = txn.tables();
@@ -108,7 +108,7 @@ fn test_insert_and_get_on_transaction() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -150,7 +150,7 @@ fn test_insert_and_get_on_readonly_transaction() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -192,7 +192,7 @@ fn test_insert_and_get() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {

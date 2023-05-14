@@ -27,7 +27,7 @@ fn test_simple_len() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {
@@ -68,7 +68,7 @@ fn test_simple_len_txn_write() {
 
     let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
 
-    db.add_schema(Item::struct_db_schema());
+    db.define::<Item>();
 
     let txn = db.transaction().unwrap();
     {

@@ -13,8 +13,8 @@
 //! - Initialize a database:
 //!    - [`Db::init_tmp(<database name>)`](crate::Db::init_tmp) initializes a database at a temporary path.
 //!    - [`Db::init(<path>)`](crate::Db::init) initializes a database at a given path.
-//! - Initialize schema
-//!    - [`Db::add_schema(`](crate::Db::add_schema)[`<your_item>::struct_db_schema()`](crate::SDBItem::struct_db_schema)`)` initializes a schema.
+//! - Define schema
+//!    - [`db.define::<your_type>()`](crate::Db::define) initializes a schema.
 //! - Transactions
 //!    - [`db.transaction()`](crate::Db::transaction) starts a [`read-write transaction`](crate::Transaction).
 //!    - [`db.read_transaction()`](crate::Db::read_transaction) starts a [`read-only transaction`](crate::ReadOnlyTransaction).
@@ -28,24 +28,24 @@
 //!    - [`tables.migrate::<old_type, new_type>(&txn)`](crate::Tables::migrate) migrates the schema from `old_type` to `new_type`.
 //! - Read operations
 //!    - Primary key
-//!       - [`tables.primary_get(&txn,<value>)`](crate::ReadableTable::primary_get) get an item.
+//!       - [`tables.primary_get(&txn,<key>)`](crate::ReadableTable::primary_get) get an item.
 //!       - [`tables.primary_iter(&txn)`](crate::ReadableTable::primary_iter) iterate all items.
-//!       - [`tables.primary_iter_range(&txn,<start_value>..<end_value>)`](crate::ReadableTable::primary_iter_range) all items in range.
-//!       - [`tables.primary_iter_start_with(&txn,<prefix_value>)`](crate::ReadableTable::primary_iter_start_with) all items with prefix.
+//!       - [`tables.primary_iter_range(&txn,<start_key>..<end_key>)`](crate::ReadableTable::primary_iter_range) all items in range.
+//!       - [`tables.primary_iter_start_with(&txn,<key_prefix>)`](crate::ReadableTable::primary_iter_start_with) all items with prefix.
 //!    - Secondary key
-//!       - [`tables.secondary_get(&txn,<key_def>,<value>)`](crate::ReadableTable::secondary_get) get an item.
+//!       - [`tables.secondary_get(&txn,<key_def>,<key>)`](crate::ReadableTable::secondary_get) get an item.
 //!       - [`tables.secondary_iter(&txn,<key_def>,<key_def>)`](crate::ReadableTable::secondary_iter) iterate all items.
-//!       - [`tables.secondary_iter_range(&txn,<key_def>,<start_value>..<end_value>)`](crate::ReadableTable::secondary_iter_range) all items in range.
-//!       - [`tables.secondary_iter_start_with(&txn,<key_def>,<prefix_value>)`](crate::ReadableTable::secondary_iter_start_with) all items with prefix.
+//!       - [`tables.secondary_iter_range(&txn,<key_def>,<start_key>..<end_key>)`](crate::ReadableTable::secondary_iter_range) all items in range.
+//!       - [`tables.secondary_iter_start_with(&txn,<key_def>,<key_prefix>)`](crate::ReadableTable::secondary_iter_start_with) all items with prefix.
 //!    - Global
 //!       - [`tables.len()`](crate::ReadableTable::len)
 //! - Watch use [`std::sync::mpsc::Receiver`](std::sync::mpsc::Receiver) to receive [`watch::Event`](crate::watch::Event).
 //!    - Primary key
-//!       - [`db.primary_watch(Option<<value>>)`](crate::Db::primary_watch) watch all or a specific item.
-//!       - [`db.primary_watch_start_with(<prefix_value>)`](crate::Db::primary_watch_start_with) watch all items with prefix.
+//!       - [`db.primary_watch(Option<key>)`](crate::Db::primary_watch) watch all or a specific item.
+//!       - [`db.primary_watch_start_with(<key_prefix>)`](crate::Db::primary_watch_start_with) watch all items with prefix.
 //!    - Secondary key
-//!       - [`db.secondary_watch(<key_def>,Option<value>)`](crate::Db::secondary_watch) watch all or a specific item.
-//!       - [`db.secondary_watch_start_with(<key_def>,<prefix_value>)`](crate::Db::secondary_watch_start_with) watch all items with prefix.
+//!       - [`db.secondary_watch(<key_def>,Option<key>)`](crate::Db::secondary_watch) watch all or a specific item.
+//!       - [`db.secondary_watch_start_with(<key_def>,<key_prefix>)`](crate::Db::secondary_watch_start_with) watch all items with prefix.
 //!    - Global
 //!       - [`db.unwatch(<watcher_id>)`](crate::Db::unwatch) stop watching a specific watcher.
 //! # Example
@@ -55,9 +55,9 @@
 //!
 //! #[derive(Serialize, Deserialize, PartialEq, Debug)]
 //! #[struct_db(
-//! fn_primary_key(p_key),  // required
-//! fn_secondary_key(s_key),  // optional
-//! // ... other fn_secondary_key ...
+//!    fn_primary_key(p_key),  // required
+//!    fn_secondary_key(s_key),  // optional
+//!    // ... other fn_secondary_key ...
 //! )]
 //! struct Data(u32, String);
 //!
@@ -79,15 +79,15 @@
 //!  fn main() {
 //!   let mut db = Db::init_tmp("my_db_example").unwrap();
 //!   // Initialize the schema
-//!   db.add_schema(Data::struct_db_schema());
+//!   db.define::<Data>();
 //!
 //!   // Insert data
 //!   let txn = db.transaction().unwrap();
 //!   {
-//!     let mut tables = txn.tables();
-//!     tables.insert(&txn, Data(1,"red".to_string())).unwrap();
-//!     tables.insert(&txn, Data(2,"red".to_string())).unwrap();
-//!     tables.insert(&txn, Data(3,"blue".to_string())).unwrap();
+//!      let mut tables = txn.tables();
+//!      tables.insert(&txn, Data(1,"red".to_string())).unwrap();
+//!      tables.insert(&txn, Data(2,"red".to_string())).unwrap();
+//!      tables.insert(&txn, Data(3,"blue".to_string())).unwrap();
 //!   }
 //!   txn.commit().unwrap();
 //!    
@@ -98,18 +98,18 @@
 //!   let retrieve_data: Data = tables.primary_get(&txn_read, &3_u32.to_be_bytes()).unwrap().unwrap();
 //!   println!("data p_key='3' : {:?}", retrieve_data);
 //!    
-//!    // Iterate data with s_key="red" String
-//!    for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
+//!   // Iterate data with s_key="red" String
+//!   for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
 //!      println!("data s_key='1': {:?}", item);
-//!    }
-//!    
-//!    // Remove data
-//!    let txn = db.transaction().unwrap();
-//!    {
+//!   }
+//!
+//!   // Remove data
+//!   let txn = db.transaction().unwrap();
+//!   {
 //!      let mut tables = txn.tables();
 //!      tables.remove(&txn, retrieve_data).unwrap();
-//!    }
-//!    txn.commit().unwrap();
+//!   }
+//!   txn.commit().unwrap();
 //!  }
 //! ```
 
@@ -154,8 +154,8 @@ pub enum Error {
     #[error("Table definition not found {table}")]
     TableDefinitionNotFound { table: String },
 
-    #[error("Key not found {value:?}")]
-    KeyNotFound { value: Vec<u8> },
+    #[error("Key not found {key:?}")]
+    KeyNotFound { key: Vec<u8> },
 
     #[error("Primary key associated with the secondary key not found {primary_key:?}")]
     PrimaryKeyNotFound { primary_key: Vec<u8> },
