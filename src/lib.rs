@@ -38,7 +38,7 @@
 //!       - [`tables.secondary_iter_range(&txn,<key_def>,<start_key>..<end_key>)`](crate::ReadableTable::secondary_iter_range) all items in range.
 //!       - [`tables.secondary_iter_start_with(&txn,<key_def>,<key_prefix>)`](crate::ReadableTable::secondary_iter_start_with) all items with prefix.
 //!    - Global
-//!       - [`tables.len()`](crate::ReadableTable::len)
+//!       - [`tables.len::<your_type>()`](crate::ReadableTable::len)
 //! - Watch use [`std::sync::mpsc::Receiver`](std::sync::mpsc::Receiver) to receive [`watch::Event`](crate::watch::Event).
 //!    - Primary key
 //!       - [`db.primary_watch(Option<key>)`](crate::Db::primary_watch) watch all or a specific item.
