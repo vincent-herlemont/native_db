@@ -40,3 +40,29 @@ jobs:
         with:
           command: test
           args: ${{ env.FEATURE_ARGS }}
+  build_android:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [i686-linux-android, aarch64-linux-android, armv7-linux-androideabi, thumbv7neon-linux-androideabi, x86_64-linux-android]
+        toolchain: [stable]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target ${{ matrix.target }}
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: test
+          args: --release --target ${{ matrix.target }}
