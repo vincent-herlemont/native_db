@@ -1,0 +1,42 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  common:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        toolchain: [stable]
+        feature: [ no_feature , "eyre_support" ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: Setup Feature Args
+        shell: bash
+        run: |
+          if [[ "${{ matrix.feature }}" == "no_feature" ]]; then
+            echo "FEATURE_ARGS=" >> $GITHUB_ENV
+          else
+            echo "FEATURE_ARGS=-F ${{ matrix.feature }}" >> $GITHUB_ENV
+          fi
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: ${{ env.FEATURE_ARGS }}
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: ${{ env.FEATURE_ARGS }}
