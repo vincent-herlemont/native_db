@@ -12,7 +12,7 @@ keywords = ["embedded", "database", "persistence", "key-value-store", "lmdb"]
 categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
 [workspace]
-members = ["struct_db_macro"]
+members = ["struct_db_macro", "server", "example"]
 
 [dependencies]
 redb = "0.17.0" # TODO make it optional when IndexDB is implemented
