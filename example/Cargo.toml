@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.28.0", features = ["full"] }
-struct_db = "0.3"
+struct_db = { path = "../" }
 serde = { version = "1.0", features = ["derive"] }
 server = {path = "../server"}
 anyhow = "1.0"
