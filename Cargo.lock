@@ -411,7 +411,7 @@ dependencies = [
  "anyhow",
  "serde",
  "server",
- "struct_db 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "struct_db",
  "tokio",
 ]
 
@@ -1255,7 +1255,7 @@ dependencies = [
  "pin-project-lite",
  "serde",
  "serde_json",
- "struct_db 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "struct_db",
  "thiserror",
  "tokio",
  "tower-http",
@@ -1346,37 +1346,13 @@ dependencies = [
  "serial_test",
  "shortcut_assert_fs",
  "skeptic",
- "struct_db_macro 0.3.1",
- "thiserror",
-]
-
-[[package]]
-name = "struct_db"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69f81ade8bd0334725529d9e5e09094b6fc3d9b9ef4c83e8c9998ddfda25aa02"
-dependencies = [
- "bincode",
- "redb",
- "serde",
- "skeptic",
- "struct_db_macro 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "struct_db_macro",
  "thiserror",
 ]
 
 [[package]]
 name = "struct_db_macro"
 version = "0.3.1"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
-name = "struct_db_macro"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "732a3b457ad7e001c594f913911eb073760c1a8f7cf2b21da3b17a1f34c92d8e"
 dependencies = [
  "quote",
  "syn",

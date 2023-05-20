@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-struct_db = "0.3"
+struct_db = { path = "../" }
 axum = "0.6.9"
 tokio = { version = "1.28.0", features = ["full"] }
 serde_json = "1.0.96"
