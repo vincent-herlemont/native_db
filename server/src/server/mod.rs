@@ -2,7 +2,7 @@ mod layer;
 use std::{net::TcpListener, sync::Arc};
 
 use axum::extract::Extension;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 use crate::{api::register_routes, context::RawSDBApiContext};
@@ -12,7 +12,7 @@ pub type HttpApiServer =
 
 pub async fn build_http_server<T>(db_path: String) -> anyhow::Result<HttpApiServer>
 where
-    T: struct_db::SDBItem + Send + Sync + 'static + Serialize,
+    T: struct_db::SDBItem + Send + Sync + 'static + Serialize + Deserialize<'static>,
 {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
