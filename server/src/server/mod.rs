@@ -19,8 +19,8 @@ where
     let default_port = std::env::var("PORT").unwrap_or_else(|_| 8080.to_string());
     let default_host = "0.0.0.0";
     let default_http_addr = [default_host, &default_port].join(":");
-    let db_path = std::path::Path::new(&db_path);
-    let mut db = struct_db::Db::init(db_path).unwrap();
+    let path = std::path::Path::new(&db_path);
+    let mut db = struct_db::Db::init(path).unwrap();
     db.define::<T>();
     let ctx = Arc::new(Mutex::new(RawSDBApiContext { db }));
 
@@ -33,6 +33,8 @@ where
 
     let httpserver = axum::Server::from_tcp(listener).unwrap();
     let httpserver = httpserver.serve(app.into_make_service());
+
+    log::info!("SERVER HAS STARTED AT PORT: 8080");
 
     Ok(httpserver)
 }
