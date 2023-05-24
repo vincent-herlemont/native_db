@@ -107,3 +107,13 @@ The following features are planned before the 1.0 release
 - Add support for custom serialization/deserialization logic.
 - Add CI for Linux, macOS, Windows, Android, iOS, WebBrowser.
 
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
