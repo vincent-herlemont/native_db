@@ -1,0 +1,34 @@
+name: Weekly Release
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+      contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: install npm
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: install @semantic-release/exec
+        run: npm install @semantic-release/exec
+
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@v3
+        with:
+          branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
