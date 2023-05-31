@@ -134,7 +134,6 @@ pub use readonly_tables::*;
 pub use readonly_transaction::*;
 pub use schema::*;
 pub use serialization::*;
-use std::path::PathBuf;
 pub use struct_db_macro::*;
 pub use tables::*;
 pub use transaction::*;
@@ -143,13 +142,26 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("IO error")]
-    Io(#[from] std::io::Error),
     #[error("Redb error")]
     Redb(#[from] redb::Error),
 
-    #[error("Init database error {path:?}")]
-    InitDbBackendError { source: redb::Error, path: PathBuf },
+    #[error("Redb database error")]
+    RedbDatabaseError(#[from] redb::DatabaseError),
+
+    #[error("Redb transaction error")]
+    RedbTransactionError(#[from] redb::TransactionError),
+
+    #[error("Redb storage error")]
+    RedbStorageError(#[from] redb::StorageError),
+
+    #[error("Redb table error")]
+    RedbTableError(#[from] redb::TableError),
+
+    #[error("Redb commit error")]
+    RedbCommitError(#[from] redb::CommitError),
+
+    #[error("IO error")]
+    Io(#[from] std::io::Error),
 
     #[error("Table definition not found {table}")]
     TableDefinitionNotFound { table: String },
