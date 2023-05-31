@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  common:
+  build_test_common_os:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
@@ -40,7 +40,7 @@ jobs:
         with:
           command: test
           args: ${{ env.FEATURE_ARGS }}
-  build_android:
+  build_test_android:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
