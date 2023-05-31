@@ -16,7 +16,7 @@ jobs:
         toolchain: [stable]
         feature: [ no_feature , "eyre_support" ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -48,7 +48,7 @@ jobs:
         target: [i686-linux-android, aarch64-linux-android, armv7-linux-androideabi, thumbv7neon-linux-androideabi, x86_64-linux-android]
         toolchain: [stable]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
