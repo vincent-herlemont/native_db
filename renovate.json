@@ -10,6 +10,12 @@
       "description": "Automerge non-major updates",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
+    },
+    {
+        "description": "Automerge actions",
+        "matchDepTypes": ["action"],
+        "matchUpdateTypes": ["major", "minor", "patch"],
+        "automerge": true
     }
   ]
 }
