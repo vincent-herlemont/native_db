@@ -66,3 +66,29 @@ jobs:
           use-cross: true
           command: test
           args: --release --target ${{ matrix.target }}
+  build_test_ios:
+      runs-on: macos-latest
+      strategy:
+        fail-fast: true
+        matrix:
+          target: [aarch64-apple-ios, x86_64-apple-ios]
+          toolchain: [stable]
+      steps:
+        - uses: actions/checkout@v2
+        - name: Setup Rust
+          uses: actions-rs/toolchain@v1
+          with:
+            toolchain: ${{ matrix.toolchain }}
+            target: ${{ matrix.target }}
+            override: true
+        - name: Install cargo-lipo
+          run: cargo install cargo-lipo
+        - name: Install M1 compatible OpenSSL
+          run: brew install openssl@1.1
+        - name: Build
+          run: cargo lipo --release
+        - name: Run tests
+          uses: actions-rs/cargo@v1
+          with:
+            command: test
+            args: --release --target ${{ matrix.target }}
