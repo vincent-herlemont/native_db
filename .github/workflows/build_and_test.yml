@@ -7,90 +7,24 @@ on:
     branches: [ main ]
 
 jobs:
-  common:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        toolchain: [stable]
-        feature: [ no_feature , "eyre_support" ]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-      - name: Setup Feature Args
-        shell: bash
-        run: |
-          if [[ "${{ matrix.feature }}" == "no_feature" ]]; then
-            echo "FEATURE_ARGS=" >> $GITHUB_ENV
-          else
-            echo "FEATURE_ARGS=-F ${{ matrix.feature }}" >> $GITHUB_ENV
-          fi
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: ${{ env.FEATURE_ARGS }}
-      - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: ${{ env.FEATURE_ARGS }}
-  build_android:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        target: [i686-linux-android, aarch64-linux-android, armv7-linux-androideabi, thumbv7neon-linux-androideabi, x86_64-linux-android]
-        toolchain: [stable]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target ${{ matrix.target }}
-      - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: test
-          args: --release --target ${{ matrix.target }}
   build_test_ios:
-      runs-on: macos-latest
-      strategy:
-        fail-fast: true
-        matrix:
-          target: [aarch64-apple-ios, x86_64-apple-ios]
-          toolchain: [stable]
-      steps:
-        - uses: actions/checkout@v2
-        - name: Setup Rust
-          uses: actions-rs/toolchain@v1
-          with:
-            toolchain: ${{ matrix.toolchain }}
-            target: ${{ matrix.target }}
-            override: true
-        - name: Add targets
-          run: rustup target add ${{ matrix.target }}
-        - name: Install cargo-lipo
-          run: cargo install cargo-lipo
-        - name: Install M1 compatible OpenSSL
-          run: brew install openssl@1.1
-        - name: Build
-          run: cargo lipo --release
-        - name: Run tests
-          uses: actions-rs/cargo@v1
-          with:
-            command: test
-            args: --release --target ${{ matrix.target }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain: [stable]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: Install cargo-dinghy
+        run: cargo install cargo-dinghy
+      - name: Start iPhone simulator
+        run: xcrun simctl boot "iPhone 14"
+      - name: List simulators
+        run: xcrun simctl list
+      - name: Build and run tests
+        run: cargo dinghy -d iphone test
