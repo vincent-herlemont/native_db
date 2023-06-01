@@ -81,6 +81,8 @@ jobs:
             toolchain: ${{ matrix.toolchain }}
             target: ${{ matrix.target }}
             override: true
+        - name: Add targets
+          run: rustup target add ${{ matrix.target }}
         - name: Install cargo-lipo
           run: cargo install cargo-lipo
         - name: Install M1 compatible OpenSSL
