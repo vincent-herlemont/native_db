@@ -1,5 +1,4 @@
 use crate::watch;
-use crate::Error::InitDbBackendError;
 use crate::{Error, KeyDefinition, ReadOnlyTransaction, Result, SDBItem, Transaction};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -27,10 +26,7 @@ impl Db {
 
     /// Creates a new `Db` instance using the given path.
     pub fn init(path: &Path) -> Result<Self> {
-        let db = redb::Database::create(path).map_err(|e| InitDbBackendError {
-            path: path.to_path_buf(),
-            source: e,
-        })?;
+        let db = redb::Database::create(path)?;
         Ok(Self {
             instance: db,
             table_definitions: HashMap::new(),

@@ -18,7 +18,7 @@ members = ["struct_db_macro"]
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
-redb = "0.17.0" # TODO make it optional when IndexDB is implemented
+redb = "0.20.0" # TODO make it optional when IndexDB is implemented
 struct_db_macro = { version = "0.3.1", path = "struct_db_macro" }
 thiserror = "1.0"
 
