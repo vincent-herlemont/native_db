@@ -20,8 +20,19 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           override: true
+      - name: Add target
+        run: rustup target add x86_64-apple-ios
+      - name: Cache cargo install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/bin/
+          key: ${{ runner.os }}-cargo-install-${{ hashFiles('**/Cargo.lock') }}
       - name: Install cargo-dinghy
-        run: cargo install cargo-dinghy
+        run: |
+          if ! command -v cargo-dinghy &> /dev/null
+          then
+            cargo install cargo-dinghy
+          fi
       - name: Start iPhone simulator
         run: xcrun simctl boot "iPhone 14"
       - name: List simulators
