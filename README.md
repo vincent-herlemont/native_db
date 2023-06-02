@@ -1,9 +1,14 @@
 # Struct DB 🔧🔩 
+
+[![Crates.io](https://img.shields.io/crates/v/struct_db)](https://crates.io/crates/struct_db)
+[![Linux/Windows/macOS/Android/iOS (Build/Test/Release)](https://github.com/vincent-herlemont/struct_db/actions/workflows/build_and_test_release.yml/badge.svg)](https://github.com/vincent-herlemont/struct_db/actions/workflows/build_and_test_release.yml)
+[![Documentation](https://docs.rs/struct_db/badge.svg)](https://docs.rs/struct_db)
+[![License](https://img.shields.io/crates/l/struct_db)](LICENSE)
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-[![Crates.io](https://img.shields.io/crates/v/struct_db?style=flat-square)](https://crates.io/crates/struct_db)
 
 Provides a drop-in, fast, and embedded database solution, focusing on maintaining coherence between Rust types and stored data with minimal boilerplate. It supports multiple indexes, real-time watch with filters, schema migration, enjoy 😌🍃.
 
