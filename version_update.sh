@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 # Bash script to update version for struct_db and struct_db_macro
 
 # Semantic release version obtained from argument
@@ -29,4 +31,8 @@ do
   fi
 done
 
+
+cd "$DIR/"
+
 git commit --all --message "chore: update version to $NEW_VERSION"
+git push
