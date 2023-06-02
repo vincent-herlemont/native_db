@@ -28,3 +28,5 @@ do
     fi
   fi
 done
+
+git commit --all --message "chore: update version to $NEW_VERSION"
