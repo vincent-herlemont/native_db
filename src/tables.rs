@@ -259,7 +259,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         ))
     }
 
-    /// Migration from a table to another.
+    /// Migration from a type to another.
     ///
     /// Not send any event.
     ///
