@@ -1,6 +1,6 @@
 [package]
 name = "struct_db_macro"
-version = "0.3.8"
+version = "0.3.9"
 authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
 edition = "2018"
 description = "A procedural macro for struct_db"
