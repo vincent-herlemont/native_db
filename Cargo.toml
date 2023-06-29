@@ -15,7 +15,7 @@ categories = ["database-implementations", "concurrency", "data-structures", "cac
 members = ["struct_db_macro"]
 
 [dependencies]
-redb = "1.0.1" # TODO make it optional when IndexDB is implemented
+redb = "1.0.2" # TODO make it optional when IndexDB is implemented
 struct_db_macro = { version = "0.3.9", path = "struct_db_macro" }
 thiserror = "1.0"
 
