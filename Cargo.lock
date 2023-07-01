@@ -879,7 +879,7 @@ checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 
 [[package]]
 name = "struct_db"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "assert_fs",
  "bincode",
@@ -896,7 +896,7 @@ dependencies = [
 
 [[package]]
 name = "struct_db_macro"
-version = "0.3.10"
+version = "0.3.11"
 dependencies = [
  "quote",
  "syn",
