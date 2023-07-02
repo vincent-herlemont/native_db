@@ -1,6 +1,6 @@
 [package]
 name = "struct_db"
-version = "0.3.11"
+version = "0.3.12"
 authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
 edition = "2018"
 description = "Drop-in embedded database"
@@ -16,7 +16,7 @@ members = ["struct_db_macro"]
 
 [dependencies]
 redb = "1.0.4" # TODO make it optional when IndexDB is implemented
-struct_db_macro = { version = "0.3.11", path = "struct_db_macro" }
+struct_db_macro = { version = "0.3.12", path = "struct_db_macro" }
 thiserror = "1.0"
 
 # TODO: make it optional when custom serialization is implemented
