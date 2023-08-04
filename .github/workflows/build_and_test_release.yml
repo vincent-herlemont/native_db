@@ -2,9 +2,9 @@ name: Linux/Windows/macOS/Android/iOS (Build/Test/Release)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, next ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, next ]
 
 jobs:
   build_test_common_os:
