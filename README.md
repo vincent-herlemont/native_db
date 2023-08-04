@@ -14,8 +14,8 @@ Provides a drop-in, fast, and embedded database solution, focusing on maintainin
 
 # Features
 
-- Fast as the storage engine you choose ([redb](https://github.com/cberner/redb), _[IndexDB](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.IdbDatabase.html) [planned*](#roadmap)_).
-- Embedded database (Linux, macOS, Windows, Android, iOS, _WebBrowser WASM [planned*](#roadmap)_).
+- Almost as fast as the storage engine [redb](https://github.com/cberner/redb)
+- Embedded database (Linux, macOS, Windows, Android, iOS).
 - Support multiple indexes ([unique secondary keys](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.secondary_get)).
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
 - [Query data](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.primary_get) (`get`, `watch`, `iter` etc.) using explicit type or type inference. 
@@ -24,10 +24,6 @@ Provides a drop-in, fast, and embedded database solution, focusing on maintainin
 - Fully ACID-compliant transactions.
 - _Add your own serialization/deserialization logic [planned*](#roadmap) (e.g: zero-copy)._
 - Thread-safe.
-- Plus, all features depending on the storage engine you choose:
-   - [redb](https://github.com/cberner/redb) support: Linux, macOS, Windows, Android, iOS.
-   - _[IndexDB](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.IdbDatabase.html) support: WebBrowser (WASM) [planned*](#roadmap)._
-   - Open an issue if you want to add another storage engine.
 
 # Status
 
@@ -111,9 +107,8 @@ The following features are planned before the 1.0 release
 - Add benchmarks tests. 
 - Add documentation.
 - Stable release of [redb](https://github.com/cberner/redb) or implement another stable storage engine(s) for Linux, macOS, Windows, Android, iOS.
-- Add support for [IndexDB](https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.IdbDatabase.html) (WebBrowser).
 - Add support for custom serialization/deserialization logic.
-- Add CI for Linux, macOS, Windows, Android, iOS, WebBrowser.
+- Add CI for Linux, macOS, Windows, Android, iOS.
 
 ## Contributors
 
