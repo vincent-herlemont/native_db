@@ -19,9 +19,23 @@ pub enum WatchEventError {
     TryLockErrorPoisoned(Batch),
     #[error("TryLockErrorWouldBlock")]
     TryLockErrorWouldBlock(Batch),
+    #[cfg(not(feature = "tokio"))]
     #[error("SendError")]
     SendError(#[from] std::sync::mpsc::SendError<Event>),
+    #[cfg(feature = "tokio")]
+    #[error("SendError")]
+    SendError(#[from] tokio::sync::mpsc::error::SendError<Event>),
 }
+
+#[cfg(not(feature = "tokio"))]
+pub type MpscSender<T> = std::sync::mpsc::Sender<T>;
+#[cfg(not(feature = "tokio"))]
+pub type MpscReceiver<T> = std::sync::mpsc::Receiver<T>;
+
+#[cfg(feature = "tokio")]
+pub type MpscSender<T> = tokio::sync::mpsc::UnboundedSender<T>;
+#[cfg(feature = "tokio")]
+pub type MpscReceiver<T> = tokio::sync::mpsc::UnboundedReceiver<T>;
 
 pub(crate) fn push_batch(
     senders: Arc<RwLock<Watchers>>,
