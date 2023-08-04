@@ -34,9 +34,6 @@ done
 
 cd "$DIR/"
 
-# Update cargo.lock
-cargo check
-
 # Commit
 git commit --all --message "chore: update version to $NEW_VERSION"
 git push
