@@ -182,12 +182,5 @@ pub enum Error {
     MaxWatcherReached,
 }
 
-#[cfg(feature = "eyre_support")]
-use eyre::Report;
-#[cfg(feature = "eyre_support")]
-pub type ReportError = Report;
-#[cfg(feature = "eyre_support")]
-pub type Result<T> = std::result::Result<T, ReportError>;
 
-#[cfg(not(feature = "eyre_support"))]
 pub type Result<T> = std::result::Result<T, Error>;

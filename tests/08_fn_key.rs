@@ -83,12 +83,6 @@ fn test_insert_duplicate_key() {
     tables.insert(&txn, item_1).unwrap();
     let result = tables.insert(&txn, item_2);
     assert!(result.is_err());
-    #[cfg(feature = "eyre_support")]
-    assert!(matches!(
-        result.unwrap_err().downcast().unwrap(),
-        Error::DuplicateKey { .. }
-    ));
-    #[cfg(not(feature = "eyre_support"))]
     assert!(matches!(result.unwrap_err(), Error::DuplicateKey { .. }));
 }
 
