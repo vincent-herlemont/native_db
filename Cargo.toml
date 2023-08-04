@@ -27,16 +27,21 @@ bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 eyre = { version = "0.6", optional = true }
 color-eyre = { version = "0.6", optional = true }
 
+# Optional tokio support
+tokio = { version = "1.0", features = ["sync"], optional = true }
+
 [dev-dependencies]
 assert_fs = "1.0"
 serial_test = { version = "2.0", features = ["file_locks"] }
 shortcut_assert_fs = { version = "0.1.0" }
 skeptic = "0.13"
 color-eyre = { version = "0.6" }
+tokio = { version = "1.0", features = ["test-util","macros"] }
 
 [features]
 default = []
 eyre_support = ["eyre", "color-eyre"]
+async_tokio = ["tokio"]
 
 [build-dependencies]
 skeptic = "0.13"

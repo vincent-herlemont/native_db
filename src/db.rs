@@ -4,8 +4,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::AtomicU64;
-use std::sync::{mpsc, Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 use std::u64;
+use crate::watch::MpscReceiver;
 
 /// The `Db` struct represents a database instance. It allows add **schema**, create **transactions** and **watcher**.
 pub struct Db {
@@ -67,7 +68,7 @@ impl Db {
 }
 
 /// Watcher is a tool to watch changes on the database.
-/// Use [`std::sync::mpsc::Receiver`](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html) to receive changes.
+/// Use [`std::sync::mpsc::Receiver`](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html) or [tokio::sync::mpsc::UnboundedReceiver](https://docs.rs/tokio/latest/tokio/sync/mpsc/struct.UnboundedReceiver.html) to receive changes.
 impl Db {
     /// Creates a new read-write transaction.
     ///
@@ -182,8 +183,11 @@ impl Db {
     fn watch_generic(
         &self,
         table_filter: watch::TableFilter,
-    ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
-        let (event_sender, event_receiver) = mpsc::channel();
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
+        #[cfg(not(feature = "tokio"))]
+        let (event_sender, event_receiver) = std::sync::mpsc::channel();
+        #[cfg(feature = "tokio")]
+        let (event_sender, event_receiver) = tokio::sync::mpsc::unbounded_channel();
         let event_sender = Arc::new(Mutex::new(event_sender));
         let id = self.generate_watcher_id()?;
         let mut watchers = self.watchers.write().unwrap();
@@ -232,6 +236,7 @@ impl Db {
     ///
     ///  // Wait for the event
     ///  for _ in 0..1 {
+    ///   // With the feature "async_tokio" you can use async/await pattern
     ///   let event = event_receiver.recv().unwrap();
     ///   if let watch::Event::Insert(insert) = event {
     ///      let data = insert.inner::<Data>();
@@ -242,7 +247,7 @@ impl Db {
     pub fn primary_watch<T: SDBItem>(
         &self,
         key: Option<&[u8]>,
-    ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
         let table_filter = watch::TableFilter::new_primary(table_name.as_bytes(), key);
         self.watch_generic(table_filter)
@@ -259,7 +264,7 @@ impl Db {
     pub fn primary_watch_start_with<T: SDBItem>(
         &self,
         key_prefix: &[u8],
-    ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
         let table_filter =
             watch::TableFilter::new_primary_start_with(table_name.as_bytes(), key_prefix);
@@ -279,7 +284,7 @@ impl Db {
         &self,
         key_def: impl KeyDefinition,
         key: Option<&[u8]>,
-    ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
         let table_filter = watch::TableFilter::new_secondary(table_name.as_bytes(), key_def, key);
         self.watch_generic(table_filter)
@@ -297,7 +302,7 @@ impl Db {
         &self,
         key_def: impl KeyDefinition,
         key_prefix: &[u8],
-    ) -> Result<(mpsc::Receiver<watch::Event>, u64)> {
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::struct_db_schema().table_name;
         let table_filter = watch::TableFilter::new_secondary_start_with(
             table_name.as_bytes(),

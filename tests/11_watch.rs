@@ -1,3 +1,4 @@
+#![cfg(not(feature = "async_tokio"))]
 mod tests;
 
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,7 @@ impl B {
     }
 }
 
-const TIMOUT: Duration = Duration::from_secs(1);
+const TIMEOUT: Duration = Duration::from_secs(1);
 
 #[test]
 fn watch_one_primary_key() {
@@ -48,7 +49,7 @@ fn watch_one_primary_key() {
     tx.commit().unwrap();
 
     for _ in 0..1 {
-        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -79,7 +80,7 @@ fn watch_all_primary_key() {
     tx.commit().unwrap();
 
     for _ in 0..2 {
-        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -114,7 +115,7 @@ fn watch_multithreading() {
         }
         tx.commit().unwrap();
         for _ in 0..1 {
-            let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+            let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
                 event.inner()
             } else {
                 panic!("wrong event")
@@ -134,7 +135,7 @@ fn watch_multithreading() {
 
     handle.join().unwrap();
     for _ in 0..2 {
-        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -169,7 +170,7 @@ fn watch_outside() {
     tx.commit().unwrap();
 
     // Check that recv receives only 1 insert event
-    let inner_event: B = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+    let inner_event: B = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
         event.inner()
     } else {
         panic!("wrong event")
@@ -214,7 +215,7 @@ fn watch_one_secondary_key() {
     tx.commit().unwrap();
 
     for _ in 0..1 {
-        let inner_event: A1K = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -246,7 +247,7 @@ fn watch_all_secondary_keys() {
     tx.commit().unwrap();
 
     for _ in 0..2 {
-        let inner_event: A1K = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -276,7 +277,7 @@ fn unwatch() {
     tx.commit().unwrap();
 
     for _ in 0..1 {
-        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -331,7 +332,7 @@ fn watch_start_with() {
     tx.commit().unwrap();
 
     for _ in 0..2 {
-        let inner_event: C = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: C = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -367,7 +368,7 @@ fn watch_start_with_by_key() {
     tx.commit().unwrap();
 
     for _ in 0..2 {
-        let inner_event: A1K = if let Event::Insert(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let inner_event: A1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -396,7 +397,7 @@ fn watch_all_delete() {
     }
     tx.commit().unwrap();
 
-    recv.recv_timeout(TIMOUT).unwrap();
+    recv.recv_timeout(TIMEOUT).unwrap();
 
     let tx = db.transaction().unwrap();
     {
@@ -406,7 +407,7 @@ fn watch_all_delete() {
     tx.commit().unwrap();
 
     for _ in 0..1 {
-        let r_a: A = if let Event::Delete(event) = recv.recv_timeout(TIMOUT).unwrap() {
+        let r_a: A = if let Event::Delete(event) = recv.recv_timeout(TIMEOUT).unwrap() {
             event.inner()
         } else {
             panic!("wrong event")
@@ -436,7 +437,7 @@ fn watch_all_update() {
     }
     tx.commit().unwrap();
 
-    recv.recv_timeout(TIMOUT).unwrap();
+    recv.recv_timeout(TIMEOUT).unwrap();
 
     let tx = db.transaction().unwrap();
     {
@@ -447,7 +448,7 @@ fn watch_all_update() {
 
     for _ in 0..1 {
         let (old_r_a, new_r_a): (A, A) =
-            if let Event::Update(event) = recv.recv_timeout(TIMOUT).unwrap() {
+            if let Event::Update(event) = recv.recv_timeout(TIMEOUT).unwrap() {
                 (event.inner_old(), event.inner_new())
             } else {
                 panic!("wrong event")
