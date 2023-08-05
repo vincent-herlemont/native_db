@@ -14,7 +14,7 @@ Provides a drop-in, fast, and embedded database solution, focusing on maintainin
 
 # Features
 
-- Almost as fast as the storage engine [redb](https://github.com/cberner/redb)
+- Almost as fast as the storage engine [redb](https://github.com/cberner/redb).
 - Embedded database (Linux, macOS, Windows, Android, iOS).
 - Support multiple indexes ([unique secondary keys](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.secondary_get)).
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
@@ -27,7 +27,7 @@ Provides a drop-in, fast, and embedded database solution, focusing on maintainin
 
 # Status
 
-Early development. Not ready for production.
+Early development. Not ready for production. Follow the [roadmap](#roadmap) for the 1.0 release.
 
 # How to use?
 
@@ -103,12 +103,12 @@ impl Data {
 
 The following features are planned before the 1.0 release
 
-- Stabilize the wording, if you have any suggestion follow [this issue](https://github.com/vincent-herlemont/struct_db/issues/1) 🙏.
-- Add benchmarks tests. 
-- Add documentation.
-- Stable release of [redb](https://github.com/cberner/redb) or implement another stable storage engine(s) for Linux, macOS, Windows, Android, iOS.
-- Add support for custom serialization/deserialization logic.
-- Add CI for Linux, macOS, Windows, Android, iOS.
+- [ ] Add benchmarks tests. 
+- [x] Add documentation.
+- [x] Stable release of [redb](https://github.com/cberner/redb) or implement another stable storage engine(s) for Linux, macOS, Windows, Android, iOS.
+- [ ] Add support for custom serialization/deserialization logic.
+- [x] Add CI for Linux, macOS, Windows, Android, iOS.
+- [ ] Use in a real-world project.
 
 ## Contributors
 
