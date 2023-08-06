@@ -125,7 +125,9 @@ mod serialization;
 mod tables;
 mod transaction;
 pub mod watch;
+mod builder;
 
+pub use builder::*;
 pub use db::*;
 pub use item::*;
 pub use iterator::*;
