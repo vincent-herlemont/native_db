@@ -39,7 +39,7 @@
 //!       - [`tables.secondary_iter_start_with(&txn,<key_def>,<key_prefix>)`](crate::ReadableTable::secondary_iter_start_with) all items with prefix.
 //!    - Global
 //!       - [`tables.len::<your_type>()`](crate::ReadableTable::len)
-//! - Watch use [`std::sync::mpsc::Receiver`](std::sync::mpsc::Receiver) or [tokio::sync::mpsc::UnboundedReceiver](https://docs.rs/tokio/latest/tokio/sync/mpsc/struct.UnboundedReceiver.html) to receive [`watch::Event`](crate::watch::Event).
+//! - Watch (details [`here`](crate::Db::primary_watch))
 //!    - Primary key
 //!       - [`db.primary_watch(Option<key>)`](crate::Db::primary_watch) watch all or a specific item.
 //!       - [`db.primary_watch_start_with(<key_prefix>)`](crate::Db::primary_watch_start_with) watch all items with prefix.

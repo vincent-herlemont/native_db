@@ -76,8 +76,6 @@ impl Db {
     }
 }
 
-/// Watcher is a tool to watch changes on the database.
-/// Use [`std::sync::mpsc::Receiver`](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html) or [tokio::sync::mpsc::UnboundedReceiver](https://docs.rs/tokio/latest/tokio/sync/mpsc/struct.UnboundedReceiver.html) to receive changes.
 impl Db {
     /// Creates a new read-write transaction.
     ///
@@ -209,6 +207,10 @@ impl Db {
     /// If the argument `key` is `None` you will receive all the events from the table.
     /// Otherwise you will receive only the events for the given primary key.
     ///
+    /// Supported channels to to receive changes:
+    ///   - [`std::sync::mpsc::Receiver`](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html) by default
+    ///   - [`tokio::sync::mpsc::UnboundedReceiver`](https://docs.rs/tokio/latest/tokio/sync/mpsc/struct.UnboundedReceiver.html) with the feature (`async_tokio`).
+    ///
     /// To unregister the watcher you need to call [`unwatch`](Db::unwatch)
     /// with the returned `id`.
     ///
@@ -269,7 +271,7 @@ impl Db {
     /// with the returned `id`.
     ///
     /// # Example
-    /// - Similar to [`watch`](#method.watch) but with a prefix.
+    /// - Similar to [`primary_watch`](#method.primary_watch) but with a prefix.
     pub fn primary_watch_start_with<T: SDBItem>(
         &self,
         key_prefix: &[u8],
@@ -288,7 +290,7 @@ impl Db {
     /// with the returned `id`.
     ///
     /// # Example
-    /// - Similar to [`watch`](#method.watch) but with a secondary key.
+    /// - Similar to [`primary_watch`](#method.primary_watch) but with a secondary key.
     pub fn secondary_watch<T: SDBItem>(
         &self,
         key_def: impl KeyDefinition,
@@ -306,7 +308,7 @@ impl Db {
     /// with the returned `id`.
     ///
     /// # Example
-    /// - Similar to [`watch`](#method.watch) but with a secondary key and a prefix.
+    /// - Similar to [`primary_watch`](#method.primary_watch) but with a secondary key and a prefix.
     pub fn secondary_watch_start_with<T: SDBItem>(
         &self,
         key_def: impl KeyDefinition,
@@ -322,7 +324,7 @@ impl Db {
     }
 
     /// Unwatch the given `id`.
-    /// You can get the `id` from the return value of [`watch`](#method.watch).
+    /// You can get the `id` from the return value of [`primary_watch`](#method.primary_watch).
     /// If the `id` is not valid anymore, this function will do nothing.
     /// If the `id` is valid, the corresponding watcher will be removed.
     pub fn unwatch(&self, id: u64) -> Result<()> {
