@@ -7,39 +7,42 @@ use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Mutex, RwLock};
 use std::u64;
 use crate::watch::MpscReceiver;
+use crate::builder::Builder;
 
 /// The `Db` struct represents a database instance. It allows add **schema**, create **transactions** and **watcher**.
 pub struct Db {
-    instance: redb::Database,
-    table_definitions:
+    pub(crate) instance: redb::Database,
+    pub(crate) table_definitions:
         HashMap<&'static str, redb::TableDefinition<'static, &'static [u8], &'static [u8]>>,
-    watchers: Arc<RwLock<watch::Watchers>>,
-    watchers_counter_id: AtomicU64,
+    pub(crate) watchers: Arc<RwLock<watch::Watchers>>,
+    pub(crate) watchers_counter_id: AtomicU64,
 }
 
 impl Db {
-    /// Creates a new `Db` instance using a temporary directory with the given path.
-    ///
-    /// Example: `db.create_tmp('project/my_db')` will create the db to `/tmp/project/my_db`.
-    ///
-    /// Use [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
-    pub fn create_tmp(path: impl AsRef<Path>) -> Result<Self> {
-        let tmp_dir = std::env::temp_dir();
-        let tmp_dir = tmp_dir.join(path);
-        Self::create(tmp_dir.as_path())
-    }
-
-    /// Creates a new `Db` instance using the given path.
+    /// Creates a new [Db] instance using the given path.
     ///
     /// Use [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
     pub fn create(path: impl AsRef<Path>) -> Result<Self> {
-        let db = redb::Database::create(path)?;
-        Ok(Self {
-            instance: db,
-            table_definitions: HashMap::new(),
-            watchers: Arc::new(RwLock::new(watch::Watchers::new())),
-            watchers_counter_id: AtomicU64::new(0),
-        })
+        Builder::new().create(path)
+    }
+
+    /// Creates a new [Db] instance using a temporary directory with the given path.
+    ///
+    /// Example: `Db::create_tmp('project/my_db')` will create the db to `/tmp/project/my_db`.
+    ///
+    /// Use [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
+    pub fn create_tmp(path: impl AsRef<Path>) -> Result<Self> {
+        Builder::new().create_tmp(path)
+    }
+
+    /// Opens an existing [Db] instance using the given path.
+    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+        Builder::new().open(path)
+    }
+
+    /// Opens an existing [Db] instance using a temporary directory with the given path.
+    pub fn open_tmp(path: impl AsRef<Path>) -> Result<Self> {
+        Builder::new().open_tmp(path)
     }
 
     /// Defines a table using the given schema.
