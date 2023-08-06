@@ -209,7 +209,7 @@ impl Db {
     ///
     /// Supported channels to to receive changes:
     ///   - [`std::sync::mpsc::Receiver`](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html) by default
-    ///   - [`tokio::sync::mpsc::UnboundedReceiver`](https://docs.rs/tokio/latest/tokio/sync/mpsc/struct.UnboundedReceiver.html) with the feature (`async_tokio`).
+    ///   - [`tokio::sync::mpsc::UnboundedReceiver`](https://docs.rs/tokio/latest/tokio/sync/mpsc/struct.UnboundedReceiver.html) with the feature (`tokio`).
     ///
     /// To unregister the watcher you need to call [`unwatch`](Db::unwatch)
     /// with the returned `id`.
@@ -247,7 +247,7 @@ impl Db {
     ///
     ///  // Wait for the event
     ///  for _ in 0..1 {
-    ///   // With the feature "async_tokio" you can use async/await pattern
+    ///   // With the feature "tokio" you can use async/await pattern
     ///   let event = event_receiver.recv().unwrap();
     ///   if let watch::Event::Insert(insert) = event {
     ///      let data = insert.inner::<Data>();

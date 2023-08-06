@@ -1,4 +1,4 @@
-#![cfg(feature = "async_tokio")]
+#![cfg(feature = "tokio")]
 
 mod tests;
 

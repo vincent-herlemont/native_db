@@ -1,4 +1,4 @@
-#![cfg(not(feature = "async_tokio"))]
+#![cfg(not(feature = "tokio"))]
 mod tests;
 
 use serde::{Deserialize, Serialize};
