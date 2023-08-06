@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         toolchain: [stable]
-        feature: [ no_feature , "async_tokio" ]
+        feature: [ no_feature , "tokio" ]
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
       - name: Setup Rust
@@ -39,17 +39,17 @@ jobs:
           command: build
           args: ${{ env.FEATURE_ARGS }}
       - name: Run tests
-        if: matrix.feature != 'async_tokio'
+        if: matrix.feature != 'tokio'
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: ${{ env.FEATURE_ARGS }}
       - name: Run tests
-        if: matrix.feature == 'async_tokio'
+        if: matrix.feature == 'tokio'
         uses: actions-rs/cargo@v1
         with:
           command: test
-          # Ignore rust doc tests for async_tokio
+          # Ignore rust doc tests for tokio feature
           args: ${{ env.FEATURE_ARGS }} --test '*'
   build_test_android:
     runs-on: ubuntu-latest

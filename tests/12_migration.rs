@@ -64,14 +64,14 @@ fn migration() {
     }
     txn.commit().unwrap();
 
-    #[cfg(not(feature = "async_tokio"))]
+    #[cfg(not(feature = "tokio"))]
     let (recv_av1, _id) = db.primary_watch::<ItemV0>(None).unwrap();
-    #[cfg(not(feature = "async_tokio"))]
+    #[cfg(not(feature = "tokio"))]
     let (recv_av2, _id) = db.primary_watch::<ItemV1>(None).unwrap();
 
-    #[cfg(feature = "async_tokio")]
+    #[cfg(feature = "tokio")]
     let (mut recv_av1, _id) = db.primary_watch::<ItemV0>(None).unwrap();
-    #[cfg(feature = "async_tokio")]
+    #[cfg(feature = "tokio")]
     let (mut recv_av2, _id) = db.primary_watch::<ItemV0>(None).unwrap();
 
     // Migrate
