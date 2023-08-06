@@ -35,7 +35,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
     /// fn main() {
-    ///    let mut db = Db::init_tmp("my_db_rt_g").unwrap();
+    ///    let mut db = Db::create_tmp("my_db_rt_g").unwrap();
     ///    // Initialize the table
     ///    db.define::<Data>();
     ///    
@@ -84,7 +84,7 @@ pub trait ReadableTable<'db, 'txn> {
     ///
     /// fn main() {
     ///   use std::arch::asm;
-    /// let mut db = Db::init_tmp("my_db_p_iter").unwrap();
+    /// let mut db = Db::create_tmp("my_db_p_iter").unwrap();
     ///   // Initialize the table
     ///   db.define::<Data>();
     ///   
@@ -191,7 +191,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// }
     ///
     /// fn main() {
-    ///   let mut db = Db::init_tmp("my_db_rt_gk").unwrap();
+    ///   let mut db = Db::create_tmp("my_db_rt_gk").unwrap();
     ///   // Initialize the table
     ///   db.define::<Data>();
     ///   
@@ -335,7 +335,7 @@ pub trait ReadableTable<'db, 'txn> {
     ///
     /// fn main() {
     ///   use std::arch::asm;
-    /// let mut db = Db::init_tmp("my_db_len").unwrap();
+    /// let mut db = Db::create_tmp("my_db_len").unwrap();
     ///   // Initialize the table
     ///   db.define::<Data>();
     ///   

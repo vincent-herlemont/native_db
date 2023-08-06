@@ -33,7 +33,7 @@ const TIMEOUT: Duration = Duration::from_secs(1);
 fn watch_one_primary_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 
@@ -63,7 +63,7 @@ fn watch_one_primary_key() {
 fn watch_all_primary_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 
@@ -94,7 +94,7 @@ fn watch_all_primary_key() {
 fn watch_multithreading() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 
@@ -153,7 +153,7 @@ fn watch_outside() {
     let b1 = B(1);
     let b2 = B(2);
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
     db.define::<B>();
@@ -197,7 +197,7 @@ impl A1K {
 fn watch_one_secondary_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A1K>();
 
@@ -229,7 +229,7 @@ fn watch_one_secondary_key() {
 fn watch_all_secondary_keys() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A1K>();
 
@@ -261,7 +261,7 @@ fn watch_all_secondary_keys() {
 fn unwatch() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 
@@ -310,7 +310,7 @@ impl C {
 fn watch_start_with() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<C>();
 
@@ -346,7 +346,7 @@ fn watch_start_with() {
 fn watch_start_with_by_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A1K>();
 
@@ -382,7 +382,7 @@ fn watch_start_with_by_key() {
 fn watch_all_delete() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 
@@ -421,7 +421,7 @@ fn watch_all_delete() {
 fn watch_all_update() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 

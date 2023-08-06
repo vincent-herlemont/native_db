@@ -25,7 +25,7 @@ fn test_insert_get_my_item() {
         name: "test".to_string(),
     };
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -56,7 +56,7 @@ fn test_insert_get_my_item_write_txn() {
         name: "test".to_string(),
     };
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -85,7 +85,7 @@ fn test_insert_get_my_item_readonly_txn() {
         name: "test".to_string(),
     };
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 

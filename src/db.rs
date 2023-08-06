@@ -18,15 +18,21 @@ pub struct Db {
 }
 
 impl Db {
-    /// Creates a new `Db` instance using a temporary directory with the given name.
-    pub fn init_tmp(name: &str) -> Result<Self> {
+    /// Creates a new `Db` instance using a temporary directory with the given path.
+    ///
+    /// Example: `db.create_tmp('project/my_db')` will create the db to `/tmp/project/my_db`.
+    ///
+    /// Use [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
+    pub fn create_tmp(path: impl AsRef<Path>) -> Result<Self> {
         let tmp_dir = std::env::temp_dir();
-        let tmp_dir = tmp_dir.join(name);
-        Self::init(tmp_dir.as_path())
+        let tmp_dir = tmp_dir.join(path);
+        Self::create(tmp_dir.as_path())
     }
 
     /// Creates a new `Db` instance using the given path.
-    pub fn init(path: &Path) -> Result<Self> {
+    ///
+    /// Use [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
+    pub fn create(path: impl AsRef<Path>) -> Result<Self> {
         let db = redb::Database::create(path)?;
         Ok(Self {
             instance: db,
@@ -49,7 +55,7 @@ impl Db {
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
     /// fn main() {
-    ///    let mut db = Db::init_tmp("my_db_as").unwrap();
+    ///    let mut db = Db::create_tmp("my_db_as").unwrap();
     ///    // Initialize the table
     ///    db.define::<Data>();
     /// }
@@ -83,7 +89,7 @@ impl Db {
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
     /// fn main() {
-    ///   let mut db = Db::init_tmp("my_db_t").unwrap();
+    ///   let mut db = Db::create_tmp("my_db_t").unwrap();
     ///   db.define::<Data>();
     ///
     ///   // Use transaction to insert a new data
@@ -142,7 +148,7 @@ impl Db {
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
     /// fn main() {
-    ///  let mut db = Db::init_tmp("my_db_rt").unwrap();
+    ///  let mut db = Db::create_tmp("my_db_rt").unwrap();
     ///  db.define::<Data>();
     ///  
     ///  // Insert a new data
@@ -220,7 +226,7 @@ impl Db {
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
     /// fn main() {
-    ///  let mut db = Db::init_tmp("my_db").unwrap();
+    ///  let mut db = Db::create_tmp("my_db").unwrap();
     ///  db.define::<Data>();
     ///
     ///  // None you will receive all the events from Data.

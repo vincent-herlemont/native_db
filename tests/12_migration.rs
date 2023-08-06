@@ -38,7 +38,7 @@ impl From<ItemV0> for ItemV1 {
 fn migration() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<ItemV0>();
     db.define::<ItemV1>();

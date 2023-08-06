@@ -11,8 +11,8 @@
 //!
 //! ## API
 //! - Initialize a database:
-//!    - [`Db::init_tmp(<database name>)`](crate::Db::init_tmp) initializes a database at a temporary path.
-//!    - [`Db::init(<path>)`](crate::Db::init) initializes a database at a given path.
+//!    - [`Db::init_tmp(<database name>)`](crate::Db::create_tmp) initializes a database at a temporary path.
+//!    - [`Db::init(<path>)`](crate::Db::create) initializes a database at a given path.
 //! - Define schema
 //!    - [`db.define::<your_type>()`](crate::Db::define) initializes a schema.
 //! - Transactions
@@ -77,7 +77,7 @@
 //!  }
 //!
 //!  fn main() {
-//!   let mut db = Db::init_tmp("my_db_example").unwrap();
+//!   let mut db = Db::create_tmp("my_db_example").unwrap();
 //!   // Initialize the schema
 //!   db.define::<Data>();
 //!

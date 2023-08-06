@@ -19,7 +19,7 @@ fn update() {
 
     let o_v1 = Item(1);
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -85,7 +85,7 @@ fn update_1k() {
 
     let o_v1 = Item1K(1, "1".to_string());
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item1K>();
 
