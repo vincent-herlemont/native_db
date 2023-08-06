@@ -33,7 +33,7 @@ const TIMEOUT: Duration = Duration::from_secs(1);
 async fn watch_one_primary_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<A>();
 

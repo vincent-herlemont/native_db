@@ -65,7 +65,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// }
     ///
     /// fn main() {
-    ///   let mut db = Db::init_tmp("my_db_t_insert").unwrap();
+    ///   let mut db = Db::create_tmp("my_db_t_insert").unwrap();
     ///   // Initialize the table
     ///   db.define::<Data>();
     ///   
@@ -139,7 +139,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// impl Data{ pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()} }
     ///
     /// fn main() {
-    ///   let mut db = Db::init_tmp("my_db_t_update").unwrap();
+    ///   let mut db = Db::create_tmp("my_db_t_update").unwrap();
     ///   // Initialize the table
     ///   db.define::<Data>();
     ///   
@@ -197,7 +197,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// impl Data{ pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()} }
     ///
     /// fn main() {
-    ///   let mut db = Db::init_tmp("my_db_t_remove").unwrap();
+    ///   let mut db = Db::create_tmp("my_db_t_remove").unwrap();
     ///   // Initialize the table
     ///   db.define::<Data>();
     ///   
@@ -297,7 +297,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// }
     ///
     /// fn main() {
-    ///   let mut db = Db::init_tmp("my_db_t_migration").unwrap();
+    ///   let mut db = Db::create_tmp("my_db_t_migration").unwrap();
     ///
     ///   db.define::<DataV1>();
     ///   db.define::<DataV2>();

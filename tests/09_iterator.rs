@@ -36,7 +36,7 @@ impl Item {
 fn test_iter() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -69,7 +69,7 @@ fn test_iter() {
 fn test_iter_many_items_to_be_bytes() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -109,7 +109,7 @@ fn test_iter_many_items_to_be_bytes() {
 fn test_double_ended_iter() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -144,7 +144,7 @@ fn test_double_ended_iter() {
 fn test_iter_range() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -203,7 +203,7 @@ fn test_iter_range() {
 fn test_iter_by_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -239,7 +239,7 @@ fn test_iter_by_key() {
 fn test_double_ended_iter_by_key() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -275,7 +275,7 @@ fn test_double_ended_iter_by_key() {
 fn test_double_ended_iter_by_key_range() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -356,7 +356,7 @@ impl ItemFlag {
 fn test_start_with_scenario() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<ItemFlag>();
 
@@ -430,7 +430,7 @@ impl ItemIdFlag {
 fn test_start_with_by_key_scenario_write_txn() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<ItemIdFlag>();
 
@@ -492,7 +492,7 @@ fn test_start_with_by_key_scenario_write_txn() {
 fn test_start_with_by_key_scenario_readonly_txn() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<ItemIdFlag>();
 
@@ -554,7 +554,7 @@ fn test_start_with_by_key_scenario_readonly_txn() {
 fn test_txn_write_iter() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -586,7 +586,7 @@ fn test_txn_write_iter() {
 fn test_txn_write_iter_range() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<Item>();
 
@@ -645,7 +645,7 @@ fn test_txn_write_iter_range() {
 fn test_txn_write_start_with_scenario() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<ItemFlag>();
 

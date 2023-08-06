@@ -19,7 +19,7 @@ fn remove() {
 
     let o = O(1);
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
 
     db.define::<O>();
 

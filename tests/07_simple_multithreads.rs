@@ -21,7 +21,7 @@ impl Item {
 fn multi_threads() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
     db.define::<Item>();
 
     let db = Arc::new(db);

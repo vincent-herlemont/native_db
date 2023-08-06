@@ -20,7 +20,7 @@ impl Item {
 fn test_transaction_obj_1() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
     db.define::<Item>();
 
     let item = Item {
@@ -63,7 +63,7 @@ impl Item2 {
 fn test_transaction_obj_1_and_obj_2() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
     db.define::<Item>();
     db.define::<Item2>();
 
@@ -106,7 +106,7 @@ fn test_transaction_obj_1_and_obj_2() {
 fn test_transaction_fail() {
     let tf = tests::init();
 
-    let mut db = Db::init(tf.path("test").as_std_path()).unwrap();
+    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
     db.define::<Item>();
 
     let item_1 = Item {
