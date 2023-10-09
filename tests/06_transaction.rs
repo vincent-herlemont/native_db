@@ -1,5 +1,6 @@
 mod tests;
 
+use std::panic::AssertUnwindSafe;
 use serde::{Deserialize, Serialize};
 use struct_db::*;
 
@@ -136,7 +137,7 @@ fn test_transaction_fail() {
         id: 2,
         name: "test".to_string(),
     };
-    let result = std::panic::catch_unwind(|| {
+    let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
         let tx_write = db.transaction().unwrap();
         {
             let mut tables = tx_write.tables();
@@ -145,7 +146,7 @@ fn test_transaction_fail() {
         }
 
         tx_write.commit().unwrap();
-    });
+    }));
 
     assert!(result.is_err());
 
