@@ -121,7 +121,8 @@ pub fn struct_db(args: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
 
-        enum #keys_enum_name_token {
+        /// Index selection Enum for [#struct_name]
+        pub(crate) enum #keys_enum_name_token {
             #(#keys_enum_tokens),*
         }
 
