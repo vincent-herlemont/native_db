@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, next ]
 
+env:
+  RUST_BACKTRACE: full
+
 jobs:
   build_test_common_os:
     runs-on: ${{ matrix.os }}
