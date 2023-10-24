@@ -131,7 +131,9 @@ fn watch_multithreading() {
         let mut tables = tx.tables();
         tables.insert(&tx, a.clone()).unwrap();
     }
-    tx.commit().unwrap();
+    let _result = tx.commit();
+    dbg!(&_result);
+    _result.unwrap();
 
     handle.join().unwrap();
     for _ in 0..2 {
