@@ -47,9 +47,9 @@ use struct_db::*;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[struct_db(
-    fn_primary_key(p_key),  // required
-    fn_secondary_key(s_key),  // optional
-    // ... other fn_secondary_key ...
+    pk = p_key,  // required
+    gk = s_key,  // optional
+    // ... other gk ...
 )]
 struct Data(u32, String);
 

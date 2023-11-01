@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct O(u32);
 
 impl O {

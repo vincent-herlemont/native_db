@@ -9,7 +9,7 @@ use struct_db::watch::Event;
 use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct A(u32);
 
 impl A {
@@ -19,7 +19,7 @@ impl A {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct B(u32);
 
 impl B {
@@ -181,7 +181,7 @@ fn watch_outside() {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key), fn_secondary_key(s_key))]
+#[struct_db(pk = p_key, gk = s_key)]
 struct A1K(u32, String);
 
 impl A1K {
@@ -298,7 +298,7 @@ fn unwatch() {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct C(String);
 
 impl C {

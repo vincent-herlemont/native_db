@@ -7,7 +7,7 @@ use struct_db::*;
 type Item = ItemV1;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct ItemV0(u32);
 
 impl ItemV0 {
@@ -17,7 +17,7 @@ impl ItemV0 {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct ItemV1(String);
 
 impl ItemV1 {

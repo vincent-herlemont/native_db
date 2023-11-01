@@ -1,17 +1,17 @@
 #[cfg(not(feature = "native_model"))]
 pub trait SDBItem: Sized {
     fn struct_db_schema() -> crate::Schema;
-    fn struct_db_primary_key(&self) -> Vec<u8>;
+    fn struct_db_pk(&self) -> Vec<u8>;
 
     // Return map of secondary table name and the value of the key
-    fn struct_db_keys(&self) -> std::collections::HashMap<&'static str, Vec<u8>>;
+    fn struct_db_gks(&self) -> std::collections::HashMap<&'static str, Vec<u8>>;
     fn struct_db_bincode_encode_to_vec(&self) -> Vec<u8>;
     fn struct_db_bincode_decode_from_slice(slice: &[u8]) -> Self;
 
     fn to_item(&self) -> Item {
         Item {
-            primary_key: self.struct_db_primary_key(),
-            secondary_keys: self.struct_db_keys(),
+            primary_key: self.struct_db_pk(),
+            secondary_keys: self.struct_db_gks(),
             value: self.struct_db_bincode_encode_to_vec(),
         }
     }
@@ -20,15 +20,15 @@ pub trait SDBItem: Sized {
 #[cfg(feature = "native_model")]
 pub trait SDBItem: Sized + native_model::Model {
     fn struct_db_schema() -> crate::Schema;
-    fn struct_db_primary_key(&self) -> Vec<u8>;
-    fn struct_db_keys(&self) -> std::collections::HashMap<&'static str, Vec<u8>>;
+    fn struct_db_pk(&self) -> Vec<u8>;
+    fn struct_db_gks(&self) -> std::collections::HashMap<&'static str, Vec<u8>>;
     fn struct_db_bincode_encode_to_vec(&self) -> Vec<u8>;
     fn struct_db_bincode_decode_from_slice(slice: &[u8]) -> Self;
 
     fn to_item(&self) -> Item {
         Item {
-            primary_key: self.struct_db_primary_key(),
-            secondary_keys: self.struct_db_keys(),
+            primary_key: self.struct_db_pk(),
+            secondary_keys: self.struct_db_gks(),
             value: self.struct_db_bincode_encode_to_vec(),
         }
     }

@@ -8,9 +8,9 @@ use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[struct_db(
-    fn_primary_key(generate_my_primary_key),
-    fn_secondary_key(secondary_key_1),
-    fn_secondary_key(secondary_key_2)
+    pk = generate_my_primary_key,
+    gk = secondary_key_1,
+    gk = secondary_key_2
 )]
 struct Item {
     id: u32,
@@ -30,12 +30,12 @@ impl Item {
 }
 
 #[test]
-fn test_fn_secondary_key() {
+fn test_gk() {
     let item = Item {
         id: 1,
         name: "test".to_string(),
     };
-    let db_keys = item.struct_db_keys();
+    let db_keys = item.struct_db_gks();
     assert_eq!(db_keys.len(), 2);
 
     assert_eq!(db_keys.get("item_secondary_key_1").unwrap(), b"1");
@@ -54,7 +54,7 @@ fn test_init_table() {
 }
 
 #[test]
-fn test_struct_db_keys() {
+fn test_struct_db_gks() {
     let secondary_table_name_1 = ItemKey::secondary_key_1.secondary_table_name();
     assert_eq!(secondary_table_name_1, "item_secondary_key_1");
     let secondary_table_name_2 = ItemKey::secondary_key_2.secondary_table_name();

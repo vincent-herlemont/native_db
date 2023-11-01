@@ -27,7 +27,7 @@ impl<T: bincode::Decode> native_model::Decode<T> for Bincode {
 
 #[derive(Serialize, Deserialize, Encode, Decode, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1, with = Bincode)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct ItemV1 {
     id: u32,
     name: String,

@@ -1,5 +1,4 @@
 #![cfg(not(feature = "native_model"))]
-mod tests;
 
 use serde::{Deserialize, Serialize};
 use struct_db::*;
@@ -19,17 +18,11 @@ impl Item {
 
 #[test]
 fn test_insert_my_item() {
-    let tf = tests::init();
-
     let item = Item {
         id: 1,
         name: "test".to_string(),
     };
 
-    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
-
-    db.define::<Item>();
-
-    let txn = db.transaction().unwrap();
-    txn.tables().insert(&txn, item).unwrap();
+    let key: Vec<u8> = item.struct_db_pk();
+    assert_eq!(key, "1-test".as_bytes());
 }

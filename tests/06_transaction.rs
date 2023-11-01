@@ -6,7 +6,7 @@ use std::panic::AssertUnwindSafe;
 use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct Item {
     id: u32,
     name: String,
@@ -49,7 +49,7 @@ fn test_transaction_obj_1() {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct Item2 {
     id: u32,
     name: String,

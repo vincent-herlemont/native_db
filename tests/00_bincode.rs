@@ -6,7 +6,7 @@ use struct_db::*;
 use struct_db_macro::struct_db;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct Item {
     id: u32,
     name: String,

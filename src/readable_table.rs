@@ -38,7 +38,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
@@ -86,7 +86,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data{ pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()} }
     ///
@@ -191,7 +191,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key),fn_secondary_key(s_key))]
+    /// #[struct_db(pk = p_key,gk = s_key)]
     /// struct Data(u32, String);
     /// impl Data {
     ///    pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}
@@ -337,7 +337,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data{ pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()} }
     ///

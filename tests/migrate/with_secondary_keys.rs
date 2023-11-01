@@ -5,7 +5,7 @@ use struct_db::{struct_db, Db, ReadableTable};
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
-#[struct_db(fn_primary_key(id_key), fn_secondary_key(name_key))]
+#[struct_db(pk = id_key, gk = name_key)]
 struct ItemV1 {
     id: u32,
     name: String,
@@ -32,9 +32,9 @@ impl ItemV1 {
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 2, from = ItemV1)]
 #[struct_db(
-    fn_primary_key(id_key),
-    fn_secondary_key(first_name_key),
-    fn_secondary_key(last_name_key)
+    pk = id_key,
+    gk = first_name_key,
+    gk = last_name_key
 )]
 struct ItemV2 {
     id: u64,

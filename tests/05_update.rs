@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key))]
+#[struct_db(pk = p_key)]
 struct Item(u32);
 
 impl Item {
@@ -67,7 +67,7 @@ fn update() {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(p_key), fn_secondary_key(s_key))]
+#[struct_db(pk = p_key, gk = s_key)]
 struct Item1K(u32, String);
 
 impl Item1K {
