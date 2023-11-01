@@ -1,8 +1,8 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 mod tests;
 
-use std::panic::AssertUnwindSafe;
 use serde::{Deserialize, Serialize};
+use std::panic::AssertUnwindSafe;
 use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]

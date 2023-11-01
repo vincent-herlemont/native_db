@@ -1,4 +1,4 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 mod tests;
 
 use serde::{Deserialize, Serialize};

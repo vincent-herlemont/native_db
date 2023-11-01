@@ -88,11 +88,11 @@ pub fn struct_db(args: TokenStream, input: TokenStream) -> TokenStream {
             }
         });
 
-    #[cfg(feature = "use_native_model")]
+    #[cfg(feature = "native_model")]
     let is_native_model_exists = quote! {
         true
     };
-    #[cfg(not(feature = "use_native_model"))]
+    #[cfg(not(feature = "native_model"))]
     let is_native_model_exists = quote! {
         false
     };

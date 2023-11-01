@@ -1,4 +1,4 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;

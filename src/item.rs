@@ -1,4 +1,4 @@
-#[cfg(not(feature = "use_native_model"))]
+#[cfg(not(feature = "native_model"))]
 pub trait SDBItem: Sized {
     fn struct_db_schema() -> crate::Schema;
     fn struct_db_primary_key(&self) -> Vec<u8>;
@@ -17,7 +17,7 @@ pub trait SDBItem: Sized {
     }
 }
 
-#[cfg(feature = "use_native_model")]
+#[cfg(feature = "native_model")]
 pub trait SDBItem: Sized + native_model::Model {
     fn struct_db_schema() -> crate::Schema;
     fn struct_db_primary_key(&self) -> Vec<u8>;

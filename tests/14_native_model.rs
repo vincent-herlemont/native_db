@@ -1,4 +1,4 @@
-#![cfg(feature = "use_native_model")]
+#![cfg(feature = "native_model")]
 
 mod tests;
 

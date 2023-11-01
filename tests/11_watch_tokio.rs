@@ -1,4 +1,4 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 #![cfg(feature = "tokio")]
 mod tests;
 

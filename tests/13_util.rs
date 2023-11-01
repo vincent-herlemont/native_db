@@ -1,4 +1,4 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 mod tests;
 
 use struct_db::*;
@@ -14,9 +14,11 @@ fn test_builder() {
 fn test_builder_with_set_cache_size() {
     let tf = tests::init();
     // Create without error
-    let mut _db = Builder::new().set_cache_size(100).create(&tf.path("test")).unwrap();
+    let mut _db = Builder::new()
+        .set_cache_size(100)
+        .create(&tf.path("test"))
+        .unwrap();
 }
-
 
 #[test]
 fn test_open_unexisting_database() {
@@ -30,7 +32,7 @@ fn test_open_existing_database() {
     let tf = tests::init();
 
     // Create a database
-    let  db = Builder::new().create(&tf.path("test")).unwrap();
+    let db = Builder::new().create(&tf.path("test")).unwrap();
     drop(db);
 
     // Open an existing database
