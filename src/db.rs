@@ -72,7 +72,7 @@ impl Db {
         let mut primary_table_definition: PrimaryTableDefinition =
             (schema.clone(), main_table_definition).into();
 
-        #[cfg(feature = "use_native_model")]
+        #[cfg(feature = "native_model")]
         {
             primary_table_definition.native_model_id = T::native_model_id();
             primary_table_definition.native_model_version = T::native_model_version();
@@ -114,7 +114,7 @@ impl Db {
         Ok(())
     }
 
-    #[cfg(feature = "use_native_model")]
+    #[cfg(feature = "native_model")]
     pub fn migrate<T: SDBItem + Debug>(&mut self) -> Result<()> {
         use redb::ReadableTable;
 

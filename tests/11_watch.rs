@@ -1,7 +1,6 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 #![cfg(not(feature = "tokio"))]
 mod tests;
-
 
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

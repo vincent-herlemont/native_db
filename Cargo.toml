@@ -25,7 +25,7 @@ bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 
 # Optional tokio support
 tokio = { version = "1.29", features = ["sync"], optional = true }
-native_model = { path = "../native_model", optional = true }
+native_model_dep = { package = "native_model", path = "../native_model", optional = true }
 
 [dev-dependencies]
 assert_fs = "1.0"
@@ -36,7 +36,7 @@ tokio = { version = "1.35", features = ["test-util","macros"] }
 
 [features]
 default = []
-use_native_model = ["native_model", "struct_db_macro/use_native_model"]
+native_model = ["native_model_dep", "struct_db_macro/native_model"]
 
 [build-dependencies]
 skeptic = "0.13"

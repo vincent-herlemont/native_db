@@ -3,14 +3,14 @@ use redb::TableHandle;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-#[cfg(not(feature = "use_native_model"))]
+#[cfg(not(feature = "native_model"))]
 pub(crate) struct PrimaryTableDefinition {
     pub(crate) schema: crate::Schema,
     pub(crate) redb: redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
     pub(crate) secondary_tables: HashMap<&'static str, SecondaryTableDefinition>,
 }
 
-#[cfg(feature = "use_native_model")]
+#[cfg(feature = "native_model")]
 pub(crate) struct PrimaryTableDefinition {
     pub(crate) schema: crate::Schema,
     pub(crate) redb: redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
@@ -29,7 +29,7 @@ impl
         redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
     )> for PrimaryTableDefinition
 {
-    #[cfg(not(feature = "use_native_model"))]
+    #[cfg(not(feature = "native_model"))]
     fn from(
         input: (
             schema::Schema,
@@ -44,7 +44,7 @@ impl
         }
     }
 
-    #[cfg(feature = "use_native_model")]
+    #[cfg(feature = "native_model")]
     fn from(
         input: (
             schema::Schema,
@@ -63,7 +63,7 @@ impl
     }
 }
 
-#[cfg(feature = "use_native_model")]
+#[cfg(feature = "native_model")]
 impl Debug for PrimaryTableDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TableDefinition")
@@ -75,7 +75,7 @@ impl Debug for PrimaryTableDefinition {
     }
 }
 
-#[cfg(not(feature = "use_native_model"))]
+#[cfg(not(feature = "native_model"))]
 impl Debug for PrimaryTableDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TableDefinition")

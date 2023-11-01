@@ -1,4 +1,4 @@
-#![cfg(not(feature = "use_native_model"))]
+#![cfg(not(feature = "native_model"))]
 
 use redb::TableHandle;
 use serde::{Deserialize, Serialize};
