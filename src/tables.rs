@@ -1,4 +1,5 @@
-use crate::item::BinaryValue;
+use crate::item::{BinaryValue, Item};
+use crate::table_definition::PrimaryTableDefinition;
 use crate::watch;
 use crate::watch::{Event, WatcherRequest};
 use crate::Error::TableDefinitionNotFound;
@@ -6,13 +7,13 @@ use crate::Result;
 use crate::{ReadableTable, SDBItem, Transaction};
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::RangeBounds;
 
 /// A collection of read-write tables. Read operation from [`ReadableTable`](crate::ReadableTable)
 /// and write operations [`insert`](crate::Tables::insert), [`update`](crate::Tables::update), [`remove`](crate::Tables::remove)
 /// and [`migrate`](crate::Tables::migrate) are available.
 pub struct Tables<'db, 'txn> {
-    pub(crate) table_definitions:
-        &'db HashMap<&'static str, redb::TableDefinition<'static, &'static [u8], &'static [u8]>>,
+    pub(crate) table_definitions: &'db HashMap<&'static str, PrimaryTableDefinition>,
     pub(crate) opened_tables:
         HashMap<&'static str, redb::Table<'db, 'txn, &'static [u8], &'static [u8]>>,
     pub(crate) batch: &'txn RefCell<watch::Batch>,
@@ -22,20 +23,45 @@ impl<'db, 'txn> ReadableTable<'db, 'txn> for Tables<'db, 'txn> {
     type Table = redb::Table<'db, 'txn, &'static [u8], &'static [u8]>;
     type Transaction<'x> = Transaction<'db>;
 
-    fn open_table(
+    fn open_primary_table(
         &mut self,
         txn: &'txn Self::Transaction<'db>,
-        table_name: &'static str,
+        primary_table_name: &'static str,
     ) -> Result<()> {
-        let table = *self
-            .table_definitions
-            .get(table_name)
+        let table =
+            self.table_definitions
+                .get(primary_table_name)
+                .ok_or(TableDefinitionNotFound {
+                    table: primary_table_name.to_string(),
+                })?;
+        if !self.opened_tables.contains_key(primary_table_name) {
+            let table = txn.txn.open_table(table.redb)?;
+            self.opened_tables.insert(primary_table_name, table);
+        }
+        Ok(())
+    }
+
+    fn open_secondary_table(
+        &mut self,
+        txn: &'txn Self::Transaction<'db>,
+        primary_table_name: &'static str,
+        secondary_table_name: &'static str,
+    ) -> Result<()> {
+        let primary_table =
+            self.table_definitions
+                .get(primary_table_name)
+                .ok_or(TableDefinitionNotFound {
+                    table: primary_table_name.to_string(),
+                })?;
+        let secondary_table = primary_table
+            .secondary_tables
+            .get(secondary_table_name)
             .ok_or(TableDefinitionNotFound {
-                table: table_name.to_string(),
+                table: secondary_table_name.to_string(),
             })?;
-        if !self.opened_tables.contains_key(table_name) {
-            let table = txn.txn.open_table(table)?;
-            self.opened_tables.insert(table_name, table);
+        if !self.opened_tables.contains_key(secondary_table_name) {
+            let table = txn.txn.open_table(secondary_table.rdb())?;
+            self.opened_tables.insert(secondary_table_name, table);
         }
         Ok(())
     }
@@ -78,50 +104,22 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     ///   txn.commit().unwrap(); // /!\ Don't forget to commit
     /// }
     pub fn insert<T: SDBItem>(&mut self, txn: &'txn Transaction<'db>, item: T) -> Result<()> {
-        let (watcher_request, binary_value) = self.internal_insert(txn, item)?;
+        let (watcher_request, binary_value) =
+            self.internal_insert(txn, T::struct_db_schema(), item.to_item())?;
         let event = Event::new_insert(binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
     }
 
-    fn internal_insert<T: SDBItem>(
-        &mut self,
-        txn: &'txn Transaction<'db>,
-        item: T,
-    ) -> Result<(WatcherRequest, BinaryValue)> {
-        let schema = T::struct_db_schema();
-        let table_name = schema.table_name;
-
-        let primary_key = item.struct_db_primary_key();
-        let secondary_keys = item.struct_db_keys();
-        let value = item.struct_db_bincode_encode_to_vec();
-        let already_exists;
-        {
-            self.open_table(txn, table_name)?;
-            let table = self.opened_tables.get_mut(table_name).unwrap();
-            already_exists = table
-                .insert(&primary_key.as_slice(), &value.as_slice())?
-                .is_some();
-        }
-
-        for (secondary_table_name, key) in &secondary_keys {
-            self.open_table(txn, secondary_table_name)?;
-            let secondary_table = self.opened_tables.get_mut(secondary_table_name).unwrap();
-            let result =
-                secondary_table.insert(&key.as_slice(), &primary_key.as_slice())?;
-            if result.is_some() && !already_exists {
-                return Err(crate::Error::DuplicateKey {
-                    key_name: secondary_table_name,
-                }
-                .into());
-            }
-        }
-
-        Ok((
-            WatcherRequest::new(table_name, primary_key, secondary_keys),
-            BinaryValue(value),
-        ))
-    }
+    // fn internal_insert<T: SDBItem>(
+    //     &mut self,
+    //     txn: &'txn Transaction<'db>,
+    //     item: T,
+    // ) -> Result<(WatcherRequest, BinaryValue)> {
+    //     let item: Item = item.to_item();
+    //     let schema = T::struct_db_schema();
+    //     self.internal_insert_2(txn, schema, item)
+    // }
 
     /// Update data in the database.
     ///
@@ -174,7 +172,8 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         updated_item: T,
     ) -> Result<()> {
         let (_, old_binary_value) = self.internal_remove(txn, old_item)?;
-        let (watcher_request, new_binary_value) = self.internal_insert(txn, updated_item)?;
+        let (watcher_request, new_binary_value) =
+            self.internal_insert(txn, T::struct_db_schema(), updated_item.to_item())?;
 
         let event = Event::new_update(old_binary_value, new_binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
@@ -242,13 +241,13 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         let keys = item.struct_db_keys();
         let value = item.struct_db_bincode_encode_to_vec();
         {
-            self.open_table(txn, table_name)?;
+            self.open_primary_table(txn, table_name)?;
             let table = self.opened_tables.get_mut(table_name).unwrap();
             table.remove(&primary_key.as_slice())?;
         }
 
         for (secondary_table_name, value) in &keys {
-            self.open_table(txn, secondary_table_name)?;
+            self.open_secondary_table(txn, table_name, secondary_table_name)?;
             let secondary_table = self.opened_tables.get_mut(secondary_table_name).unwrap();
             secondary_table.remove(&value.as_slice())?;
         }
@@ -333,10 +332,26 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         let find_all_old: Vec<OldType> = self.primary_iter(txn).unwrap().collect();
         for old in find_all_old {
             let new: NewType = old.clone().into();
-            self.internal_insert(txn, new)?;
+            self.internal_insert(txn, NewType::struct_db_schema(), new.to_item())?;
             self.internal_remove(txn, old)?;
         }
 
         Ok(())
+    }
+
+    // TODO: rename to drain, add add to argument a range
+    pub fn primary_drain<'a, T: SDBItem>(
+        &mut self,
+        txn: &'txn Transaction<'db>,
+        range_value: impl RangeBounds<&'a [u8]> + 'a + Copy,
+    ) -> Result<Vec<T>> {
+        let drained_data =
+            self.internal_primary_drain(txn, T::struct_db_schema().table_name, range_value)?;
+        let mut items = vec![];
+        for binary_value in drained_data {
+            let item = T::struct_db_bincode_decode_from_slice(binary_value.0.as_slice());
+            items.push(item);
+        }
+        Ok(items)
     }
 }
