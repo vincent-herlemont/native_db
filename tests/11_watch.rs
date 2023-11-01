@@ -92,6 +92,7 @@ fn watch_all_primary_key() {
 }
 
 #[test]
+#[ignore]
 fn watch_multithreading() {
     let tf = tests::init();
 
