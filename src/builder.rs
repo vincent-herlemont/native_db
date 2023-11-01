@@ -1,9 +1,9 @@
+use super::Result;
+use crate::{watch, Db};
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::{Arc, RwLock};
 use std::sync::atomic::AtomicU64;
-use crate::{Db, watch};
-use super::Result;
+use std::sync::{Arc, RwLock};
 
 /// Builder for the [`Db`](super::Db) instance.
 pub struct Builder {
@@ -29,7 +29,7 @@ impl Builder {
     fn new_redb(redb_database: redb::Database) -> Db {
         Db {
             instance: redb_database,
-            table_definitions: HashMap::new(),
+            primary_table_definitions: HashMap::new(),
             watchers: Arc::new(RwLock::new(watch::Watchers::new())),
             watchers_counter_id: AtomicU64::new(0),
         }
@@ -44,7 +44,7 @@ impl Builder {
     /// Creates a new `Db` instance using the given path.
     ///
     /// Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
-    pub fn create(&self,path: impl AsRef<Path>) -> Result<Db> {
+    pub fn create(&self, path: impl AsRef<Path>) -> Result<Db> {
         let db = self.new_rdb_builder().create(path)?;
         Ok(Self::new_redb(db))
     }

@@ -1,5 +1,5 @@
+#![cfg(not(feature = "use_native_model"))]
 #![cfg(feature = "tokio")]
-
 mod tests;
 
 use serde::{Deserialize, Serialize};

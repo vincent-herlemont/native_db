@@ -88,8 +88,23 @@ pub fn struct_db(args: TokenStream, input: TokenStream) -> TokenStream {
             }
         });
 
+    #[cfg(feature = "use_native_model")]
+    let is_native_model_exists = quote! {
+        true
+    };
+    #[cfg(not(feature = "use_native_model"))]
+    let is_native_model_exists = quote! {
+        false
+    };
+
     let gen = quote! {
         #ast
+
+        impl #struct_name {
+            fn is_native_model() -> bool {
+                #is_native_model_exists
+            }
+        }
 
         impl struct_db::SDBItem for #struct_name {
             fn struct_db_bincode_encode_to_vec(&self) -> Vec<u8> {

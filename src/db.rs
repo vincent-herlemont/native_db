@@ -1,19 +1,22 @@
-use crate::watch;
+use crate::builder::Builder;
+use crate::stats::{Stats, StatsTable};
+use crate::table_definition::PrimaryTableDefinition;
+use crate::watch::MpscReceiver;
+use crate::{watch, ReadableTable};
 use crate::{Error, KeyDefinition, ReadOnlyTransaction, Result, SDBItem, Transaction};
+use redb::TableHandle;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::path::Path;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Mutex, RwLock};
 use std::u64;
-use crate::watch::MpscReceiver;
-use crate::builder::Builder;
 
 /// The `Db` struct represents a database instance. It allows add **schema**, create **transactions** and **watcher**.
 pub struct Db {
     pub(crate) instance: redb::Database,
-    pub(crate) table_definitions:
-        HashMap<&'static str, redb::TableDefinition<'static, &'static [u8], &'static [u8]>>,
+    pub(crate) primary_table_definitions: HashMap<&'static str, PrimaryTableDefinition>,
     pub(crate) watchers: Arc<RwLock<watch::Watchers>>,
     pub(crate) watchers_counter_id: AtomicU64,
 }
@@ -62,17 +65,144 @@ impl Db {
     ///    // Initialize the table
     ///    db.define::<Data>();
     /// }
-    pub fn define<T: SDBItem>(&mut self) {
+    pub fn define<T: SDBItem>(&mut self) -> Result<()> {
         let schema = T::struct_db_schema();
         let main_table_name = schema.table_name;
         let main_table_definition = redb::TableDefinition::new(main_table_name);
-        self.table_definitions
-            .insert(main_table_name, main_table_definition);
-        for secondary_table_name in schema.secondary_tables_name {
-            let secondary_table_definition = redb::TableDefinition::new(secondary_table_name);
-            self.table_definitions
-                .insert(secondary_table_name, secondary_table_definition);
+        let mut primary_table_definition: PrimaryTableDefinition =
+            (schema.clone(), main_table_definition).into();
+
+        #[cfg(feature = "use_native_model")]
+        {
+            primary_table_definition.native_model_id = T::native_model_id();
+            primary_table_definition.native_model_version = T::native_model_version();
+
+            // Set native model legacy
+            for other_primary_table_definition in self.primary_table_definitions.values_mut() {
+                if other_primary_table_definition.native_model_version
+                    > primary_table_definition.native_model_version
+                {
+                    other_primary_table_definition.native_model_legacy = false;
+                    primary_table_definition.native_model_legacy = true;
+                } else {
+                    other_primary_table_definition.native_model_legacy = true;
+                    primary_table_definition.native_model_legacy = false;
+                }
+
+                // Panic if native model version are the same
+                if other_primary_table_definition.native_model_version
+                    == primary_table_definition.native_model_version
+                {
+                    panic!(
+                        "The table {} has the same native model version as the table {} and it's not allowed",
+                        other_primary_table_definition.redb.name(),
+                        primary_table_definition.redb.name()
+                    );
+                }
+            }
         }
+
+        for secondary_table_name in schema.secondary_tables_name {
+            primary_table_definition.secondary_tables.insert(
+                secondary_table_name,
+                redb::TableDefinition::new(secondary_table_name).into(),
+            );
+        }
+        self.primary_table_definitions
+            .insert(main_table_name, primary_table_definition);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "use_native_model")]
+    pub fn migrate<T: SDBItem + Debug>(&mut self) -> Result<()> {
+        use redb::ReadableTable;
+
+        // Panic if T is legacy
+        let new_table_definition = self
+            .primary_table_definitions
+            .get(T::struct_db_schema().table_name)
+            .unwrap();
+        if new_table_definition.native_model_legacy {
+            // TODO: test
+            panic!(
+                "The table {} is legacy, you can't migrate it",
+                T::struct_db_schema().table_name
+            );
+        }
+
+        // Check which table are the data
+        let mut old_table_definition = None;
+        for other_primary_table_definition in self.primary_table_definitions.values() {
+            let rx = self.instance.begin_read()?;
+
+            // check if table exists, if the table does not exist continue
+            if rx
+                .list_tables()?
+                .find(|table| table.name() == other_primary_table_definition.redb.name())
+                .is_none()
+            {
+                continue;
+            }
+
+            let table = rx.open_table(other_primary_table_definition.redb.clone())?;
+            let len = table.len()?;
+            if len > 0 && old_table_definition.is_some() {
+                panic!(
+                    "Impossible to migrate the table {} because the table {} has data",
+                    T::struct_db_schema().table_name,
+                    other_primary_table_definition.redb.name()
+                );
+            } else if table.len()? > 0 {
+                old_table_definition = Some(other_primary_table_definition);
+            }
+        }
+
+        // Check there data in the old table
+        if old_table_definition.is_none() {
+            // Nothing to migrate
+            return Ok(());
+        }
+
+        let old_table_definition = old_table_definition.unwrap();
+
+        // If the old table is the same as the new table, nothing to migrate
+        if old_table_definition.redb.name() == T::struct_db_schema().table_name {
+            // Nothing to migrate
+            return Ok(());
+        }
+
+        let wx = self.transaction()?;
+        {
+            let mut tables = wx.tables();
+            let old_data =
+                tables.internal_primary_drain(&wx, old_table_definition.schema.table_name, ..)?;
+
+            for old_data in old_data {
+                let (decoded_item, _) = native_model::decode::<T>(old_data.0).unwrap();
+                tables.insert(&wx, decoded_item)?;
+            }
+        }
+        wx.commit()?;
+
+        Ok(())
+    }
+
+    pub fn redb_stats(&self) -> Result<Stats> {
+        use redb::{ReadableTable, TableHandle};
+        let rx = self.instance.begin_read()?;
+        let mut stats_tables = vec![];
+        for table in rx.list_tables()? {
+            let table_definition: redb::TableDefinition<'_, &'static [u8], &'static [u8]> =
+                redb::TableDefinition::new(&table.name());
+            let table_open = rx.open_table(table_definition)?;
+            let num_raw = table_open.len()?;
+            stats_tables.push(StatsTable {
+                name: table.name().to_string(),
+                num_raw: num_raw as usize,
+            });
+        }
+        Ok(Stats { stats_tables })
     }
 }
 
@@ -128,7 +258,7 @@ impl Db {
     pub fn transaction(&self) -> Result<Transaction> {
         let txn = self.instance.begin_write()?;
         let write_txn = Transaction {
-            table_definitions: &self.table_definitions,
+            table_definitions: &self.primary_table_definitions,
             txn,
             watcher: &self.watchers,
             batch: RefCell::new(watch::Batch::new()),
@@ -168,7 +298,7 @@ impl Db {
     pub fn read_transaction(&self) -> Result<ReadOnlyTransaction> {
         let txn = self.instance.begin_read()?;
         let read_txn = ReadOnlyTransaction {
-            table_definitions: &self.table_definitions,
+            table_definitions: &self.primary_table_definitions,
             txn,
         };
         Ok(read_txn)

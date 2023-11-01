@@ -1,10 +1,10 @@
+use crate::table_definition::PrimaryTableDefinition;
 use crate::ReadOnlyTables;
 use std::collections::HashMap;
 
 /// Can open only [`ReadOnlyTables`](crate::ReadOnlyTables).
 pub struct ReadOnlyTransaction<'db> {
-    pub(crate) table_definitions:
-        &'db HashMap<&'static str, redb::TableDefinition<'static, &'static [u8], &'static [u8]>>,
+    pub(crate) table_definitions: &'db HashMap<&'static str, PrimaryTableDefinition>,
     pub(crate) txn: redb::ReadTransaction<'db>,
 }
 

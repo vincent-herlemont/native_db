@@ -1,4 +1,5 @@
 use crate::common::unwrap_item;
+use crate::Error::TableDefinitionNotFound;
 use crate::PrimaryIterator;
 use crate::{
     KeyDefinition, PrimaryIteratorStartWith, Result, SDBItem, SecondaryIterator,
@@ -12,10 +13,17 @@ pub trait ReadableTable<'db, 'txn> {
     type Table: redb::ReadableTable<&'static [u8], &'static [u8]>;
     type Transaction<'x>;
 
-    fn open_table(
+    fn open_primary_table(
         &mut self,
         txn: &'txn Self::Transaction<'db>,
         table_name: &'static str,
+    ) -> Result<()>;
+
+    fn open_secondary_table(
+        &mut self,
+        txn: &'txn Self::Transaction<'db>,
+        primary_table_name: &'static str,
+        secondary_table_name: &'static str,
     ) -> Result<()>;
 
     fn get_table(&self, table_name: &'static str) -> Option<&Self::Table>;
@@ -63,7 +71,7 @@ pub trait ReadableTable<'db, 'txn> {
         key: &[u8],
     ) -> Result<Option<T>> {
         let table_name = T::struct_db_schema().table_name;
-        self.open_table(txn, table_name)?;
+        self.open_primary_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
         let item = table.get(key)?;
         Ok(unwrap_item(item))
@@ -132,7 +140,7 @@ pub trait ReadableTable<'db, 'txn> {
         'txn: 'a,
     {
         let table_name = T::struct_db_schema().table_name;
-        self.open_table(txn, table_name)?;
+        self.open_primary_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
         let range = table.range::<&'_ [u8]>(range_value)?;
         Ok(PrimaryIterator {
@@ -158,7 +166,7 @@ pub trait ReadableTable<'db, 'txn> {
         'txn: 'a,
     {
         let table_name = T::struct_db_schema().table_name;
-        self.open_table(txn, table_name)?;
+        self.open_primary_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
         let range = table.range::<&'_ [u8]>(prefix_value..)?;
         Ok(PrimaryIteratorStartWith {
@@ -221,7 +229,7 @@ pub trait ReadableTable<'db, 'txn> {
         let table_name = key_def.secondary_table_name();
 
         let primary_key: Vec<u8> = {
-            self.open_table(txn, table_name)?;
+            self.open_secondary_table(txn, T::struct_db_schema().table_name, table_name)?;
             let table = self.get_table(table_name).unwrap();
             let value = table.get(key)?;
             if let Some(value) = value {
@@ -271,9 +279,9 @@ pub trait ReadableTable<'db, 'txn> {
         'a: 'b,
     {
         let main_table_name = T::struct_db_schema().table_name;
-        self.open_table(txn, main_table_name)?;
+        self.open_primary_table(txn, main_table_name)?;
         let secondary_table_name = key_def.secondary_table_name();
-        self.open_table(txn, secondary_table_name)?;
+        self.open_secondary_table(txn, main_table_name, secondary_table_name)?;
 
         let main_table = self.get_table(main_table_name).unwrap();
         let secondary_table = self.get_table(secondary_table_name).unwrap();
@@ -304,9 +312,9 @@ pub trait ReadableTable<'db, 'txn> {
         'b: 'a,
     {
         let main_table_name = T::struct_db_schema().table_name;
-        self.open_table(txn, main_table_name)?;
+        self.open_primary_table(txn, main_table_name)?;
         let secondary_table_name = key_def.secondary_table_name();
-        self.open_table(txn, secondary_table_name)?;
+        self.open_secondary_table(txn, main_table_name, secondary_table_name)?;
 
         let main_table = self.get_table(main_table_name).unwrap();
         let secondary_table = self.get_table(secondary_table_name).unwrap();
@@ -355,7 +363,7 @@ pub trait ReadableTable<'db, 'txn> {
     /// }
     fn len<T: SDBItem>(&mut self, txn: &'txn Self::Transaction<'db>) -> Result<u64> {
         let table_name = T::struct_db_schema().table_name;
-        self.open_table(txn, table_name)?;
+        self.open_primary_table(txn, table_name)?;
         let table = self.get_table(table_name).unwrap();
         let result = table.len()?;
         Ok(result)

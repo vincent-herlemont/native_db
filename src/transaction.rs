@@ -1,3 +1,4 @@
+use crate::table_definition::PrimaryTableDefinition;
 use crate::watch;
 use crate::{Result, Tables};
 use std::cell::RefCell;
@@ -6,8 +7,7 @@ use std::sync::{Arc, RwLock};
 
 /// Can open only [`Tables`](crate::Tables).
 pub struct Transaction<'db> {
-    pub(crate) table_definitions:
-        &'db HashMap<&'static str, redb::TableDefinition<'static, &'static [u8], &'static [u8]>>,
+    pub(crate) table_definitions: &'db HashMap<&'static str, PrimaryTableDefinition>,
     pub(crate) txn: redb::WriteTransaction<'db>,
     pub(crate) watcher: &'db Arc<RwLock<watch::Watchers>>,
     pub(crate) batch: RefCell<watch::Batch>,
