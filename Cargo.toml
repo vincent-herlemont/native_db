@@ -25,7 +25,7 @@ bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 
 # Optional tokio support
 tokio = { version = "1.29", features = ["sync"], optional = true }
-native_model = { path = "../native_model", optional = true }
+native_model = { git = "https://github.com/vincent-herlemont/native_model.git", optional = true, rev = "69d42f5ec9a4ad671525233e2835efeaae95862e" }
 
 [dev-dependencies]
 assert_fs = "1.0"
