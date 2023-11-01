@@ -17,7 +17,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         toolchain: [stable]
-        feature: [ no_feature , "tokio" ]
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
       - name: Setup Rust
@@ -25,32 +24,16 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           override: true
-      - name: Setup Feature Args
-        shell: bash
-        run: |
-          if [[ "${{ matrix.feature }}" == "no_feature" ]]; then
-            echo "FEATURE_ARGS=" >> $GITHUB_ENV
-          else
-            echo "FEATURE_ARGS=-F ${{ matrix.feature }}" >> $GITHUB_ENV
-          fi
+      - uses: extractions/setup-just@v1
+      - uses: hustcer/setup-nu@v3.7
+        with:
+          version: '0.85'
+      - name: Just version
+        run: just --version
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: ${{ env.FEATURE_ARGS }}
-      - name: Run tests
-        if: matrix.feature != 'tokio'
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: ${{ env.FEATURE_ARGS }}
-      - name: Run tests
-        if: matrix.feature == 'tokio'
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          # Ignore rust doc tests for tokio feature
-          args: ${{ env.FEATURE_ARGS }} --test '*'
+        run: just build_all
+      - name: Test
+        run: just test_all
   build_test_android:
     runs-on: ubuntu-latest
     strategy:
