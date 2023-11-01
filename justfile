@@ -18,3 +18,7 @@ test_default:
     cargo test
 
 test_all: test_no_default test_default
+
+
+expand test_file_name:
+    cargo expand --test {{test_file_name}} | save --raw {{test_file_name}}.expanded.rs

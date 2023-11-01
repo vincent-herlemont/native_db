@@ -83,7 +83,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key),fn_secondary_key(s_key))]
+    /// #[struct_db(pk = p_key,gk = s_key)]
     /// struct Data(u32, String);
     /// impl Data {
     ///    pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}
@@ -132,7 +132,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data{ pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()} }
     ///
@@ -191,7 +191,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data{ pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()} }
     ///
@@ -237,8 +237,8 @@ impl<'db, 'txn> Tables<'db, 'txn> {
         let schema = T::struct_db_schema();
         let table_name = schema.table_name;
 
-        let primary_key = item.struct_db_primary_key();
-        let keys = item.struct_db_keys();
+        let primary_key = item.struct_db_pk();
+        let keys = item.struct_db_gks();
         let value = item.struct_db_bincode_encode_to_vec();
         {
             self.open_primary_table(txn, table_name)?;
@@ -270,7 +270,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// type Data = DataV2;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct DataV1(u32);
     ///
     /// impl DataV1 {
@@ -280,7 +280,7 @@ impl<'db, 'txn> Tables<'db, 'txn> {
     /// }
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct DataV2(String);
     ///
     /// impl DataV2 {

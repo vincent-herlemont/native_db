@@ -6,9 +6,9 @@ use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[struct_db(
-    fn_primary_key(generate_my_primary_key),
-    fn_secondary_key(secondary_key_1),
-    fn_secondary_key(secondary_key_2)
+    pk = generate_my_primary_key,
+    gk = secondary_key_1,
+    gk = secondary_key_2
 )]
 struct Item {
     id: u32,
@@ -336,7 +336,7 @@ fn test_double_ended_iter_by_key_range() {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct ItemFlag {
     name: String,
 }
@@ -405,7 +405,7 @@ fn test_start_with_scenario() {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-#[struct_db(fn_primary_key(generate_my_primary_key), fn_secondary_key(flag))]
+#[struct_db(pk = generate_my_primary_key, gk = flag)]
 struct ItemIdFlag {
     id: String,
     flag: String,

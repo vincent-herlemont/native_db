@@ -6,7 +6,7 @@ use struct_db::{struct_db, Db};
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct ItemV1 {
     id: u32,
     name: String,
@@ -21,7 +21,7 @@ impl ItemV1 {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 2, from = ItemV1)]
-#[struct_db(fn_primary_key(generate_my_primary_key))]
+#[struct_db(pk = generate_my_primary_key)]
 struct ItemV2 {
     id: u64,
     name: String,

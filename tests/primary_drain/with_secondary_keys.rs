@@ -7,8 +7,8 @@ use struct_db::*;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[struct_db(
-    fn_primary_key(generate_my_primary_key),
-    fn_secondary_key(generate_my_secondary_key)
+    pk = generate_my_primary_key,
+    gk = generate_my_secondary_key
 )]
 struct Item {
     id: u32,

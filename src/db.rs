@@ -56,7 +56,7 @@ impl Db {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
@@ -189,7 +189,7 @@ impl Db {
     }
 
     pub fn redb_stats(&self) -> Result<Stats> {
-        use redb::{ReadableTable, TableHandle};
+        use redb::ReadableTable;
         let rx = self.instance.begin_read()?;
         let mut stats_tables = vec![];
         for table in rx.list_tables()? {
@@ -215,7 +215,7 @@ impl Db {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
@@ -274,7 +274,7 @@ impl Db {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///
@@ -356,7 +356,7 @@ impl Db {
     /// use struct_db::*;
     ///
     /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
-    /// #[struct_db(fn_primary_key(p_key))]
+    /// #[struct_db(pk = p_key)]
     /// struct Data(u32);
     /// impl Data {pub fn p_key(&self) -> Vec<u8> {self.0.to_be_bytes().to_vec()}}
     ///

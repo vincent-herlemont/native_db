@@ -6,8 +6,8 @@
 //!
 //! Use macro `struct_db`:
 //!
-//! - required: `fn_primary_key(<function name>)` associates a function of the struct that generates the **primary key** of the struct. Allows **only one** `fn_primary_key` declaration.
-//! - optional: `fn_secondary_key(<function name>)` associates a function of the struct that generates a **secondary key** of the struct. Allows **multiple** `fn_secondary_key` declarations.
+//! - required: `pk(<function name>)` associates a function of the struct that generates the **primary key** of the struct. Allows **only one** `pk` declaration.
+//! - optional: `gk(<function name>)` associates a function of the struct that generates a **secondary key** of the struct. Allows **multiple** `gk` declarations.
 //!
 //! `struct_db` generates an enum `<your_type>` with the suffix `Key` that contains all the secondary keys like: E.g. `<your_type>Key::<your_secondary_key>` more details [`here`](crate::ReadableTable::secondary_get).
 //!
@@ -57,9 +57,9 @@
 //!
 //! #[derive(Serialize, Deserialize, PartialEq, Debug)]
 //! #[struct_db(
-//!    fn_primary_key(p_key),  // required
-//!    fn_secondary_key(s_key),  // optional
-//!    // ... other fn_secondary_key ...
+//!    pk = p_key,  // required
+//!    gk = s_key,  // optional
+//!    // ... other gk ...
 //! )]
 //! struct Data(u32, String);
 //!
@@ -121,6 +121,7 @@ mod db;
 mod item;
 mod iterator;
 mod operation;
+mod query;
 mod readable_table;
 mod readonly_tables;
 mod readonly_transaction;
