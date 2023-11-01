@@ -13,9 +13,10 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 
-Provides a drop-in, fast, and embedded database solution based on [redb](https://github.com/cberner/redb), focusing on maintaining coherence between Rust 
-types 
-and stored data with minimal boilerplate. It supports multiple indexes, real-time watch with filters, schema migration, enjoy 😌🍃.
+Here's a drop-in, fast, embedded database solution based on [redb](https://github.com/cberner/redb) for 
+multi-platform applications (server, desktop, mobile). 
+It's focused on maintaining coherence between Rust types and stored data with minimal boilerplate. 
+It supports multiple indexes, real-time watch with filters, schema migration. Enjoy! 😌🍃.
 
 # Features
 
