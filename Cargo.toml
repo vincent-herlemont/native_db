@@ -20,11 +20,11 @@ native_db_macro = { version = "0.4.6", path = "native_db_macro" }
 thiserror = "1.0"
 uuid = { version = "1", features = [ "v4"] }
 serde = { version = "1.0" }
+native_model = { version = "0.4.2" }
+doc-comment = "0.3.3"
 
 # Optional tokio support
 tokio = { version = "1", features = ["sync"], optional = true }
-#native_model = { git = "https://github.com/vincent-herlemont/native_model.git", rev = "69d42f5ec9a4ad671525233e2835efeaae95862e" }
-native_model = { path = "../native_model" }
 
 [dev-dependencies]
 assert_fs = "1.0"
@@ -34,6 +34,7 @@ skeptic = "0.13"
 tokio = { version = "1.33", features = ["test-util","macros"] }
 bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 criterion = { version = "0.5.1" }
+
 
 [features]
 default = []

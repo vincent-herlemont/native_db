@@ -9,7 +9,7 @@ pub(crate) type RedbSecondaryTableDefinition<'a> =
     redb::TableDefinition<'a, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
 
 pub struct PrimaryTableDefinition<'a> {
-    pub(crate) model: crate::Model,
+    pub(crate) model: crate::DatabaseModel,
     pub(crate) redb: RedbPrimaryTableDefinition<'a>,
     pub(crate) secondary_tables:
         HashMap<DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>, SecondaryTableDefinition<'a>>,

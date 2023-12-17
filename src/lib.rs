@@ -24,3 +24,12 @@ pub use model::*;
 pub use native_db_macro::*;
 pub use native_db_macro::*;
 pub use serialization::*;
+
+#[cfg(doctest)]
+#[macro_use]
+extern crate doc_comment;
+
+#[cfg(doctest)]
+doc_comment! {
+    include_str!("../README.md")
+}

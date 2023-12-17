@@ -44,7 +44,7 @@ impl DatabaseInput {
 }
 
 pub trait Input: Sized + native_model::Model {
-    fn native_db_model() -> crate::Model;
+    fn native_db_model() -> crate::DatabaseModel;
 
     fn native_db_primary_key(&self) -> DatabaseInnerKeyValue;
 

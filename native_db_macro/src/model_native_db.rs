@@ -100,10 +100,10 @@ impl ModelNativeDB {
             .collect::<Vec<_>>();
 
         quote! {
-            fn native_db_model() -> native_db::Model {
+            fn native_db_model() -> native_db::DatabaseModel {
                 let mut secondary_tables_name = std::collections::HashSet::new();
                 #(#secondary_keys)*
-                native_db::Model {
+                native_db::DatabaseModel {
                     primary_key: #primary_key,
                     secondary_keys: secondary_tables_name,
                 }
