@@ -1,0 +1,21 @@
+[package]
+name = "native_db_macro"
+version = "0.4.6"
+authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
+edition = "2018"
+description = "A procedural macro for native_db"
+license = "MIT"
+repository = "https://github.com/vincent-herlemont/native_db"
+readme = "README.md"
+
+[lib]
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[features]
+default = []

@@ -1,25 +1,27 @@
-use native_model::native_model;
+use native_db::*;
+use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
-use struct_db::{struct_db, Db, ReadableTable};
+use std::convert::TryFrom;
+use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
-#[struct_db(pk = id_key, gk = name_key)]
+#[native_db(primary_key(id_key), secondary_key(name_key))]
 struct ItemV1 {
     id: u32,
     name: String,
 }
 
 impl ItemV1 {
-    pub fn id_key(&self) -> Vec<u8> {
-        self.id.to_be_bytes().to_vec()
+    pub fn id_key(&self) -> u32 {
+        self.id
     }
 
-    pub fn name_key(&self) -> Vec<u8> {
-        let mut tag = self.name.as_bytes().to_vec();
-        let primary_key = self.id_key();
-        tag.extend_from_slice(&primary_key);
+    pub fn name_key(&self) -> String {
+        let mut tag = self.name.clone();
+        let primary_key = self.id_key().to_string();
+        tag.push_str(&primary_key);
         tag
     }
     pub fn inc(&mut self, new_name: &str) -> &Self {
@@ -31,10 +33,10 @@ impl ItemV1 {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 2, from = ItemV1)]
-#[struct_db(
-    pk = id_key,
-    gk = first_name_key,
-    gk = last_name_key
+#[native_db(
+    primary_key(id_key),
+    secondary_key(first_name_key, unique),
+    secondary_key(last_name_key, unique)
 )]
 struct ItemV2 {
     id: u64,
@@ -43,21 +45,21 @@ struct ItemV2 {
 }
 
 impl ItemV2 {
-    pub fn id_key(&self) -> Vec<u8> {
-        self.id.to_be_bytes().to_vec()
+    pub fn id_key(&self) -> u64 {
+        self.id
     }
 
-    pub fn first_name_key(&self) -> Vec<u8> {
-        let mut tag = self.first_name.as_bytes().to_vec();
-        let primary_key = self.id_key();
-        tag.extend_from_slice(&primary_key);
+    pub fn first_name_key(&self) -> String {
+        let mut tag = self.first_name.clone();
+        let primary_key = self.id_key().to_string();
+        tag.push_str(&primary_key);
         tag
     }
 
-    pub fn last_name_key(&self) -> Vec<u8> {
-        let mut tag = self.last_name.as_bytes().to_vec();
-        let primary_key = self.id_key();
-        tag.extend_from_slice(&primary_key);
+    pub fn last_name_key(&self) -> String {
+        let mut tag = self.last_name.clone();
+        let primary_key = self.id_key().to_string();
+        tag.push_str(&primary_key);
         tag
     }
 }
@@ -87,66 +89,63 @@ impl From<ItemV2> for ItemV1 {
 #[test]
 fn test_migrate() {
     let tf = TmpFs::new().unwrap();
-    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
-    db.define::<ItemV1>().unwrap();
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemV1>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
 
     let mut item = ItemV1 {
         id: 1,
         name: "test".to_string(),
     };
 
-    let txn = db.transaction().unwrap();
+    let rw_txn = db.rw_transaction().unwrap();
     {
-        let mut tables = txn.tables();
-        tables.insert(&txn, item.clone()).unwrap();
-        tables
-            .insert(&txn, item.inc("Victor Hugo").clone())
-            .unwrap();
-        tables
-            .insert(&txn, item.inc("Jules Verne").clone())
-            .unwrap();
-        tables
-            .insert(&txn, item.inc("Alexandre Dumas").clone())
-            .unwrap();
-        tables.insert(&txn, item.inc("Emile Zola").clone()).unwrap();
+        rw_txn.insert(item.clone()).unwrap();
+        rw_txn.insert(item.inc("Victor Hugo").clone()).unwrap();
+        rw_txn.insert(item.inc("Jules Verne").clone()).unwrap();
+        rw_txn.insert(item.inc("Alexandre Dumas").clone()).unwrap();
+        rw_txn.insert(item.inc("Emile Zola").clone()).unwrap();
     }
-    txn.commit().unwrap();
+    rw_txn.commit().unwrap();
 
     let stats = db.redb_stats().unwrap();
-    assert_eq!(stats.stats_tables.len(), 2);
-    assert_eq!(stats.stats_tables[0].name, "itemv1");
-    assert_eq!(stats.stats_tables[0].num_raw, 5);
-    assert_eq!(stats.stats_tables[1].name, "itemv1_name_key");
-    assert_eq!(stats.stats_tables[1].num_raw, 5);
+    assert_eq!(stats.primary_tables.len(), 1);
+    assert_eq!(stats.primary_tables[0].name, "1_1_id_key");
+    assert_eq!(stats.primary_tables[0].n_entries, Some(5));
+    assert_eq!(stats.secondary_tables.len(), 1);
+    assert_eq!(stats.secondary_tables[0].name, "1_1_name_key");
+    assert_eq!(stats.secondary_tables[0].n_entries, Some(5));
+
     drop(db);
 
-    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
-    db.define::<ItemV1>().unwrap();
-    db.define::<ItemV2>().unwrap();
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemV1>().unwrap();
+    builder.define::<ItemV2>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
 
-    db.migrate::<ItemV2>().unwrap();
+    let rw = db.rw_transaction().unwrap();
+    rw.migrate::<ItemV2>().unwrap();
+    rw.commit().unwrap();
 
     let stats = db.redb_stats().unwrap();
-    assert_eq!(stats.stats_tables.len(), 5);
-    assert_eq!(stats.stats_tables[0].name, "itemv1");
-    assert_eq!(stats.stats_tables[0].num_raw, 0);
-    assert_eq!(stats.stats_tables[1].name, "itemv1_name_key");
-    assert_eq!(stats.stats_tables[1].num_raw, 0);
-    assert_eq!(stats.stats_tables[2].name, "itemv2");
-    assert_eq!(stats.stats_tables[2].num_raw, 5);
-    assert_eq!(stats.stats_tables[3].name, "itemv2_first_name_key");
-    assert_eq!(stats.stats_tables[3].num_raw, 5);
-    assert_eq!(stats.stats_tables[4].name, "itemv2_last_name_key");
-    assert_eq!(stats.stats_tables[4].num_raw, 5);
+    assert_eq!(stats.primary_tables.len(), 2);
+    assert_eq!(stats.primary_tables[1].name, "1_2_id_key");
+    assert_eq!(stats.primary_tables[1].n_entries, Some(5));
+    assert_eq!(stats.primary_tables[0].name, "1_1_id_key");
+    assert_eq!(stats.primary_tables[0].n_entries, Some(0));
+    dbg!(&stats.secondary_tables);
+    assert_eq!(stats.secondary_tables.len(), 3);
+    assert_eq!(stats.secondary_tables[0].name, "1_1_name_key");
+    assert_eq!(stats.secondary_tables[0].n_entries, Some(0));
+    assert_eq!(stats.secondary_tables[1].name, "1_2_first_name_key");
+    assert_eq!(stats.secondary_tables[1].n_entries, Some(5));
+    assert_eq!(stats.secondary_tables[2].name, "1_2_last_name_key");
+    assert_eq!(stats.secondary_tables[2].n_entries, Some(5));
 
-    let txn = db.read_transaction().unwrap();
+    let r_txn = db.r_transaction().unwrap();
 
     // Get Victor Hugo by id
-    let item: ItemV2 = txn
-        .tables()
-        .primary_get(&txn, 2_u64.to_be_bytes().as_slice())
-        .unwrap()
-        .unwrap();
+    let item: ItemV2 = r_txn.get().primary(2_u64).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV2 {
@@ -157,10 +156,11 @@ fn test_migrate() {
     );
 
     // Get Alexandre Dumas by first name
-    let item: Vec<ItemV2> = txn
-        .tables()
-        .secondary_iter_start_with(&txn, ItemV2Key::first_name_key, b"Alexandre")
+    let item: Vec<ItemV2> = r_txn
+        .scan()
+        .secondary(ItemV2Key::first_name_key)
         .unwrap()
+        .start_with("Alexandre")
         .collect();
     assert_eq!(
         item,
@@ -172,10 +172,11 @@ fn test_migrate() {
     );
 
     // Get Julien Verne by last name
-    let item: Vec<ItemV2> = txn
-        .tables()
-        .secondary_iter_start_with(&txn, ItemV2Key::last_name_key, b"Verne")
+    let item: Vec<ItemV2> = r_txn
+        .scan()
+        .secondary(ItemV2Key::last_name_key)
         .unwrap()
+        .start_with("Verne")
         .collect();
     assert_eq!(
         item,
@@ -185,4 +186,96 @@ fn test_migrate() {
             last_name: "Verne".to_string(),
         }]
     );
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
+#[native_model(id = 1, version = 3, try_from = (ItemV2, db_type::Error))]
+#[native_db]
+struct ItemV3 {
+    #[primary_key]
+    id: u64,
+    first_name: String,
+    #[secondary_key]
+    last_name: String,
+}
+
+impl TryFrom<ItemV3> for ItemV2 {
+    type Error = db_type::Error;
+    fn try_from(item: ItemV3) -> Result<Self, Self::Error> {
+        Ok(ItemV2 {
+            id: item.id,
+            first_name: item.first_name,
+            last_name: item.last_name,
+        })
+    }
+}
+
+impl TryFrom<ItemV2> for ItemV3 {
+    type Error = db_type::Error;
+    fn try_from(item: ItemV2) -> Result<Self, Self::Error> {
+        Ok(ItemV3 {
+            id: item.id,
+            first_name: item.first_name,
+            last_name: item.last_name,
+        })
+    }
+}
+
+#[test]
+fn test_migrate_v3() {
+    let tf = TmpFs::new().unwrap();
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemV1>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+
+    let mut item = ItemV1 {
+        id: 1,
+        name: "test".to_string(),
+    };
+
+    let rw_txn = db.rw_transaction().unwrap();
+    {
+        rw_txn.insert(item.clone()).unwrap();
+        rw_txn.insert(item.inc("Victor Hugo").clone()).unwrap();
+        rw_txn.insert(item.inc("Jules Verne").clone()).unwrap();
+        rw_txn.insert(item.inc("Alexandre Dumas").clone()).unwrap();
+        rw_txn.insert(item.inc("Emile Zola").clone()).unwrap();
+    }
+    rw_txn.commit().unwrap();
+
+    drop(db);
+
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemV1>().unwrap();
+    builder.define::<ItemV2>().unwrap();
+    builder.define::<ItemV3>().unwrap();
+    let db = builder.open(tf.path("test").as_std_path()).unwrap();
+
+    // Return error because the latest version is Item is ItemV3
+    let rw = db.rw_transaction().unwrap();
+    let error = rw.migrate::<ItemV2>().unwrap_err();
+    assert!(matches!(error, db_type::Error::MigrateLegacyModel(_)));
+    rw.commit().unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.migrate::<ItemV3>().unwrap();
+    rw.commit().unwrap();
+
+    let stats = db.redb_stats().unwrap();
+    assert_eq!(stats.primary_tables.len(), 3);
+    assert_eq!(stats.primary_tables[0].name, "1_1_id_key");
+    assert_eq!(stats.primary_tables[0].n_entries, Some(0));
+    assert_eq!(stats.primary_tables[1].name, "1_2_id_key");
+    assert_eq!(stats.primary_tables[1].n_entries, None);
+    assert_eq!(stats.primary_tables[2].name, "1_3_id");
+    assert_eq!(stats.primary_tables[2].n_entries, Some(5));
+    assert_eq!(stats.secondary_tables.len(), 4);
+    assert_eq!(stats.secondary_tables[0].name, "1_1_name_key");
+    assert_eq!(stats.secondary_tables[0].n_entries, Some(0));
+    assert_eq!(stats.secondary_tables[1].name, "1_2_first_name_key");
+    assert_eq!(stats.secondary_tables[1].n_entries, None);
+    assert_eq!(stats.secondary_tables[2].name, "1_2_last_name_key");
+    assert_eq!(stats.secondary_tables[2].n_entries, None);
+    assert_eq!(stats.secondary_tables[3].name, "1_3_last_name");
+    assert_eq!(stats.secondary_tables[3].n_entries, Some(5));
 }

@@ -1,120 +1,138 @@
-# Important Update: This crate `struct_db` has been renamed to [`native_db`](https://crates.io/crates/native_db) to better reflect its functionality and purpose. Please update your dependencies to use [`native_db`](https://crates.io/crates/native_db) for the latest features and updates.
+# Native DB 🔧🔩
 
-
-# Struct DB 🔧🔩 
-
-[![Crates.io](https://img.shields.io/crates/v/struct_db)](https://crates.io/crates/struct_db)
-[![Linux/Windows/macOS/Android/iOS (Build/Test/Release)](https://github.com/vincent-herlemont/struct_db/actions/workflows/build_and_test_release.yml/badge.svg)](https://github.com/vincent-herlemont/struct_db/actions/workflows/build_and_test_release.yml)
-[![Documentation](https://docs.rs/struct_db/badge.svg)](https://docs.rs/struct_db)
-[![License](https://img.shields.io/crates/l/struct_db)](LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/native_db)](https://crates.io/crates/native_db)
+[![Linux/Windows/macOS/Android/iOS (Build/Test/Release)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_and_test_release.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_and_test_release.yml)
+[![Documentation](https://docs.rs/native_db/badge.svg)](https://docs.rs/native_db)
+[![License](https://img.shields.io/crates/l/native_db)](LICENSE)
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 
-Here's a drop-in, fast, embedded database solution based on [redb](https://github.com/cberner/redb) for 
-multi-platform applications (server, desktop, mobile). 
-It's focused on maintaining coherence between Rust types and stored data with minimal boilerplate. 
-It supports multiple indexes, real-time watch with filters, schema migration. Enjoy! 😌🍃.
+Here's a drop-in, fast, embedded database solution for multi-platform applications (server, desktop, mobile). It's focused on maintaining coherence between Rust types and stored data with minimal boilerplate. Enjoy! 😌🍃.
 
 # Features
 
-- Almost as fast as the storage engine [redb](https://github.com/cberner/redb).
-- Embedded database (Linux, macOS, Windows, Android, iOS).
-- Support multiple indexes ([unique secondary keys](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.secondary_get)).
+- Simple API.
+- Support for multiple indexes (primary, secondary, unique, non-unique, optional).
+- Minimal boilerplate.
+- Transparent serialization/deserialization using [native_model](https://crates.io/crates/native_model).
+- Automatic model migration.
+- Thread-safe and fully ACID-compliant transactions provided by [redb](https://github.com/cberner/redb).
+- Real-time subscription with filters for `insert`, `update` and `delete` operations.
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
-- [Query data](https://docs.rs/struct_db/latest/struct_db/trait.ReadableTable.html#method.primary_get) (`get`, `watch`, `iter` etc.) using explicit type or type inference. 
-- [Real-time subscription](https://docs.rs/struct_db/latest/struct_db/struct.Db.html#method.primary_watch) with filters for `insert`, `update` and `delete` operations.
-- [Schema migration](https://docs.rs/struct_db/latest/struct_db/struct.Tables.html#method.migrate) using native Rust coercion.
-- Fully ACID-compliant transactions.
-- _Add your own serialization/deserialization logic [planned*](#roadmap) (e.g: zero-copy)._
-- Thread-safe.
+- Hot snapshots.
+
+# Installation
+
+Add this to your `Cargo.toml`:
+```toml
+[dependencies]
+native_db = "0.4.3"
+native_model = "0.3.30"
+```
+
+NOTE: `native_db` requires `native_model` to work.
 
 # Status
 
-Early development. Not ready for production. Follow the [roadmap](#roadmap) for the 1.0 release.
+Active development. The API is not stable yet and may change in the future.
 
-# How to use?
+# Usual API
+- [**DatabaseBuilder**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html)  
+    - [**define**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.define) a model.
+    - [**create**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.create) / [**open**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.open) a database.
+    - [**create_in_memory**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.create_in_memory) an in-memory database.
+- [**Database**](https://docs.rs/native_db/latest/native_db/struct.Database.html)
+    - [**snapshot**](https://docs.rs/native_db/latest/native_db/struct.Database.html#method.snapshot) the database.
+    - **rw_transaction** open a read-write transaction.
+        - [**insert**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.insert) a new item.
+        - [**update**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.update) an existing item.
+        - [**remove**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.remove) an existing item.
+        - [**commit**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.commit) the transaction.
+        - [**min**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.min) the minimum primary key.
+        - plus all read-only transaction APIs.
+    - **r_transaction** open a read-only transaction.
+        - **get**
+            - [**primary**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.RGet.html#method.primary) an item by its primary key.
+            - [**secondary**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.RGet.html#method.secondary) an item by its secondary key.
+        - **scan**
+            - **primary**
+                - [**all**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.PrimaryScan.html#method.all) items.
+                - [**start_with**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.PrimaryScan.html#method.start_with) items with a primary key starting with a given value.
+                - [**range**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.PrimaryScan.html#method.range) items with a primary key in a given range.
+            - **secondary**
+                - [**all**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.SecondaryScan.html#method.all) items with a given secondary key.
+                - [**start_with**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.SecondaryScan.html#method.start_with) items with a secondary key starting with a given value.
+                - [**range**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.SecondaryScan.html#method.range) items with a secondary key in a given range.
+        - **len**
+            - [**primary**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.RLen.html#method.primary) the number of items.
+            - [**secondary**](https://docs.rs/native_db/latest/native_db/transaction/query/struct.RLen.html#method.secondary) the number of items with a given secondary key.
+    - **watch** real-time subscriptions via [std channel](https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html) based or [tokio channel](https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.unbounded_channel.html) based depending on the feature `tokio`.
+        - **get**
+            - [**primary**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchGet.html#method.primary) an item by its primary key.
+            - [**secondary**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchGet.html#method.secondary) an item by its secondary key.
+        - **scan**
+            - **primary**
+                - [**all**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchScanPrimary.html#method.all) items.
+                - [**start_with**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchScanPrimary.html#method.start_with) items with a primary key starting with a given value.
+                - [**range**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchScanPrimary.html#method.range) items with a primary key in a given range.
+            - **secondary**
+                - [**all**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchScanSecondary.html#method.all) items with a given secondary key.
+                - [**start_with**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchScanSecondary.html#method.start_with) items with a secondary key starting with a given value.
+                - [**range**](https://docs.rs/native_db/latest/native_db/watch/query/struct.WatchScanSecondary.html#method.range) items with a secondary key in a given range.
 
-See [docs.rs](https://docs.rs/struct_db/latest/struct_db/).
 
 # Example
 
 ```rust
 use serde::{Deserialize, Serialize};
-use struct_db::*;
+use native_db::*;
+use native_model::{native_model, Model};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
-#[struct_db(
-    pk = p_key,  // required
-    gk = s_key,  // optional
-    // ... other gk ...
-)]
-struct Data(u32, String);
+#[native_model(id = 1, version = 1)]
+#[native_db]
+struct Item {
+    #[primary_key]
+    id: u32,
+    #[secondary_key]
+    name: String,
+}
 
-impl Data {
-  // Returns primary key as big-endian bytes for consistent lexicographical ordering.
-  pub fn p_key(&self) -> Vec<u8> {
-    self.0.to_be_bytes().to_vec()
-  }
-
-  // Generates a secondary key combining the String field and the big-endian bytes of
-  // the primary key for versatile queries.
-  pub fn s_key(&self) -> Vec<u8> {
-    let mut s_key = self.1.as_bytes().to_vec();
-    s_key.extend_from_slice(&self.p_key().as_slice());
-    s_key
-  }
- }
-
- fn main() {
-  let mut db = Db::init_tmp("my_db_example").unwrap();
-  // Initialize the schema
-  db.define::<Data>();
-
-  // Insert data
-  let txn = db.transaction().unwrap();
-  {
-    let mut tables = txn.tables();
-    tables.insert(&txn, Data(1,"red".to_string())).unwrap();
-    tables.insert(&txn, Data(2,"red".to_string())).unwrap();
-    tables.insert(&txn, Data(3,"blue".to_string())).unwrap();
-  }
-  txn.commit().unwrap();
-   
-  let txn_read = db.read_transaction().unwrap();
-  let mut tables = txn_read.tables();
-   
-  // Retrieve data with p_key=3 
-  let retrieve_data: Data = tables.primary_get(&txn_read, &3_u32.to_be_bytes()).unwrap().unwrap();
-  println!("data p_key='3' : {:?}", retrieve_data);
-   
-  // Iterate data with s_key="red" String
-  for item in tables.secondary_iter_start_with::<Data>(&txn_read, DataKey::s_key, "red".as_bytes()).unwrap() {
-    println!("data s_key='1': {:?}", item);
-  }
-   
-  // Remove data
-  let txn = db.transaction().unwrap();
-  {
-    let mut tables = txn.tables();
-    tables.remove(&txn, retrieve_data).unwrap();
-  }
-  txn.commit().unwrap();
- }
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    // Initialize the model
+    builder.define::<Item>()?;
+    
+    // Create a database in memory
+    let mut db = builder.create_in_memory()?;
+    
+    // Insert data (open a read-write transaction)
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(Item { id: 1, name: "red".to_string() })?;
+    rw.insert(Item { id: 2, name: "green".to_string() })?;
+    rw.insert(Item { id: 3, name: "blue".to_string() })?;
+    rw.commit()?;
+    
+    // Open a read-only transaction
+    let r = db.r_transaction()?;
+    // Retrieve data with id=3 
+    let retrieve_data: Item = r.get().primary(3_u32)?.unwrap();
+    println!("data id='3': {:?}", retrieve_data);
+    // Iterate items with name starting with "red"
+    for item in r.scan().secondary::<Item>(ItemKey::name)?.start_with("red") {
+        println!("data name=\"red\": {:?}", item);
+    }
+    
+    // Remove data (open a read-write transaction)
+    let rw = db.rw_transaction()?;
+    rw.remove(retrieve_data)?;
+    rw.commit()?;
+    Ok(())
+}
 ```
-
-# Roadmap
-
-The following features are planned before the 1.0 release
-
-- [ ] Add benchmarks tests. 
-- [x] Add documentation.
-- [x] Stable release of [redb](https://github.com/cberner/redb) or implement another stable storage engine(s) for Linux, macOS, Windows, Android, iOS.
-- [ ] Add support for custom serialization/deserialization logic.
-- [x] Add CI for Linux, macOS, Windows, Android, iOS.
-- [ ] Use in a real-world project.
 
 ## Contributors
 
@@ -124,7 +142,7 @@ The following features are planned before the 1.0 release
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/elliot14A"><img src="https://avatars.githubusercontent.com/u/84667163?v=4?s=100" width="100px;" alt="Akshith Madhur"/><br /><sub><b>Akshith Madhur</b></sub></a><br /><a href="https://github.com/vincent-herlemont/struct_db/commits?author=elliot14A" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/elliot14A"><img src="https://avatars.githubusercontent.com/u/84667163?v=4?s=100" width="100px;" alt="Akshith Madhur"/><br /><sub><b>Akshith Madhur</b></sub></a><br /><a href="https://github.com/vincent-herlemont/native_db/commits?author=elliot14A" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

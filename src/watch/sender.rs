@@ -1,3 +1,4 @@
+use crate::db_type::DatabaseKeyValue;
 use crate::watch::filter::{KeyFilter, TableFilter};
 use crate::watch::request::WatcherRequest;
 use crate::watch::{Event, MpscSender};
@@ -42,7 +43,11 @@ impl Watchers {
                         }
                     }
                     KeyFilter::PrimaryStartWith(key_prefix) => {
-                        if request.primary_key.starts_with(key_prefix) {
+                        if request
+                            .primary_key
+                            .as_slice()
+                            .starts_with(key_prefix.as_slice())
+                        {
                             event_senders.push(Arc::clone(event_sender));
                         }
                     }
@@ -50,10 +55,21 @@ impl Watchers {
                         for (request_secondary_key_def, request_secondary_key) in
                             &request.secondary_keys_value
                         {
-                            if key_def == request_secondary_key_def.as_bytes() {
-                                if let Some(value) = &key {
-                                    if value == request_secondary_key {
-                                        event_senders.push(Arc::clone(event_sender));
+                            if key_def == request_secondary_key_def {
+                                if let Some(filter_value) = &key {
+                                    match request_secondary_key {
+                                        DatabaseKeyValue::Default(value) => {
+                                            if value == filter_value {
+                                                event_senders.push(Arc::clone(event_sender));
+                                            }
+                                        }
+                                        DatabaseKeyValue::Optional(value) => {
+                                            if let Some(value) = value {
+                                                if value == filter_value {
+                                                    event_senders.push(Arc::clone(event_sender));
+                                                }
+                                            }
+                                        }
                                     }
                                 } else {
                                     event_senders.push(Arc::clone(event_sender));
@@ -65,9 +81,22 @@ impl Watchers {
                         for (request_secondary_key_def, request_secondary_key) in
                             &request.secondary_keys_value
                         {
-                            if key_def == request_secondary_key_def.as_bytes() {
-                                if request_secondary_key.starts_with(key_prefix) {
-                                    event_senders.push(Arc::clone(event_sender));
+                            match request_secondary_key {
+                                DatabaseKeyValue::Default(value) => {
+                                    if key_def == request_secondary_key_def {
+                                        if value.as_slice().starts_with(key_prefix.as_slice()) {
+                                            event_senders.push(Arc::clone(event_sender));
+                                        }
+                                    }
+                                }
+                                DatabaseKeyValue::Optional(value) => {
+                                    if let Some(value) = value {
+                                        if key_def == request_secondary_key_def {
+                                            if value.as_slice().starts_with(key_prefix.as_slice()) {
+                                                event_senders.push(Arc::clone(event_sender));
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

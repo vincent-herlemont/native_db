@@ -7,7 +7,7 @@ set -x
 
 ARG_TOKEN="--token=$CARGO_TOKEN"
 
-cd $DIR/struct_db_macro
+cd $DIR/native_db_macro
 cargo publish $ARG_TOKEN $@
 
 cd $DIR

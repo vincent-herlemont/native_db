@@ -1,41 +1,46 @@
 [package]
-name = "struct_db"
+name = "native_db"
 version = "0.4.6"
 authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
 edition = "2018"
 description = "Drop-in embedded database"
 license = "MIT"
-repository = "https://github.com/vincent-herlemont/struct_db"
+repository = "https://github.com/vincent-herlemont/native_db"
 readme = "README.md"
 build = "build.rs"
 keywords = ["embedded", "database", "multi-platform", "android", "ios"]
 categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
 [workspace]
-members = ["struct_db_macro"]
+members = ["native_db_macro"]
 
 [dependencies]
 redb = "1.4.0"
-struct_db_macro = { version = "0.4.6", path = "struct_db_macro" }
+native_db_macro = { version = "0.4.6", path = "native_db_macro" }
 thiserror = "1.0"
-
-# TODO: make it optional when custom serialization is implemented
-serde = { version = "1.0", features = ["derive"] }
-bincode = { version = "2.0.0-rc.3", features = ["serde"] }
+uuid = { version = "1", features = [ "v4"] }
+serde = { version = "1.0" }
 
 # Optional tokio support
-tokio = { version = "1.29", features = ["sync"], optional = true }
-native_model = { git = "https://github.com/vincent-herlemont/native_model.git", optional = true, rev = "69d42f5ec9a4ad671525233e2835efeaae95862e" }
+tokio = { version = "1", features = ["sync"], optional = true }
+#native_model = { git = "https://github.com/vincent-herlemont/native_model.git", rev = "69d42f5ec9a4ad671525233e2835efeaae95862e" }
+native_model = { path = "../native_model" }
 
 [dev-dependencies]
 assert_fs = "1.0"
 serial_test = { version = "2.0", features = ["file_locks"] }
 shortcut_assert_fs = { version = "0.1.0" }
 skeptic = "0.13"
-tokio = { version = "1.35", features = ["test-util","macros"] }
+tokio = { version = "1.33", features = ["test-util","macros"] }
+bincode = { version = "2.0.0-rc.3", features = ["serde"] }
+criterion = { version = "0.5.1" }
 
 [features]
 default = []
+
+[[bench]]
+name = "overhead_data_size"
+harness = false
 
 [build-dependencies]
 skeptic = "0.13"

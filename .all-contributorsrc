@@ -21,6 +21,6 @@
   "skipCi": true,
   "repoType": "github",
   "repoHost": "https://github.com",
-  "projectName": "struct_db",
+  "projectName": "native_db",
   "projectOwner": "vincent-herlemont"
 }

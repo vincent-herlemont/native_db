@@ -21,4 +21,5 @@ test_all: test_no_default test_default
 
 
 expand test_file_name:
+    rm -f {{test_file_name}}.expanded.rs; \
     cargo expand --test {{test_file_name}} | save --raw {{test_file_name}}.expanded.rs

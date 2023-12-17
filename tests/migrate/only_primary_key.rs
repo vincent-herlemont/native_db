@@ -1,12 +1,11 @@
-use native_model::native_model;
+use native_db::*;
+use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
-use struct_db::ReadableTable;
-use struct_db::{struct_db, Db};
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
-#[struct_db(pk = generate_my_primary_key)]
+#[native_db(primary_key(generate_my_primary_key))]
 struct ItemV1 {
     id: u32,
     name: String,
@@ -14,14 +13,14 @@ struct ItemV1 {
 
 impl ItemV1 {
     #[allow(dead_code)]
-    pub fn generate_my_primary_key(&self) -> Vec<u8> {
-        format!("{}-{}", self.id, self.name).into()
+    pub fn generate_my_primary_key(&self) -> String {
+        format!("{}-{}", self.id, self.name)
     }
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 2, from = ItemV1)]
-#[struct_db(pk = generate_my_primary_key)]
+#[native_db(primary_key(generate_my_primary_key))]
 struct ItemV2 {
     id: u64,
     name: String,
@@ -47,29 +46,30 @@ impl From<ItemV2> for ItemV1 {
 
 impl ItemV2 {
     #[allow(dead_code)]
-    pub fn generate_my_primary_key(&self) -> Vec<u8> {
-        format!("{}-{}", self.id, self.name).into()
+    pub fn generate_my_primary_key(&self) -> String {
+        format!("{}-{}", self.id, self.name)
     }
 }
 
 #[test]
 fn test_migrate() {
     let tf = TmpFs::new().unwrap();
-    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
-    db.define::<ItemV1>().unwrap();
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemV1>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
 
     let item = ItemV1 {
         id: 1,
         name: "test".to_string(),
     };
 
-    let txn = db.transaction().unwrap();
-    txn.tables().insert(&txn, item).unwrap();
-    txn.commit().unwrap();
+    let rw_txn = db.rw_transaction().unwrap();
+    rw_txn.insert(item).unwrap();
+    rw_txn.commit().unwrap();
 
-    let txn = db.read_transaction().unwrap();
+    let r_txn = db.r_transaction().unwrap();
 
-    let item: ItemV1 = txn.tables().primary_get(&txn, b"1-test").unwrap().unwrap();
+    let item: ItemV1 = r_txn.get().primary("1-test").unwrap().unwrap();
     assert_eq!(
         item,
         ItemV1 {
@@ -77,17 +77,20 @@ fn test_migrate() {
             name: "test".to_string(),
         }
     );
-    drop(txn);
+    drop(r_txn);
     drop(db);
 
-    let mut db = Db::create(tf.path("test").as_std_path()).unwrap();
-    db.define::<ItemV1>().unwrap();
-    db.define::<ItemV2>().unwrap();
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemV1>().unwrap();
+    builder.define::<ItemV2>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
 
-    db.migrate::<ItemV2>().unwrap();
+    let rw = db.rw_transaction().unwrap();
+    rw.migrate::<ItemV2>().unwrap();
+    rw.commit().unwrap();
 
-    let txn = db.read_transaction().unwrap();
-    let item: ItemV2 = txn.tables().primary_get(&txn, b"1-test").unwrap().unwrap();
+    let r_txn = db.r_transaction().unwrap();
+    let item: ItemV2 = r_txn.get().primary("1-test").unwrap().unwrap();
     assert_eq!(
         item,
         ItemV2 {
@@ -96,10 +99,11 @@ fn test_migrate() {
         }
     );
 
-    let redb_stats = db.redb_stats().unwrap();
-    assert_eq!(redb_stats.stats_tables.len(), 2);
-    assert_eq!(redb_stats.stats_tables[0].name, "itemv1");
-    assert_eq!(redb_stats.stats_tables[0].num_raw, 0);
-    assert_eq!(redb_stats.stats_tables[1].name, "itemv2");
-    assert_eq!(redb_stats.stats_tables[1].num_raw, 1);
+    let stats = db.redb_stats().unwrap();
+    assert_eq!(stats.primary_tables.len(), 2);
+    assert_eq!(stats.primary_tables[0].name, "1_1_generate_my_primary_key");
+    assert_eq!(stats.primary_tables[0].n_entries, Some(0));
+    assert_eq!(stats.primary_tables[1].name, "1_2_generate_my_primary_key");
+    assert_eq!(stats.primary_tables[1].n_entries, Some(1));
+    assert_eq!(stats.secondary_tables.len(), 0);
 }
