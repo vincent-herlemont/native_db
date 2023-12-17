@@ -3,7 +3,7 @@ use crate::db_type::{
     Error, InnerKeyValue, KeyDefinition, Result,
 };
 use crate::table_definition::PrimaryTableDefinition;
-use crate::Model;
+use crate::DatabaseModel;
 use redb::ReadableTable;
 use std::collections::HashMap;
 
@@ -17,17 +17,17 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition>;
 
-    fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable>;
+    fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable>;
 
     fn get_secondary_table(
         &'txn self,
-        model: &Model,
+        model: &DatabaseModel,
         secondary_key: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
     ) -> Result<Self::RedbSecondaryTable>;
 
     fn get_by_primary_key(
         &'txn self,
-        model: Model,
+        model: DatabaseModel,
         key: impl InnerKeyValue,
     ) -> Result<Option<DatabaseOutputValue>> {
         let table = self.get_primary_table(&model)?;
@@ -38,7 +38,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
 
     fn get_by_secondary_key(
         &'txn self,
-        model: Model,
+        model: DatabaseModel,
         key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
         key: impl InnerKeyValue,
     ) -> Result<Option<DatabaseOutputValue>> {
@@ -60,7 +60,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
         ))
     }
 
-    fn primary_len(&'txn self, model: Model) -> Result<u64> {
+    fn primary_len(&'txn self, model: DatabaseModel) -> Result<u64> {
         let table = self.get_primary_table(&model)?;
         let result = table.len()?;
         Ok(result)

@@ -3,7 +3,7 @@ use crate::db_type::{
 };
 use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
-use crate::Model;
+use crate::DatabaseModel;
 use std::collections::HashMap;
 
 pub struct InternalRTransaction<'db> {
@@ -26,7 +26,7 @@ where
         &self.table_definitions
     }
 
-    fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable> {
+    fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable> {
         let table_definition = self
             .table_definitions()
             .get(model.primary_key.unique_table_name.as_str())
@@ -39,7 +39,7 @@ where
 
     fn get_secondary_table(
         &'txn self,
-        model: &Model,
+        model: &DatabaseModel,
         secondary_key: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
     ) -> Result<Self::RedbSecondaryTable> {
         let main_table_definition = self

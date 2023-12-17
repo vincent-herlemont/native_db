@@ -5,7 +5,7 @@ use crate::db_type::{
 use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::watch::WatcherRequest;
-use crate::{Input, Model};
+use crate::{DatabaseModel, Input};
 use redb::ReadableTable;
 use redb::TableHandle;
 use std::collections::{HashMap, HashSet};
@@ -30,7 +30,7 @@ where
         &self.primary_table_definitions
     }
 
-    fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable> {
+    fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable> {
         let table_definition = self
             .table_definitions()
             .get(model.primary_key.unique_table_name.as_str())
@@ -43,7 +43,7 @@ where
 
     fn get_secondary_table(
         &'txn self,
-        model: &Model,
+        model: &DatabaseModel,
         secondary_key: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
     ) -> Result<Self::RedbSecondaryTable> {
         let main_table_definition = self
@@ -73,7 +73,7 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_insert(
         &self,
-        model: Model,
+        model: DatabaseModel,
         item: DatabaseInput,
     ) -> Result<(WatcherRequest, DatabaseOutputValue)> {
         let already_exists;
@@ -118,7 +118,7 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_remove(
         &self,
-        model: Model,
+        model: DatabaseModel,
         item: DatabaseInput,
     ) -> Result<(WatcherRequest, DatabaseOutputValue)> {
         let keys = &item.secondary_keys;
@@ -153,7 +153,7 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_update(
         &self,
-        model: Model,
+        model: DatabaseModel,
         old_item: DatabaseInput,
         updated_item: DatabaseInput,
     ) -> Result<(WatcherRequest, DatabaseOutputValue, DatabaseOutputValue)> {
@@ -164,7 +164,7 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_primary_drain<'a>(
         &self,
-        model: Model,
+        model: DatabaseModel,
     ) -> Result<Vec<DatabaseOutputValue>> {
         let mut items = vec![];
         let mut key_items = HashSet::new();

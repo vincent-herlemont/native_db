@@ -1,6 +1,6 @@
 use crate::db_type::Result;
 use crate::table_definition::NativeModelOptions;
-use crate::{watch, Database, Input, Model};
+use crate::{watch, Database, DatabaseModel, Input};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::AtomicU64;
@@ -321,6 +321,6 @@ impl DatabaseBuilder {
 }
 
 pub(crate) struct ModelBuilder {
-    pub(crate) model: Model,
+    pub(crate) model: DatabaseModel,
     pub(crate) native_model_options: NativeModelOptions,
 }
