@@ -1,2 +1,5 @@
-mod only_primary_key;
-mod with_secondary_keys;
+mod primary_key;
+mod primary_key_attribute;
+mod secondary_key;
+mod secondary_key_attribute;
+mod secondary_key_mix;

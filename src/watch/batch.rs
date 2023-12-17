@@ -14,7 +14,7 @@ impl Batch {
     }
 }
 
-impl Iterator for Batch {
+impl<'a> Iterator for Batch {
     type Item = (WatcherRequest, Event);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -26,12 +26,7 @@ impl Debug for Batch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[")?;
         for (watcher_request, event) in &self.0 {
-            write!(
-                f,
-                "({}, {:?}), ",
-                String::from_utf8_lossy(&watcher_request.primary_key),
-                event
-            )?;
+            write!(f, "({:?}, {:?}), ", watcher_request.primary_key, event)?;
         }
         write!(f, "]")
     }

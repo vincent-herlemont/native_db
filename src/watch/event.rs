@@ -1,4 +1,4 @@
-use crate::{BinaryValue, SDBItem};
+use crate::db_type::{DatabaseOutputValue, Input};
 use std::fmt::Debug;
 
 #[derive(Clone)]
@@ -9,18 +9,21 @@ pub enum Event {
 }
 
 impl Event {
-    pub(crate) fn new_insert(value: BinaryValue) -> Self {
+    pub(crate) fn new_insert(value: DatabaseOutputValue) -> Self {
         Self::Insert(Insert(value))
     }
 
-    pub(crate) fn new_update(old_value: BinaryValue, new_value: BinaryValue) -> Self {
+    pub(crate) fn new_update(
+        old_value: DatabaseOutputValue,
+        new_value: DatabaseOutputValue,
+    ) -> Self {
         Self::Update(Update {
             old: old_value,
             new: new_value,
         })
     }
 
-    pub(crate) fn new_delete(value: BinaryValue) -> Self {
+    pub(crate) fn new_delete(value: DatabaseOutputValue) -> Self {
         Self::Delete(Delete(value))
     }
 }
@@ -36,34 +39,34 @@ impl Debug for Event {
 }
 
 #[derive(Clone)]
-pub struct Insert(pub(crate) BinaryValue);
+pub struct Insert(pub(crate) DatabaseOutputValue);
 
 impl Insert {
-    pub fn inner<T: SDBItem>(&self) -> T {
+    pub fn inner<T: Input>(&self) -> T {
         self.0.inner()
     }
 }
 
 #[derive(Clone)]
 pub struct Update {
-    pub(crate) old: BinaryValue,
-    pub(crate) new: BinaryValue,
+    pub(crate) old: DatabaseOutputValue,
+    pub(crate) new: DatabaseOutputValue,
 }
 
 impl Update {
-    pub fn inner_old<T: SDBItem>(&self) -> T {
+    pub fn inner_old<T: Input>(&self) -> T {
         self.old.inner()
     }
-    pub fn inner_new<T: SDBItem>(&self) -> T {
+    pub fn inner_new<T: Input>(&self) -> T {
         self.new.inner()
     }
 }
 
 #[derive(Clone)]
-pub struct Delete(pub(crate) BinaryValue);
+pub struct Delete(pub(crate) DatabaseOutputValue);
 
 impl Delete {
-    pub fn inner<T: SDBItem>(&self) -> T {
+    pub fn inner<T: Input>(&self) -> T {
         self.0.inner()
     }
 }

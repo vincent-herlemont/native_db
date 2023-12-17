@@ -1,4 +1,5 @@
-mod macro_def;
-#[cfg(feature = "native_model")]
+// mod macro_def;
 mod migrate;
 mod primary_drain;
+mod query;
+mod watch;

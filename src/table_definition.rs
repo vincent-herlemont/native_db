@@ -1,20 +1,23 @@
-use crate::{schema, SDBItem};
-use redb::TableHandle;
+use crate::builder::ModelBuilder;
+use crate::db_type::{DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseSecondaryKeyOptions};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-#[cfg(not(feature = "native_model"))]
-pub(crate) struct PrimaryTableDefinition {
-    pub(crate) schema: crate::Schema,
-    pub(crate) redb: redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
-    pub(crate) secondary_tables: HashMap<&'static str, SecondaryTableDefinition>,
+pub(crate) type RedbPrimaryTableDefinition<'a> =
+    redb::TableDefinition<'a, DatabaseInnerKeyValue, &'static [u8]>;
+pub(crate) type RedbSecondaryTableDefinition<'a> =
+    redb::TableDefinition<'a, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
+
+pub struct PrimaryTableDefinition<'a> {
+    pub(crate) model: crate::Model,
+    pub(crate) redb: RedbPrimaryTableDefinition<'a>,
+    pub(crate) secondary_tables:
+        HashMap<DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>, SecondaryTableDefinition<'a>>,
+    pub(crate) native_model_options: NativeModelOptions,
 }
 
-#[cfg(feature = "native_model")]
-pub(crate) struct PrimaryTableDefinition {
-    pub(crate) schema: crate::Schema,
-    pub(crate) redb: redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
-    pub(crate) secondary_tables: HashMap<&'static str, SecondaryTableDefinition>,
+#[derive(Clone, Debug)]
+pub struct NativeModelOptions {
     pub(crate) native_model_id: u32,
     pub(crate) native_model_version: u32,
     // If a model as a new version, the old version is still available but marked as legacy.
@@ -23,39 +26,9 @@ pub(crate) struct PrimaryTableDefinition {
     pub(crate) native_model_legacy: bool,
 }
 
-impl
-    From<(
-        schema::Schema,
-        redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
-    )> for PrimaryTableDefinition
-{
-    #[cfg(not(feature = "native_model"))]
-    fn from(
-        input: (
-            schema::Schema,
-            redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
-        ),
-    ) -> Self {
-        let (schema, redb) = input;
+impl Default for NativeModelOptions {
+    fn default() -> Self {
         Self {
-            schema,
-            redb,
-            secondary_tables: HashMap::new(),
-        }
-    }
-
-    #[cfg(feature = "native_model")]
-    fn from(
-        input: (
-            schema::Schema,
-            redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
-        ),
-    ) -> Self {
-        let (schema, redb) = input;
-        Self {
-            schema,
-            redb,
-            secondary_tables: HashMap::new(),
             native_model_id: 0,
             native_model_version: 0,
             native_model_legacy: false,
@@ -63,41 +36,40 @@ impl
     }
 }
 
-#[cfg(feature = "native_model")]
-impl Debug for PrimaryTableDefinition {
+impl<'a> From<(&ModelBuilder, RedbPrimaryTableDefinition<'a>)> for PrimaryTableDefinition<'a> {
+    fn from(input: (&ModelBuilder, RedbPrimaryTableDefinition<'a>)) -> Self {
+        let (builder, redb) = input;
+        Self {
+            model: builder.model.clone(),
+            redb,
+            secondary_tables: HashMap::new(),
+            native_model_options: builder.native_model_options.clone(),
+        }
+    }
+}
+
+impl Debug for PrimaryTableDefinition<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use redb::TableHandle;
         f.debug_struct("TableDefinition")
             .field("name", &self.redb.name())
-            .field("model_id", &self.native_model_id)
-            .field("model_version", &self.native_model_version)
-            .field("legacy", &self.native_model_legacy)
+            .field("model_id", &self.native_model_options.native_model_id)
+            .field(
+                "model_version",
+                &self.native_model_options.native_model_version,
+            )
+            .field("legacy", &self.native_model_options.native_model_legacy)
             .finish()
     }
 }
 
-#[cfg(not(feature = "native_model"))]
-impl Debug for PrimaryTableDefinition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TableDefinition")
-            .field("name", &self.redb.name())
-            .finish()
-    }
+#[derive(Clone)]
+pub(crate) struct SecondaryTableDefinition<'a> {
+    pub(crate) redb: RedbSecondaryTableDefinition<'a>,
 }
 
-pub(crate) struct SecondaryTableDefinition {
-    pub(crate) rdb: redb::TableDefinition<'static, &'static [u8], &'static [u8]>,
-}
-
-impl From<redb::TableDefinition<'static, &'static [u8], &'static [u8]>>
-    for SecondaryTableDefinition
-{
-    fn from(rdb: redb::TableDefinition<'static, &'static [u8], &'static [u8]>) -> Self {
-        Self { rdb }
-    }
-}
-
-impl SecondaryTableDefinition {
-    pub(crate) fn rdb(&self) -> redb::TableDefinition<'static, &'static [u8], &'static [u8]> {
-        self.rdb
+impl<'a> From<RedbSecondaryTableDefinition<'a>> for SecondaryTableDefinition<'a> {
+    fn from(rdb: RedbSecondaryTableDefinition<'a>) -> SecondaryTableDefinition<'a> {
+        Self { redb: rdb }
     }
 }

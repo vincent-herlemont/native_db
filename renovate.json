@@ -1,5 +1,5 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "$model": "https://docs.renovatebot.com/renovate-model.json",
   "extends": ["config:base"],
   "semanticCommits": "enabled",
   "semanticCommitType": "chore",
@@ -16,6 +16,17 @@
         "matchDepTypes": ["action"],
         "matchUpdateTypes": ["major", "minor", "patch"],
         "automerge": true
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^README\\.md$"],
+      "matchStrings": [
+        "\"native_model\" = \"(?<currentValue>.*?)\""
+      ],
+      "datasource": "crate",
+      "depNameTemplate": "native_model",
+      "versioningTemplate": "semver"
     }
   ]
 }

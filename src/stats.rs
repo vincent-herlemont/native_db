@@ -1,10 +1,11 @@
 #[derive(Debug)]
 pub struct Stats {
-    pub stats_tables: Vec<StatsTable>,
+    pub primary_tables: Vec<StatsTable>,
+    pub secondary_tables: Vec<StatsTable>,
 }
 
 #[derive(Debug)]
 pub struct StatsTable {
     pub name: String,
-    pub num_raw: usize,
+    pub n_entries: Option<u64>,
 }

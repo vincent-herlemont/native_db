@@ -1,20 +1,28 @@
+use crate::db_type::{
+    DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseKeyValue, DatabaseSecondaryKeyOptions,
+};
 use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct WatcherRequest {
-    pub(crate) table_name: &'static [u8],
-    pub(crate) primary_key: Vec<u8>,
-    pub(crate) secondary_keys_value: HashMap<&'static str, Vec<u8>>,
+    // TODO: Maybe replace table_name by DatabaseKeyDefinition<()> or other
+    pub(crate) table_name: String,
+    pub(crate) primary_key: DatabaseInnerKeyValue,
+    pub(crate) secondary_keys_value:
+        HashMap<DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>, DatabaseKeyValue>,
 }
 
 impl WatcherRequest {
     pub fn new(
-        table_name: &'static str,
-        primary_key: Vec<u8>,
-        secondary_keys: HashMap<&'static str, Vec<u8>>,
+        table_name: String,
+        primary_key: DatabaseInnerKeyValue,
+        secondary_keys: HashMap<
+            DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
+            DatabaseKeyValue,
+        >,
     ) -> Self {
         Self {
-            table_name: table_name.as_bytes(),
+            table_name,
             primary_key,
             secondary_keys_value: secondary_keys,
         }
