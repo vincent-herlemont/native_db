@@ -29,7 +29,7 @@ Blazing-fast, embedded database for multi-platform apps (server, desktop, mobile
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-native_db = "0.4.3"
+native_db = "0.5.0"
 native_model = "0.3.30"
 ```
 
