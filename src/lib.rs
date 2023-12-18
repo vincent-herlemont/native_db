@@ -1,3 +1,5 @@
+//! **--> /!\ Important Update: This crate `struct_db` has been renamed to [`native_db`](https://crates.io/crates/native_db) to better reflect its functionality and purpose. Please update your dependencies to use [`native_db`](https://crates.io/crates/native_db) for the latest features and updates. <--**
+//!
 //! Struct DB is a Rust library that provides a simple, fast, and embedded database solution,
 //! focusing on maintaining coherence between Rust types and stored data with minimal boilerplate.
 //! It supports multiple indexes, real-time watch with filters, schema migration.
@@ -113,6 +115,7 @@
 //!  }
 //! ```
 
+mod builder;
 mod common;
 mod db;
 mod item;
@@ -125,7 +128,6 @@ mod serialization;
 mod tables;
 mod transaction;
 pub mod watch;
-mod builder;
 
 pub use builder::*;
 pub use db::*;
@@ -183,6 +185,5 @@ pub enum Error {
     #[error("Max watcher reached (should be impossible)")]
     MaxWatcherReached,
 }
-
 
 pub type Result<T> = std::result::Result<T, Error>;
