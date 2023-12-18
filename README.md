@@ -1,4 +1,4 @@
-# Native DB 🔧🔩
+# Native DB
 
 [![Crates.io](https://img.shields.io/crates/v/native_db)](https://crates.io/crates/native_db)
 [![Linux/Windows/macOS/Android/iOS (Build/Test/Release)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_and_test_release.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_and_test_release.yml)
@@ -10,19 +10,19 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 
-Here's a drop-in, fast, embedded database solution for multi-platform applications (server, desktop, mobile). It's focused on maintaining coherence between Rust types and stored data with minimal boilerplate. Enjoy! 😌🍃.
+Blazing-fast, embedded database for multi-platform apps (server, desktop, mobile) - a Rust project's dream! 🚀 Sync Rust types effortlessly. Simple, effective, and ready to elevate your project. Get started and thrive! 😌🍃
 
 # Features
 
-- Simple API.
-- Support for multiple indexes (primary, secondary, unique, non-unique, optional).
+- Simple API 🦀.
+- Support for **multiple indexes** (primary, secondary, unique, non-unique, optional).
 - Minimal boilerplate.
 - Transparent serialization/deserialization using [native_model](https://crates.io/crates/native_model).
-- Automatic model migration.
-- Thread-safe and fully ACID-compliant transactions provided by [redb](https://github.com/cberner/redb).
-- Real-time subscription with filters for `insert`, `update` and `delete` operations.
+- **Automatic model migration** 🌟.
+- **Thread-safe** and fully **ACID-compliant** transactions provided by [redb](https://github.com/cberner/redb).
+- **Real-time** subscription with filters for `insert`, `update` and `delete` operations.
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
-- Hot snapshots.
+- **Hot snapshots**.
 
 # Installation
 

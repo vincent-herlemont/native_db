@@ -217,6 +217,44 @@ impl_inner_key_value_for_primitive!(i128);
 impl_inner_key_value_for_primitive!(f32);
 impl_inner_key_value_for_primitive!(f64);
 
+// Implement Uuid::uuid
+
+#[cfg(feature = "uuid")]
+impl InnerKeyValue for uuid::Uuid {
+    fn database_inner_key_value(&self) -> DatabaseInnerKeyValue {
+        DatabaseInnerKeyValue::new(self.as_bytes().to_vec())
+    }
+}
+
+#[cfg(feature = "uuid")]
+impl InnerKeyValue for &uuid::Uuid {
+    fn database_inner_key_value(&self) -> DatabaseInnerKeyValue {
+        DatabaseInnerKeyValue::new(self.as_bytes().to_vec())
+    }
+}
+
+// Implement chrono::DateTime<TZ>
+
+#[cfg(feature = "chrono")]
+impl<TZ> InnerKeyValue for chrono::DateTime<TZ>
+where
+    TZ: chrono::TimeZone,
+{
+    fn database_inner_key_value(&self) -> DatabaseInnerKeyValue {
+        DatabaseInnerKeyValue::new(self.timestamp().to_be_bytes().to_vec())
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl<TZ> InnerKeyValue for &chrono::DateTime<TZ>
+where
+    TZ: chrono::TimeZone,
+{
+    fn database_inner_key_value(&self) -> DatabaseInnerKeyValue {
+        DatabaseInnerKeyValue::new(self.timestamp().to_be_bytes().to_vec())
+    }
+}
+
 impl RedbValue for DatabaseInnerKeyValue {
     type SelfType<'a> = DatabaseInnerKeyValue;
     type AsBytes<'a> = &'a [u8] where Self: 'a;

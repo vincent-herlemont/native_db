@@ -18,13 +18,16 @@ members = ["native_db_macro"]
 redb = "1.4.0"
 native_db_macro = { version = "0.4.6", path = "native_db_macro" }
 thiserror = "1.0"
-uuid = { version = "1", features = [ "v4"] }
 serde = { version = "1.0" }
 native_model = { version = "0.4.2" }
-doc-comment = "0.3.3"
+
+uuid = { version = "1.6" , optional = true }
+chrono = { version = "0.4" , optional = true }
 
 # Optional tokio support
 tokio = { version = "1", features = ["sync"], optional = true }
+# TODO: channels with futures
+# TODO: channels crossbeam
 
 [dev-dependencies]
 assert_fs = "1.0"
@@ -34,6 +37,9 @@ skeptic = "0.13"
 tokio = { version = "1.33", features = ["test-util","macros"] }
 bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 criterion = { version = "0.5.1" }
+doc-comment = "0.3.3"
+uuid = { version = "1", features = ["serde", "v4"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 
 [features]

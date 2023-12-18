@@ -49,7 +49,7 @@ fn test_iter() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result: Vec<Item> = r.scan().primary().unwrap().iter().collect();
+    let result: Vec<Item> = r.scan().primary().unwrap().all().collect();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -80,7 +80,7 @@ fn test_iter_many_items_to_be_bytes() {
 
     let r = db.r_transaction().unwrap();
     {
-        let iter: Vec<Item> = r.scan().primary().unwrap().iter().collect();
+        let iter: Vec<Item> = r.scan().primary().unwrap().all().collect();
         assert_eq!(iter.len(), 257);
 
         let obj1 = iter.get(0).unwrap();
@@ -112,7 +112,7 @@ fn test_double_ended_iter() {
 
     let r = db.r_transaction().unwrap();
     let scan = r.scan().primary().unwrap();
-    let iter = scan.iter();
+    let iter = scan.all();
     let result: Vec<Item> = iter.rev().collect();
 
     assert_eq!(result.len(), 2);
@@ -472,7 +472,7 @@ fn test_txn_write_iter() {
     rw.commit().unwrap();
 
     let rw = db.rw_transaction().unwrap();
-    let result: Vec<Item> = rw.scan().primary().unwrap().iter().collect();
+    let result: Vec<Item> = rw.scan().primary().unwrap().all().collect();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();

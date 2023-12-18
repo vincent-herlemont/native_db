@@ -12,6 +12,7 @@ impl<'db, 'txn> RwDrain<'db, 'txn> {
         Ok(out.into_iter().map(|b| b.inner()).collect())
     }
 
+    /// **TODO: needs to be implemented**
     pub fn secondary<T: Input>(
         &self,
         _key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,

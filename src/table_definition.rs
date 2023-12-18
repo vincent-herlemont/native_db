@@ -1,4 +1,4 @@
-use crate::builder::ModelBuilder;
+use crate::database_builder::ModelBuilder;
 use crate::db_type::{DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseSecondaryKeyOptions};
 use std::collections::HashMap;
 use std::fmt::Debug;

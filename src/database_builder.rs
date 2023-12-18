@@ -6,7 +6,7 @@ use std::path::Path;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 
-/// Builder for the [`Db`](super::Database) instance.
+/// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc. and [define](Self::define) models.
 pub struct DatabaseBuilder {
     cache_size_bytes: Option<usize>,
     models_builder: HashMap<String, ModelBuilder>,
@@ -21,7 +21,7 @@ impl DatabaseBuilder {
         redb_builder
     }
 
-    fn init<'a>(&'a self, redb_database: redb::Database) -> Database<'a> {
+    fn init<'a>(&'a self, redb_database: redb::Database) -> Result<Database<'a>> {
         let mut database = Database {
             instance: redb_database,
             primary_table_definitions: HashMap::new(),
@@ -30,10 +30,10 @@ impl DatabaseBuilder {
         };
 
         for (_, model_builder) in &self.models_builder {
-            database.seed_model(&model_builder);
+            database.seed_model(&model_builder)?;
         }
 
-        database
+        Ok(database)
     }
 }
 
@@ -58,22 +58,23 @@ impl DatabaseBuilder {
     pub fn create(&self, path: impl AsRef<Path>) -> Result<Database> {
         let db = self.new_rdb_builder().create(path)?;
         // Ok(Self::from_redb(db))
-        Ok(self.init(db))
+        self.init(db)
     }
 
     /// Similar to [redb::Builder::open(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.open)
     pub fn open(&self, path: impl AsRef<Path>) -> Result<Database> {
         let db = self.new_rdb_builder().open(path)?;
         // Ok(Self::from_redb(db))
-        Ok(self.init(db))
+        self.init(db)
     }
 
+    /// Creates a new [`Database`](crate::Database) instance in memory.
     pub fn create_in_memory(&self) -> Result<Database> {
         let in_memory_backend = redb::backends::InMemoryBackend::new();
         let db = self.new_rdb_builder();
         let db = db.create_with_backend(in_memory_backend)?;
         // Ok(Self::from_redb(db))
-        Ok(self.init(db))
+        self.init(db)
     }
 
     /// Defines a table using the given model.
@@ -95,7 +96,7 @@ impl DatabaseBuilder {
     /// - `#[primary_key]` on the field
     /// - `#[native_db(primary_key(<method_name>))]` on any type `enum`, `struct`, `tuple struct` or `unit struct`.
     ///
-    /// By default is **unique** so you can't have two instances of the model with the same primary key saved in the database.
+    /// The primary key is **unique**, so you can't have two instances of the model with the same primary key saved in the database.
     ///
     /// ## Define a simple model with a primary key
     /// ```rust

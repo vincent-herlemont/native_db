@@ -17,24 +17,36 @@ pub struct RwTransaction<'db> {
 }
 
 impl<'db> RwTransaction<'db> {
+    /// Get a value from the database.
+    ///
+    /// Same as [`RTransaction::get()`](struct.RTransaction.html#method.get).
     pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
         RwGet {
             internal: &self.internal,
         }
     }
 
+    /// Get values from the database.
+    ///
+    /// Same as [`RTransaction::scan()`](struct.RTransaction.html#method.scan).
     pub fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
         RwScan {
             internal: &self.internal,
         }
     }
 
+    /// Get the number of values in the database.
+    ///
+    /// Same as [`RTransaction::len()`](struct.RTransaction.html#method.len).
     pub fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
         RwLen {
             internal: &self.internal,
         }
     }
 
+    /// Get all values from the database.
+    ///
+    /// Same as [`RTransaction::drain()`](struct.RTransaction.html#method.drain).
     pub fn drain<'txn>(&'txn self) -> RwDrain<'db, 'txn> {
         RwDrain {
             internal: &self.internal,
@@ -43,6 +55,26 @@ impl<'db> RwTransaction<'db> {
 }
 
 impl<'db, 'txn> RwTransaction<'db> {
+    /// Commit the transaction.
+    /// All changes will be applied to the database. If the commit fails, the transaction will be aborted. The
+    /// database will be unchanged.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let rw = db.rw_transaction()?;
+    ///     // Do some stuff..
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn commit(self) -> Result<()> {
         self.internal.commit()?;
         // Send batch to watchers after commit succeeds
@@ -53,6 +85,39 @@ impl<'db, 'txn> RwTransaction<'db> {
 }
 
 impl<'db, 'txn> RwTransaction<'db> {
+    /// Insert a value into the database.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Data>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let rw = db.rw_transaction()?;
+    ///
+    ///     // Insert a value
+    ///     rw.insert(Data { id: 1 })?;
+    ///
+    ///     // /!\ Don't forget to commit the transaction
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn insert<T: Input>(&self, item: T) -> Result<()> {
         let (watcher_request, binary_value) = self
             .internal
@@ -62,6 +127,40 @@ impl<'db, 'txn> RwTransaction<'db> {
         Ok(())
     }
 
+    /// Remove a value from the database.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Data>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let rw = db.rw_transaction()?;
+    ///
+    ///     // Remove a value
+    ///     rw.remove(Data { id: 1 })?;
+    ///
+    ///     // /!\ Don't forget to commit the transaction
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    // TODO: Return the Option<T> of the removed value
     pub fn remove<T: Input>(&self, item: T) -> Result<()> {
         let (watcher_request, binary_value) = self
             .internal
@@ -71,6 +170,41 @@ impl<'db, 'txn> RwTransaction<'db> {
         Ok(())
     }
 
+    /// Update a value in the database.
+    ///
+    /// That allow to update all keys (primary and secondary) of the value.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Data>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let rw = db.rw_transaction()?;
+    ///
+    ///     // Remove a value
+    ///     rw.update(Data { id: 1 }, Data { id: 2 })?;
+    ///
+    ///     // /!\ Don't forget to commit the transaction
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn update<T: Input>(&self, old_item: T, updated_item: T) -> Result<()> {
         let (watcher_request, old_binary_value, new_binary_value) = self.internal.concrete_update(
             T::native_db_model(),
@@ -82,12 +216,67 @@ impl<'db, 'txn> RwTransaction<'db> {
         Ok(())
     }
 
+    /// Convert all values from the database.
+    ///
+    /// This is useful when you want to change the type/model of a value.
+    /// You have to define [`From<SourceModel> for TargetModel`](https://doc.rust-lang.org/std/convert/trait.From.html) to convert the value.
+    ///
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize, Clone)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Dog {
+    ///     #[primary_key]
+    ///     name: String,
+    /// }
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=2, version=1)]
+    /// #[native_db]
+    /// struct Animal {
+    ///     #[primary_key]
+    ///     name: String,
+    ///     #[secondary_key]
+    ///     specie: String,
+    /// }
+    ///
+    /// impl From<Dog> for Animal {
+    ///     fn from(dog: Dog) -> Self {
+    ///        Animal {
+    ///           name: dog.name,
+    ///           specie: "dog".to_string(),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Dog>()?;
+    ///     builder.define::<Animal>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let rw = db.rw_transaction()?;
+    ///
+    ///     // Convert all values from Dog to Animal
+    ///     rw.convert_all::<Dog, Animal>()?;
+    ///
+    ///     // /!\ Don't forget to commit the transaction
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn convert_all<OldType, NewType>(&self) -> Result<()>
     where
         OldType: Input + Clone,
         NewType: Input + From<OldType>,
     {
-        let find_all_old: Vec<OldType> = self.scan().primary()?.iter().collect();
+        let find_all_old: Vec<OldType> = self.scan().primary()?.all().collect();
         for old in find_all_old {
             let new: NewType = old.clone().into();
             self.internal
@@ -98,7 +287,7 @@ impl<'db, 'txn> RwTransaction<'db> {
         Ok(())
     }
 
-    /// Automatically migrate the data from the old schema to the new schema. **No matter the state of the database**,
+    /// Automatically migrate the data from the old model to the new model. **No matter the state of the database**,
     /// if all models remain defined in the application as they are, the data will be migrated to the most recent version automatically.
     ///
     /// Native DB use the [`native_model`](https://crates.io/crates/native_model) identifier `id` to identify the model and `version` to identify the version of the model.
