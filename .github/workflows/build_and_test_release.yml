@@ -28,6 +28,8 @@ jobs:
       - uses: hustcer/setup-nu@v3.7
         with:
           version: '0.85'
+        env:
+            GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
       - name: Just version
         run: just --version
       - name: Build
