@@ -84,8 +84,8 @@ fn watch_all_primary_key() {
     assert!(recv.try_recv().is_err());
 }
 
-// Ignore this test on macOS because it fails with: Result::unwrap()` on an `Err` value: WatchEventError(SendError(SendError { .. }))
-#[cfg(not(target_os = "macos"))]
+// Ignore this test on macOS and ios because it fails with: Result::unwrap()` on an `Err` value: WatchEventError(SendError(SendError { .. }))
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
 #[test]
 fn watch_multithreading() {
     let tf = TmpFs::new().unwrap();

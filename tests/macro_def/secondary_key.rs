@@ -38,7 +38,7 @@ fn test_secondary() {
             .get(&DatabaseKeyDefinition::new(
                 1,
                 1,
-                "itemsecondary_compute_secondary_key",
+                "compute_secondary_key",
                 Default::default()
             ))
             .unwrap(),
@@ -83,7 +83,7 @@ fn test_secondary_unique() {
             .get(&DatabaseKeyDefinition::new(
                 2,
                 1,
-                "itemsecondaryunique_compute_secondary_key",
+                "compute_secondary_key",
                 Default::default()
             ))
             .unwrap(),
@@ -132,7 +132,7 @@ fn test_secondary_optional() {
             .get(&DatabaseKeyDefinition::new(
                 2,
                 1,
-                "itemsecondaryoptional_compute_secondary_key",
+                "compute_secondary_key",
                 Default::default()
             ))
             .unwrap(),
@@ -147,7 +147,7 @@ fn test_secondary_optional() {
             .get(&DatabaseKeyDefinition::new(
                 2,
                 1,
-                "itemsecondaryoptional_compute_secondary_key",
+                "compute_secondary_key",
                 Default::default()
             ))
             .unwrap(),

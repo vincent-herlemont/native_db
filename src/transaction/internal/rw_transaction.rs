@@ -225,8 +225,6 @@ impl<'db> InternalRwTransaction<'db> {
             .primary_table_definitions
             .get(T::native_db_model().primary_key.unique_table_name.as_str())
             .unwrap();
-
-        dbg!(&new_table_definition);
         if new_table_definition
             .native_model_options
             .native_model_legacy

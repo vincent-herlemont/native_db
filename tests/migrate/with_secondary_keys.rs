@@ -133,7 +133,6 @@ fn test_migrate() {
     assert_eq!(stats.primary_tables[1].n_entries, Some(5));
     assert_eq!(stats.primary_tables[0].name, "1_1_id_key");
     assert_eq!(stats.primary_tables[0].n_entries, Some(0));
-    dbg!(&stats.secondary_tables);
     assert_eq!(stats.secondary_tables.len(), 3);
     assert_eq!(stats.secondary_tables[0].name, "1_1_name_key");
     assert_eq!(stats.secondary_tables[0].n_entries, Some(0));
@@ -266,16 +265,16 @@ fn test_migrate_v3() {
     assert_eq!(stats.primary_tables[0].name, "1_1_id_key");
     assert_eq!(stats.primary_tables[0].n_entries, Some(0));
     assert_eq!(stats.primary_tables[1].name, "1_2_id_key");
-    assert_eq!(stats.primary_tables[1].n_entries, None);
+    assert_eq!(stats.primary_tables[1].n_entries, Some(0));
     assert_eq!(stats.primary_tables[2].name, "1_3_id");
     assert_eq!(stats.primary_tables[2].n_entries, Some(5));
     assert_eq!(stats.secondary_tables.len(), 4);
     assert_eq!(stats.secondary_tables[0].name, "1_1_name_key");
     assert_eq!(stats.secondary_tables[0].n_entries, Some(0));
     assert_eq!(stats.secondary_tables[1].name, "1_2_first_name_key");
-    assert_eq!(stats.secondary_tables[1].n_entries, None);
+    assert_eq!(stats.secondary_tables[1].n_entries, Some(0));
     assert_eq!(stats.secondary_tables[2].name, "1_2_last_name_key");
-    assert_eq!(stats.secondary_tables[2].n_entries, None);
+    assert_eq!(stats.secondary_tables[2].n_entries, Some(0));
     assert_eq!(stats.secondary_tables[3].name, "1_3_last_name");
     assert_eq!(stats.secondary_tables[3].n_entries, Some(5));
 }

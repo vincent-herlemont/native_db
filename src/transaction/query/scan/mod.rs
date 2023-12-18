@@ -11,11 +11,13 @@ use crate::transaction::internal::private_readable_transaction::PrivateReadableT
 use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 
+/// Get values from the database.
 pub struct RScan<'db, 'txn> {
     pub(crate) internal: &'txn InternalRTransaction<'db>,
 }
 
 impl<'txn> RScan<'_, 'txn> {
+    /// Get a values from the database by primary key.
     pub fn primary<T: Input>(
         &self,
     ) -> Result<PrimaryScan<redb::ReadOnlyTable<'txn, DatabaseInnerKeyValue, &'static [u8]>, T>>
@@ -26,6 +28,7 @@ impl<'txn> RScan<'_, 'txn> {
         Ok(out)
     }
 
+    /// Get a values from the database by secondary key.
     pub fn secondary<T: Input>(
         &self,
         key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,

@@ -4,6 +4,7 @@ use redb;
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
+/// Scan values from the database by secondary key.
 pub struct SecondaryScan<PrimaryTable, SecondaryTable, T: Input>
 where
     PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
@@ -19,7 +20,7 @@ where
     PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
     SecondaryTable: redb::ReadableTable<DatabaseInnerKeyValue, DatabaseInnerKeyValue>,
 {
-    pub fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable) -> Self {
+    pub(crate) fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable) -> Self {
         Self {
             primary_table,
             secondary_table,
@@ -27,6 +28,42 @@ where
         }
     }
 
+    /// Iterate over all values by secondary key.
+    ///
+    /// If the secondary key is [`optional`](struct.DatabaseBuilder.html#optional) you will
+    /// get all values that have the secondary key set.
+    ///
+    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key(optional)]
+    ///     name: Option<String>,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Data>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///     
+    ///     // Get only values that have the secondary key set (name is not None)
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().collect();
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn all(&self) -> SecondaryScanIterator<PrimaryTable, T> {
         let range = self
             .secondary_table
@@ -39,6 +76,39 @@ where
         }
     }
 
+    /// Iterate over all values by secondary key.
+    ///
+    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key]
+    ///     name: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Data>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///     
+    ///     // Get only values that have the secondary key name from C to the end
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).collect();
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn range<TR: InnerKeyValue, R: RangeBounds<TR>>(
         &self,
         range: R,
@@ -55,6 +125,39 @@ where
         }
     }
 
+    /// Iterate over all values by secondary key.
+    ///
+    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key]
+    ///     name: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut builder = DatabaseBuilder::new();
+    ///     builder.define::<Data>()?;
+    ///     let db = builder.create_in_memory()?;
+    ///     
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///     
+    ///     // Get only values that have the secondary key name starting with "hello"
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").collect();
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn start_with<'a>(
         &'a self,
         start_with: impl InnerKeyValue + 'a,

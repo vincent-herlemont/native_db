@@ -36,15 +36,15 @@ fn test_secondary() {
     let secondary_key: HashMap<_, DatabaseKeyValue> = item.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 2);
     assert_eq!(
-        secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                1,
-                1,
-                "itemsecondarymix_compute_secondary_key",
-                Default::default()
-            ))
-            .unwrap(),
-        &DatabaseKeyValue::Default("test-1".database_inner_key_value())
+        secondary_key.get(&DatabaseKeyDefinition::new(
+            1,
+            1,
+            "compute_secondary_key",
+            Default::default()
+        )),
+        Some(&DatabaseKeyValue::Default(
+            "test-1".database_inner_key_value()
+        ))
     );
 
     assert_eq!(
@@ -52,7 +52,7 @@ fn test_secondary() {
             .get(&DatabaseKeyDefinition::new(
                 1,
                 1,
-                "itemsecondarymix_name",
+                "name",
                 Default::default()
             ))
             .unwrap(),

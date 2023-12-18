@@ -47,6 +47,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
         model.check_secondary_options(&secondary_key, |options| options.unique == true)?;
 
         let table = self.get_secondary_table(&model, &secondary_key)?;
+
         let value = table.get(key.database_inner_key_value())?;
         let primary_key = if let Some(value) = value {
             value.value().to_owned()

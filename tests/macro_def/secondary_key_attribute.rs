@@ -31,7 +31,7 @@ fn test_secondary() {
             .get(&DatabaseKeyDefinition::new(
                 1,
                 1,
-                "itemsecondary_name",
+                "name",
                 Default::default()
             ))
             .unwrap(),
@@ -66,7 +66,7 @@ fn test_secondary_optional() {
             .get(&DatabaseKeyDefinition::new(
                 2,
                 1,
-                "itemsecondaryoptional_name",
+                "name",
                 Default::default()
             ))
             .unwrap(),
@@ -81,7 +81,7 @@ fn test_secondary_optional() {
             .get(&DatabaseKeyDefinition::new(
                 2,
                 1,
-                "itemsecondaryoptional_name",
+                "name",
                 Default::default()
             ))
             .unwrap(),
@@ -116,7 +116,7 @@ fn test_secondary_unique() {
             .get(&DatabaseKeyDefinition::new(
                 3,
                 1,
-                "itemsecondaryunique_name",
+                "name",
                 Default::default()
             ))
             .unwrap(),
@@ -154,7 +154,7 @@ fn test_secondary_others() {
             .get(&DatabaseKeyDefinition::new(
                 4,
                 1,
-                "itemsecondaryothers_name",
+                "name",
                 Default::default()
             ))
             .unwrap(),
@@ -165,7 +165,7 @@ fn test_secondary_others() {
             .get(&DatabaseKeyDefinition::new(
                 4,
                 1,
-                "itemsecondaryothers_name2",
+                "name2",
                 Default::default()
             ))
             .unwrap(),

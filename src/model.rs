@@ -1,7 +1,6 @@
 use crate::db_type::{DatabaseKeyDefinition, DatabaseSecondaryKeyOptions, Error, Result};
 use std::collections::HashSet;
 
-/// Model of the Item. Returned by the [`<your_item>::native_db_model()`](crate::Input::native_db_model) method.
 #[derive(Clone, Debug)]
 pub struct DatabaseModel {
     pub primary_key: DatabaseKeyDefinition<()>,

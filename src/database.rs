@@ -1,4 +1,4 @@
-use crate::builder::ModelBuilder;
+use crate::database_builder::ModelBuilder;
 use crate::db_type::Result;
 use crate::stats::{Stats, StatsTable};
 use crate::table_definition::PrimaryTableDefinition;
@@ -15,7 +15,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 use std::u64;
 
-/// The [Database] is the main entry point to interact with the database.
+/// The database instance. Allows you to create [rw_transaction](database/struct.Database.html#method.rw_transaction) and [r_transaction](database/struct.Database.html#method.r_transaction), [watch](database/struct.Database.html#method.watch) queries, and [unwatch](database/struct.Database.html#method.unwatch) etc.
 ///
 /// # Example
 /// ```rust
@@ -38,24 +38,85 @@ pub struct Database<'a> {
     pub(crate) watchers_counter_id: AtomicU64,
 }
 
+impl Database<'_> {
+    /// Creates a new read-write transaction.
+    pub fn rw_transaction(&self) -> Result<RwTransaction> {
+        let rw = self.instance.begin_write()?;
+        let write_txn = RwTransaction {
+            watcher: &self.watchers,
+            batch: RefCell::new(watch::Batch::new()),
+            internal: InternalRwTransaction {
+                redb_transaction: rw,
+                primary_table_definitions: &self.primary_table_definitions,
+            },
+        };
+        Ok(write_txn)
+    }
+
+    /// Creates a new read-only transaction.
+    pub fn r_transaction(&self) -> Result<RTransaction> {
+        let txn = self.instance.begin_read()?;
+        let read_txn = RTransaction {
+            internal: InternalRTransaction {
+                redb_transaction: txn,
+                table_definitions: &self.primary_table_definitions,
+            },
+        };
+        Ok(read_txn)
+    }
+}
+
+impl Database<'_> {
+    /// Watch queries.
+    pub fn watch(&self) -> Watch {
+        Watch {
+            internal: InternalWatch {
+                watchers: &self.watchers,
+                watchers_counter_id: &self.watchers_counter_id,
+            },
+        }
+    }
+
+    /// Unwatch the given `id`.
+    /// You can get the `id` from the return value of [`watch`](Self::watch).
+    /// If the `id` is not valid anymore, this function will do nothing.
+    /// If the `id` is valid, the corresponding watcher will be removed.
+    pub fn unwatch(&self, id: u64) -> Result<()> {
+        let mut watchers = self.watchers.write().unwrap();
+        watchers.remove_sender(id);
+        Ok(())
+    }
+}
+
 impl<'a> Database<'a> {
-    pub(crate) fn seed_model(&mut self, model_builder: &'a ModelBuilder) {
+    pub(crate) fn seed_model(&mut self, model_builder: &'a ModelBuilder) -> Result<()> {
         let main_table_definition =
             redb::TableDefinition::new(model_builder.model.primary_key.unique_table_name.as_str());
         let mut primary_table_definition: PrimaryTableDefinition =
             (model_builder, main_table_definition).into();
+
+        let rw = self.instance.begin_write()?;
+        rw.open_table(primary_table_definition.redb.clone())?;
 
         for secondary_key in model_builder.model.secondary_keys.iter() {
             primary_table_definition.secondary_tables.insert(
                 secondary_key.clone(),
                 redb::TableDefinition::new(secondary_key.unique_table_name.as_str()).into(),
             );
+            rw.open_table(
+                primary_table_definition.secondary_tables[&secondary_key]
+                    .redb
+                    .clone(),
+            )?;
         }
+        rw.commit()?;
 
         self.primary_table_definitions.insert(
             model_builder.model.primary_key.unique_table_name.clone(),
             primary_table_definition,
         );
+
+        Ok(())
     }
 
     pub fn redb_stats(&self) -> Result<Stats> {
@@ -111,55 +172,5 @@ impl<'a> Database<'a> {
             primary_tables: stats_primary_tables,
             secondary_tables: stats_secondary_tables,
         })
-    }
-}
-
-impl Database<'_> {
-    /// Creates a new read-write transaction.
-    pub fn rw_transaction(&self) -> Result<RwTransaction> {
-        let rw = self.instance.begin_write()?;
-        let write_txn = RwTransaction {
-            watcher: &self.watchers,
-            batch: RefCell::new(watch::Batch::new()),
-            internal: InternalRwTransaction {
-                redb_transaction: rw,
-                primary_table_definitions: &self.primary_table_definitions,
-            },
-        };
-        Ok(write_txn)
-    }
-
-    /// Creates a new read-only transaction.
-    pub fn r_transaction(&self) -> Result<RTransaction> {
-        let txn = self.instance.begin_read()?;
-        let read_txn = RTransaction {
-            internal: InternalRTransaction {
-                redb_transaction: txn,
-                table_definitions: &self.primary_table_definitions,
-            },
-        };
-        Ok(read_txn)
-    }
-}
-
-impl Database<'_> {
-    /// Watch queries.
-    pub fn watch(&self) -> Watch {
-        Watch {
-            internal: InternalWatch {
-                watchers: &self.watchers,
-                watchers_counter_id: &self.watchers_counter_id,
-            },
-        }
-    }
-
-    /// Unwatch the given `id`.
-    /// You can get the `id` from the return value of [`primary_watch`](#method.primary_watch).
-    /// If the `id` is not valid anymore, this function will do nothing.
-    /// If the `id` is valid, the corresponding watcher will be removed.
-    pub fn unwatch(&self, id: u64) -> Result<()> {
-        let mut watchers = self.watchers.write().unwrap();
-        watchers.remove_sender(id);
-        Ok(())
     }
 }
