@@ -24,8 +24,8 @@
       "matchStrings": [
         "\"native_model\" = \"(?<currentValue>.*?)\""
       ],
-      "datasource": "crate",
       "depNameTemplate": "native_model",
+      "datasourceTemplate": "crate",
       "versioningTemplate": "semver"
     }
   ]

@@ -10,7 +10,7 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 
-Blazing-fast, embedded database for multi-platform apps (server, desktop, mobile) - a Rust project's dream! 🚀 Sync Rust types effortlessly. Simple, effective, and ready to elevate your project. Get started and thrive! 😌🍃
+Here's a drop-in, fast, embedded database for multi-platform apps (server, desktop, mobile). Sync Rust types effortlessly. Enjoy! 😌🍃.
 
 # Features
 
@@ -30,7 +30,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 native_db = "0.5.0"
-native_model = "0.3.30"
+native_model = "0.4.2"
 ```
 
 NOTE: `native_db` requires `native_model` to work.
@@ -47,11 +47,11 @@ Active development. The API is not stable yet and may change in the future.
 - [**Database**](https://docs.rs/native_db/latest/native_db/struct.Database.html)
     - [**snapshot**](https://docs.rs/native_db/latest/native_db/struct.Database.html#method.snapshot) the database.
     - **rw_transaction** open a read-write transaction.
-        - [**insert**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.insert) a new item.
-        - [**update**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.update) an existing item.
-        - [**remove**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.remove) an existing item.
-        - [**commit**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.commit) the transaction.
-        - [**min**](https://docs.rs/native_db/latest/native_db/native_db/transaction/struct.RwTransaction.html#method.min) the minimum primary key.
+        - [**insert**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.insert) a new item.
+        - [**update**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.update) an existing item.
+        - [**remove**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.remove) an existing item.
+        - [**commit**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.commit) the transaction.
+        - [**migrate**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.migrate) a model.
         - plus all read-only transaction APIs.
     - **r_transaction** open a read-only transaction.
         - **get**
