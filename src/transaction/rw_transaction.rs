@@ -20,7 +20,7 @@ impl<'db> RwTransaction<'db> {
     /// Get a value from the database.
     ///
     /// Same as [`RTransaction::get()`](struct.RTransaction.html#method.get).
-    pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
+    pub const fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
         RwGet {
             internal: &self.internal,
         }
@@ -29,7 +29,7 @@ impl<'db> RwTransaction<'db> {
     /// Get values from the database.
     ///
     /// Same as [`RTransaction::scan()`](struct.RTransaction.html#method.scan).
-    pub fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
+    pub const fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
         RwScan {
             internal: &self.internal,
         }
@@ -38,7 +38,7 @@ impl<'db> RwTransaction<'db> {
     /// Get the number of values in the database.
     ///
     /// Same as [`RTransaction::len()`](struct.RTransaction.html#method.len).
-    pub fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
+    pub const fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
         RwLen {
             internal: &self.internal,
         }
@@ -47,14 +47,14 @@ impl<'db> RwTransaction<'db> {
     /// Get all values from the database.
     ///
     /// Same as [`RTransaction::drain()`](struct.RTransaction.html#method.drain).
-    pub fn drain<'txn>(&'txn self) -> RwDrain<'db, 'txn> {
+    pub const fn drain<'txn>(&'txn self) -> RwDrain<'db, 'txn> {
         RwDrain {
             internal: &self.internal,
         }
     }
 }
 
-impl<'db, 'txn> RwTransaction<'db> {
+impl<'db> RwTransaction<'db> {
     /// Commit the transaction.
     /// All changes will be applied to the database. If the commit fails, the transaction will be aborted. The
     /// database will be unchanged.
@@ -79,12 +79,12 @@ impl<'db, 'txn> RwTransaction<'db> {
         self.internal.commit()?;
         // Send batch to watchers after commit succeeds
         let batch = self.batch.into_inner();
-        watch::push_batch(Arc::clone(&self.watcher), batch)?;
+        watch::push_batch(Arc::clone(self.watcher), batch)?;
         Ok(())
     }
 }
 
-impl<'db, 'txn> RwTransaction<'db> {
+impl<'db> RwTransaction<'db> {
     /// Insert a value into the database.
     ///
     /// # Example
@@ -279,9 +279,11 @@ impl<'db, 'txn> RwTransaction<'db> {
         let find_all_old: Vec<OldType> = self.scan().primary()?.all().collect();
         for old in find_all_old {
             let new: NewType = old.clone().into();
-            self.internal
+            _ = self
+                .internal
                 .concrete_insert(NewType::native_db_model(), new.to_item())?;
-            self.internal
+            _ = self
+                .internal
                 .concrete_remove(OldType::native_db_model(), old.to_item())?;
         }
         Ok(())

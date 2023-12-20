@@ -28,6 +28,6 @@ fn insert_get() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result_item = r.get().primary(&item.uuid).unwrap().unwrap();
+    let result_item = r.get().primary(item.uuid).unwrap().unwrap();
     assert_eq!(item, result_item);
 }

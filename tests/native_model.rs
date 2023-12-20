@@ -1,4 +1,3 @@
-use bincode;
 use bincode::{config, Decode, Encode};
 use native_db::*;
 use native_db_macro::native_db;

@@ -9,21 +9,21 @@ pub struct RTransaction<'db> {
 
 impl<'db> RTransaction<'db> {
     /// Get a value from the database.
-    pub fn get<'txn>(&'txn self) -> RGet<'db, 'txn> {
+    pub const fn get<'txn>(&'txn self) -> RGet<'db, 'txn> {
         RGet {
             internal: &self.internal,
         }
     }
 
     /// Get values from the database.
-    pub fn scan<'txn>(&'txn self) -> RScan<'db, 'txn> {
+    pub const fn scan<'txn>(&'txn self) -> RScan<'db, 'txn> {
         RScan {
             internal: &self.internal,
         }
     }
 
     /// Get the number of values in the database.
-    pub fn len<'txn>(&'txn self) -> RLen<'db, 'txn> {
+    pub const fn len<'txn>(&'txn self) -> RLen<'db, 'txn> {
         RLen {
             internal: &self.internal,
         }

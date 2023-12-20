@@ -20,11 +20,13 @@ impl DatabaseInput {
     ) -> Result<DatabaseKeyValue> {
         let secondary_key = self.secondary_keys.get(secondary_key_def).ok_or(
             Error::SecondaryKeyDefinitionNotFound {
-                table: "".to_string(),
+                table: String::new(),
                 key: secondary_key_def.unique_table_name.clone(),
             },
         )?;
-        let out = if !secondary_key_def.options.unique {
+        let out = if secondary_key_def.options.unique {
+            secondary_key.clone()
+        } else {
             match secondary_key {
                 DatabaseKeyValue::Default(value) => {
                     DatabaseKeyValue::Default(composite_key(value, &self.primary_key))
@@ -36,8 +38,6 @@ impl DatabaseInput {
                     DatabaseKeyValue::Optional(value)
                 }
             }
-        } else {
-            secondary_key.clone()
         };
         Ok(out)
     }

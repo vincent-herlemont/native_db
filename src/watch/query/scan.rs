@@ -14,9 +14,9 @@ pub struct WatchScan<'db, 'w> {
 /// Watch multiple values.
 impl WatchScan<'_, '_> {
     /// Watch all values.
-    pub fn primary(&self) -> WatchScanPrimary {
+    pub const fn primary(&self) -> WatchScanPrimary<'_, '_> {
         WatchScanPrimary {
-            internal: &self.internal,
+            internal: self.internal,
         }
     }
 
@@ -24,10 +24,10 @@ impl WatchScan<'_, '_> {
     pub fn secondary(
         &self,
         key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-    ) -> WatchScanSecondary {
+    ) -> WatchScanSecondary<'_, '_> {
         WatchScanSecondary {
             key_def: key_def.database_key(),
-            internal: &self.internal,
+            internal: self.internal,
         }
     }
 }
@@ -154,7 +154,7 @@ impl WatchScanSecondary<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn all<'ws, T: Input>(&'ws self) -> Result<(MpscReceiver<watch::Event>, u64)> {
+    pub fn all<T: Input>(&self) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_secondary_all::<T>(&self.key_def)
     }
 

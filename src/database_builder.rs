@@ -7,6 +7,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 
 /// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc. and [define](Self::define) models.
+#[derive(Default)]
 pub struct DatabaseBuilder {
     cache_size_bytes: Option<usize>,
     models_builder: HashMap<String, ModelBuilder>,
@@ -16,12 +17,12 @@ impl DatabaseBuilder {
     fn new_rdb_builder(&self) -> redb::Builder {
         let mut redb_builder = redb::Builder::new();
         if let Some(cache_size_bytes) = self.cache_size_bytes {
-            redb_builder.set_cache_size(cache_size_bytes);
+            _ = redb_builder.set_cache_size(cache_size_bytes);
         }
         redb_builder
     }
 
-    fn init<'a>(&'a self, redb_database: redb::Database) -> Result<Database<'a>> {
+    fn init(&self, redb_database: redb::Database) -> Result<Database<'_>> {
         let mut database = Database {
             instance: redb_database,
             primary_table_definitions: HashMap::new(),
@@ -29,8 +30,8 @@ impl DatabaseBuilder {
             watchers_counter_id: AtomicU64::new(0),
         };
 
-        for (_, model_builder) in &self.models_builder {
-            database.seed_model(&model_builder)?;
+        for model_builder in self.models_builder.values() {
+            database.seed_model(model_builder)?;
         }
 
         Ok(database)
@@ -55,21 +56,21 @@ impl DatabaseBuilder {
     /// Creates a new `Db` instance using the given path.
     ///
     /// Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
-    pub fn create(&self, path: impl AsRef<Path>) -> Result<Database> {
+    pub fn create(&self, path: impl AsRef<Path>) -> Result<Database<'_>> {
         let db = self.new_rdb_builder().create(path)?;
         // Ok(Self::from_redb(db))
         self.init(db)
     }
 
     /// Similar to [redb::Builder::open(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.open)
-    pub fn open(&self, path: impl AsRef<Path>) -> Result<Database> {
+    pub fn open(&self, path: impl AsRef<Path>) -> Result<Database<'_>> {
         let db = self.new_rdb_builder().open(path)?;
         // Ok(Self::from_redb(db))
         self.init(db)
     }
 
     /// Creates a new [`Database`](crate::Database) instance in memory.
-    pub fn create_in_memory(&self) -> Result<Database> {
+    pub fn create_in_memory(&self) -> Result<Database<'_>> {
         let in_memory_backend = redb::backends::InMemoryBackend::new();
         let db = self.new_rdb_builder();
         let db = db.create_with_backend(in_memory_backend)?;
@@ -299,7 +300,7 @@ impl DatabaseBuilder {
             }
         }
 
-        self.models_builder.insert(
+        _ = self.models_builder.insert(
             new_model_builder
                 .model
                 .primary_key
@@ -321,7 +322,7 @@ impl DatabaseBuilder {
     }
 }
 
-pub(crate) struct ModelBuilder {
-    pub(crate) model: DatabaseModel,
-    pub(crate) native_model_options: NativeModelOptions,
+pub struct ModelBuilder {
+    pub model: DatabaseModel,
+    pub native_model_options: NativeModelOptions,
 }

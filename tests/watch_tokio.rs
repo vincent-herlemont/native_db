@@ -20,7 +20,7 @@ async fn watch_one_primary_key() {
 
     let mut builder = DatabaseBuilder::new();
     builder.define::<ItemA>().unwrap();
-    let mut db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
 
     let a = ItemA { id: 1 };
 

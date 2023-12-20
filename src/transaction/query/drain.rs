@@ -13,10 +13,7 @@ impl<'db, 'txn> RwDrain<'db, 'txn> {
     }
 
     /// **TODO: needs to be implemented**
-    pub fn secondary<T: Input>(
-        &self,
-        _key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-    ) -> () {
-        todo!()
+    pub fn secondary<T: Input>(&self, _key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>) {
+        unimplemented!()
     }
 }

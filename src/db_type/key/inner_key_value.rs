@@ -10,7 +10,7 @@ impl DatabaseInnerKeyValue {
         Self(data)
     }
 
-    pub(crate) fn extend(&mut self, data: &DatabaseInnerKeyValue) {
+    pub(crate) fn extend(&mut self, data: &Self) {
         self.0.extend(data.0.iter());
     }
 
@@ -186,10 +186,10 @@ where
     T: InnerKeyValue,
 {
     fn database_inner_key_value(&self) -> DatabaseInnerKeyValue {
-        match self {
-            Some(value) => value.database_inner_key_value(),
-            None => DatabaseInnerKeyValue::new(Vec::new()),
-        }
+        self.as_ref().map_or_else(
+            || DatabaseInnerKeyValue::new(Vec::new()),
+            |value| value.database_inner_key_value(),
+        )
     }
 }
 
@@ -256,7 +256,7 @@ where
 }
 
 impl RedbValue for DatabaseInnerKeyValue {
-    type SelfType<'a> = DatabaseInnerKeyValue;
+    type SelfType<'a> = Self;
     type AsBytes<'a> = &'a [u8] where Self: 'a;
 
     fn fixed_width() -> Option<usize> {
@@ -272,8 +272,7 @@ impl RedbValue for DatabaseInnerKeyValue {
 
     fn as_bytes<'a, 'b: 'a>(value: &'a Self::SelfType<'b>) -> Self::AsBytes<'a>
     where
-        Self: 'a,
-        Self: 'b,
+        Self: 'a + 'b,
     {
         value.0.as_slice()
     }
@@ -285,10 +284,11 @@ impl RedbValue for DatabaseInnerKeyValue {
 
 impl RedbKey for DatabaseInnerKeyValue {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
-        data1.cmp(&data2)
+        data1.cmp(data2)
     }
 }
 
+#[derive(Debug)]
 pub enum DatabaseInnerKeyValueRange {
     Range(Range<DatabaseInnerKeyValue>),
     RangeInclusive(RangeInclusive<DatabaseInnerKeyValue>),
@@ -299,48 +299,38 @@ pub enum DatabaseInnerKeyValueRange {
 }
 
 impl DatabaseInnerKeyValueRange {
-    pub fn new<T>(bounds: impl RangeBounds<T>) -> DatabaseInnerKeyValueRange
+    pub fn new<T>(bounds: impl RangeBounds<T>) -> Self
     where
         T: InnerKeyValue,
     {
+        // FIXME: Here are a lot of match arms with identical bodies to another arm
+        //        this needs to be refactored
         match (bounds.start_bound(), bounds.end_bound()) {
-            (Bound::Included(start), Bound::Included(end)) => {
-                DatabaseInnerKeyValueRange::RangeInclusive(
-                    start.database_inner_key_value()..=end.database_inner_key_value(),
-                )
-            }
-            (Bound::Included(start), Bound::Excluded(end)) => DatabaseInnerKeyValueRange::Range(
-                start.database_inner_key_value()..end.database_inner_key_value(),
+            (Bound::Included(start), Bound::Included(end)) => Self::RangeInclusive(
+                start.database_inner_key_value()..=end.database_inner_key_value(),
             ),
-            (Bound::Included(start), Bound::Unbounded) => {
-                DatabaseInnerKeyValueRange::RangeFrom(RangeFrom {
-                    start: start.database_inner_key_value(),
-                })
+            (Bound::Included(start), Bound::Excluded(end)) => {
+                Self::Range(start.database_inner_key_value()..end.database_inner_key_value())
             }
-            (Bound::Excluded(start), Bound::Included(end)) => {
-                DatabaseInnerKeyValueRange::RangeInclusive(
-                    start.database_inner_key_value()..=end.database_inner_key_value(),
-                )
-            }
-            (Bound::Excluded(start), Bound::Excluded(end)) => DatabaseInnerKeyValueRange::Range(
-                start.database_inner_key_value()..end.database_inner_key_value(),
+            (Bound::Included(start), Bound::Unbounded) => Self::RangeFrom(RangeFrom {
+                start: start.database_inner_key_value(),
+            }),
+            (Bound::Excluded(start), Bound::Included(end)) => Self::RangeInclusive(
+                start.database_inner_key_value()..=end.database_inner_key_value(),
             ),
-            (Bound::Excluded(start), Bound::Unbounded) => {
-                DatabaseInnerKeyValueRange::RangeFrom(RangeFrom {
-                    start: start.database_inner_key_value(),
-                })
+            (Bound::Excluded(start), Bound::Excluded(end)) => {
+                Self::Range(start.database_inner_key_value()..end.database_inner_key_value())
             }
-            (Bound::Unbounded, Bound::Included(end)) => {
-                DatabaseInnerKeyValueRange::RangeTo(RangeTo {
-                    end: { end.database_inner_key_value() },
-                })
-            }
-            (Bound::Unbounded, Bound::Excluded(end)) => {
-                DatabaseInnerKeyValueRange::RangeTo(RangeTo {
-                    end: end.database_inner_key_value(),
-                })
-            }
-            (Bound::Unbounded, Bound::Unbounded) => DatabaseInnerKeyValueRange::RangeFull,
+            (Bound::Excluded(start), Bound::Unbounded) => Self::RangeFrom(RangeFrom {
+                start: start.database_inner_key_value(),
+            }),
+            (Bound::Unbounded, Bound::Included(end)) => Self::RangeTo(RangeTo {
+                end: { end.database_inner_key_value() },
+            }),
+            (Bound::Unbounded, Bound::Excluded(end)) => Self::RangeTo(RangeTo {
+                end: end.database_inner_key_value(),
+            }),
+            (Bound::Unbounded, Bound::Unbounded) => Self::RangeFull,
         }
     }
 }
@@ -348,23 +338,23 @@ impl DatabaseInnerKeyValueRange {
 impl RangeBounds<DatabaseInnerKeyValue> for DatabaseInnerKeyValueRange {
     fn start_bound(&self) -> Bound<&DatabaseInnerKeyValue> {
         match self {
-            DatabaseInnerKeyValueRange::Range(range) => range.start_bound(),
-            DatabaseInnerKeyValueRange::RangeInclusive(range) => range.start_bound(),
-            DatabaseInnerKeyValueRange::RangeFrom(range) => range.start_bound(),
-            DatabaseInnerKeyValueRange::RangeTo(range) => range.start_bound(),
-            DatabaseInnerKeyValueRange::RangeToInclusive(range) => range.start_bound(),
-            DatabaseInnerKeyValueRange::RangeFull => Bound::Unbounded,
+            Self::Range(range) => range.start_bound(),
+            Self::RangeInclusive(range) => range.start_bound(),
+            Self::RangeFrom(range) => range.start_bound(),
+            Self::RangeTo(range) => range.start_bound(),
+            Self::RangeToInclusive(range) => range.start_bound(),
+            Self::RangeFull => Bound::Unbounded,
         }
     }
 
     fn end_bound(&self) -> Bound<&DatabaseInnerKeyValue> {
         match self {
-            DatabaseInnerKeyValueRange::Range(range) => range.end_bound(),
-            DatabaseInnerKeyValueRange::RangeInclusive(range) => range.end_bound(),
-            DatabaseInnerKeyValueRange::RangeFrom(range) => range.end_bound(),
-            DatabaseInnerKeyValueRange::RangeTo(range) => range.end_bound(),
-            DatabaseInnerKeyValueRange::RangeToInclusive(range) => range.end_bound(),
-            DatabaseInnerKeyValueRange::RangeFull => Bound::Unbounded,
+            Self::Range(range) => range.end_bound(),
+            Self::RangeInclusive(range) => range.end_bound(),
+            Self::RangeFrom(range) => range.end_bound(),
+            Self::RangeTo(range) => range.end_bound(),
+            Self::RangeToInclusive(range) => range.end_bound(),
+            Self::RangeFull => Bound::Unbounded,
         }
     }
 }
@@ -375,15 +365,15 @@ mod tests {
     use std::ops::RangeBounds;
 
     fn range<T: InnerKeyValue, R: RangeBounds<T>>(range: R) -> DatabaseInnerKeyValueRange {
-        let range = DatabaseInnerKeyValueRange::new(range);
-        range
+        DatabaseInnerKeyValueRange::new(range)
     }
 
     #[test]
     fn test_range() {
         use redb::{ReadableTable, TableDefinition};
 
-        const TABLE: TableDefinition<DatabaseInnerKeyValue, u64> = TableDefinition::new("my_data");
+        const TABLE: TableDefinition<'_, DatabaseInnerKeyValue, u64> =
+            TableDefinition::new("my_data");
 
         let backend = redb::backends::InMemoryBackend::new();
         let db = redb::Database::builder()
@@ -392,7 +382,7 @@ mod tests {
         let write_txn = db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(TABLE).unwrap();
-            table.insert(0u32.database_inner_key_value(), &123).unwrap();
+            _ = table.insert(0u32.database_inner_key_value(), &123).unwrap();
         }
         write_txn.commit().unwrap();
 
@@ -409,7 +399,6 @@ mod tests {
 
         let range = range(0..2);
         let iter = table.range::<DatabaseInnerKeyValue>(range).unwrap();
-        let result: Vec<_> = iter.collect();
-        assert_eq!(result.len(), 1);
+        assert_eq!(iter.count(), 1);
     }
 }

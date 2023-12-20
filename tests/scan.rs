@@ -28,10 +28,10 @@ impl Item {
         self.id
     }
     pub fn secondary_key_1(&self) -> String {
-        format!("{}", self.id).into()
+        format!("{}", self.id)
     }
     pub fn secondary_key_2(&self) -> String {
-        format!("{}", self.name)
+        self.name.to_string()
     }
 }
 

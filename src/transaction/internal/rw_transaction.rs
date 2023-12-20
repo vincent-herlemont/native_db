@@ -18,16 +18,15 @@ pub struct InternalRwTransaction<'db> {
 
 impl<'db, 'txn> PrivateReadableTransaction<'db, 'txn> for InternalRwTransaction<'db>
 where
-    Self: 'txn,
-    Self: 'db,
+    Self: 'txn + 'db,
 {
     type RedbPrimaryTable = redb::Table<'db, 'txn, DatabaseInnerKeyValue, &'static [u8]>;
     type RedbSecondaryTable = redb::Table<'db, 'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
 
     type RedbTransaction<'db_bis> = redb::WriteTransaction<'db> where Self: 'db_bis;
 
-    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
-        &self.primary_table_definitions
+    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition<'_>> {
+        self.primary_table_definitions
     }
 
     fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable> {
@@ -54,7 +53,7 @@ where
             })?;
         let secondary_table_definition = main_table_definition
             .secondary_tables
-            .get(&secondary_key)
+            .get(secondary_key)
             .ok_or_else(|| Error::TableDefinitionNotFound {
                 table: secondary_key.unique_table_name.to_string(),
             })?;
@@ -84,7 +83,7 @@ impl<'db> InternalRwTransaction<'db> {
                 .is_some();
         }
 
-        for (secondary_key_def, _value) in &item.secondary_keys {
+        for secondary_key_def in item.secondary_keys.keys() {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             let result = match item.secondary_key_value(secondary_key_def)? {
                 DatabaseKeyValue::Default(value) => {
@@ -101,14 +100,13 @@ impl<'db> InternalRwTransaction<'db> {
             if result.is_some() && !already_exists {
                 return Err(Error::DuplicateKey {
                     key_name: secondary_key_def.unique_table_name.to_string(),
-                }
-                .into());
+                });
             }
         }
 
         Ok((
             WatcherRequest::new(
-                model.primary_key.unique_table_name.clone(),
+                model.primary_key.unique_table_name,
                 item.primary_key,
                 item.secondary_keys,
             ),
@@ -121,21 +119,21 @@ impl<'db> InternalRwTransaction<'db> {
         model: DatabaseModel,
         item: DatabaseInput,
     ) -> Result<(WatcherRequest, DatabaseOutputValue)> {
-        let keys = &item.secondary_keys;
+        let secondary_keys = &item.secondary_keys;
         {
             let mut table = self.get_primary_table(&model)?;
-            table.remove(&item.primary_key)?;
+            _ = table.remove(&item.primary_key)?;
         }
 
-        for (secondary_key_def, _value) in keys {
+        for secondary_key_def in secondary_keys.keys() {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             match &item.secondary_key_value(secondary_key_def)? {
                 DatabaseKeyValue::Default(value) => {
-                    secondary_table.remove(value)?;
+                    _ = secondary_table.remove(value)?;
                 }
                 DatabaseKeyValue::Optional(value) => {
                     if let Some(value) = value {
-                        secondary_table.remove(value)?;
+                        _ = secondary_table.remove(value)?;
                     }
                 }
             }
@@ -143,7 +141,7 @@ impl<'db> InternalRwTransaction<'db> {
 
         Ok((
             WatcherRequest::new(
-                model.primary_key.unique_table_name.clone(),
+                model.primary_key.unique_table_name,
                 item.primary_key,
                 item.secondary_keys,
             ),
@@ -162,7 +160,7 @@ impl<'db> InternalRwTransaction<'db> {
         Ok((watcher_request, old_binary_value, new_binary_value))
     }
 
-    pub(crate) fn concrete_primary_drain<'a>(
+    pub(crate) fn concrete_primary_drain(
         &self,
         model: DatabaseModel,
     ) -> Result<Vec<DatabaseOutputValue>> {
@@ -176,7 +174,7 @@ impl<'db> InternalRwTransaction<'db> {
             let (primary_key, value) = result?;
             // TODO: we should delay to an drain scan
             let binary_value = DatabaseOutputValue(value.value().to_vec());
-            key_items.insert(primary_key.value().to_owned());
+            _ = key_items.insert(primary_key.value().to_owned());
             items.push(binary_value);
         }
 
@@ -187,8 +185,7 @@ impl<'db> InternalRwTransaction<'db> {
                 table: model.primary_key.unique_table_name.to_string(),
             })?
             .secondary_tables
-            .iter()
-            .map(|(key, _)| key)
+            .keys()
             .collect();
 
         // Drain secondary tables
@@ -213,7 +210,7 @@ impl<'db> InternalRwTransaction<'db> {
 
             // Delete secondary keys
             for secondary_key in secondary_keys_to_delete {
-                secondary_table.remove(secondary_key)?;
+                _ = secondary_table.remove(secondary_key)?;
             }
         }
 
@@ -230,10 +227,7 @@ impl<'db> InternalRwTransaction<'db> {
             .native_model_legacy
         {
             return Err(Error::MigrateLegacyModel(
-                T::native_db_model()
-                    .primary_key
-                    .unique_table_name
-                    .to_string(),
+                T::native_db_model().primary_key.unique_table_name,
             ));
         }
 
@@ -241,18 +235,17 @@ impl<'db> InternalRwTransaction<'db> {
         let mut old_table_definition = None;
         for new_primary_table_definition in self.primary_table_definitions.values() {
             // check if table exists, if the table does not exist continue
-            if self
+            if !self
                 .redb_transaction
                 .list_tables()?
-                .find(|table| table.name() == new_primary_table_definition.redb.name())
-                .is_none()
+                .any(|table| table.name() == new_primary_table_definition.redb.name())
             {
                 continue;
             }
 
             let table = self
                 .redb_transaction
-                .open_table(new_primary_table_definition.redb.clone())?;
+                .open_table(new_primary_table_definition.redb)?;
             let len = table.len()?;
             if len > 0 && old_table_definition.is_some() {
                 panic!(
@@ -284,7 +277,7 @@ impl<'db> InternalRwTransaction<'db> {
         for old_data in self.concrete_primary_drain(old_table_definition.model.clone())? {
             let (decoded_item, _) = native_model::decode::<T>(old_data.0).unwrap();
             let decoded_item = decoded_item.to_item();
-            self.concrete_insert(T::native_db_model(), decoded_item)?;
+            _ = self.concrete_insert(T::native_db_model(), decoded_item)?;
         }
 
         Ok(())

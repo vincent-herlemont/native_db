@@ -13,13 +13,13 @@ pub struct Watch<'db> {
 
 impl<'db> Watch<'db> {
     /// Watch only one value.
-    pub fn get<'w>(&'w self) -> WatchGet<'db, 'w> {
+    pub const fn get<'w>(&'w self) -> WatchGet<'db, 'w> {
         WatchGet {
             internal: &self.internal,
         }
     }
     /// Watch multiple values.
-    pub fn scan<'w>(&'w self) -> WatchScan<'db, 'w> {
+    pub const fn scan<'w>(&'w self) -> WatchScan<'db, 'w> {
         WatchScan {
             internal: &self.internal,
         }

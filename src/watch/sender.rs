@@ -5,7 +5,7 @@ use crate::watch::{Event, MpscSender};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-pub(crate) struct Watchers(HashMap<u64, (TableFilter, Arc<Mutex<MpscSender<Event>>>)>);
+pub struct Watchers(HashMap<u64, (TableFilter, Arc<Mutex<MpscSender<Event>>>)>);
 
 impl Watchers {
     pub(crate) fn new() -> Self {
@@ -18,11 +18,11 @@ impl Watchers {
         table_filter: &TableFilter,
         event_sender: Arc<Mutex<MpscSender<Event>>>,
     ) {
-        self.0.insert(id, (table_filter.clone(), event_sender));
+        _ = self.0.insert(id, (table_filter.clone(), event_sender));
     }
 
     pub(crate) fn remove_sender(&mut self, id: u64) {
-        self.0.remove(&id);
+        _ = self.0.remove(&id);
     }
 
     pub(crate) fn find_senders(
@@ -30,7 +30,7 @@ impl Watchers {
         request: &WatcherRequest,
     ) -> Vec<Arc<Mutex<MpscSender<Event>>>> {
         let mut event_senders = Vec::new();
-        for (_, (filter, event_sender)) in &self.0 {
+        for (filter, event_sender) in self.0.values() {
             if filter.table_name == request.table_name {
                 match &filter.key_filter {
                     KeyFilter::Primary(value) => {
@@ -83,18 +83,18 @@ impl Watchers {
                         {
                             match request_secondary_key {
                                 DatabaseKeyValue::Default(value) => {
-                                    if key_def == request_secondary_key_def {
-                                        if value.as_slice().starts_with(key_prefix.as_slice()) {
-                                            event_senders.push(Arc::clone(event_sender));
-                                        }
+                                    if key_def == request_secondary_key_def
+                                        && value.as_slice().starts_with(key_prefix.as_slice())
+                                    {
+                                        event_senders.push(Arc::clone(event_sender));
                                     }
                                 }
                                 DatabaseKeyValue::Optional(value) => {
                                     if let Some(value) = value {
-                                        if key_def == request_secondary_key_def {
-                                            if value.as_slice().starts_with(key_prefix.as_slice()) {
-                                                event_senders.push(Arc::clone(event_sender));
-                                            }
+                                        if key_def == request_secondary_key_def
+                                            && value.as_slice().starts_with(key_prefix.as_slice())
+                                        {
+                                            event_senders.push(Arc::clone(event_sender));
                                         }
                                     }
                                 }

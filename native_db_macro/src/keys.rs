@@ -37,7 +37,7 @@ impl<O: ToTokenStream> ToTokenStream for DatabaseKeyDefinition<O> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct DatabaseSecondaryKeyOptions {
     pub(crate) unique: bool,
     pub(crate) optional: bool,
@@ -59,15 +59,6 @@ impl ToTokenStream for DatabaseSecondaryKeyOptions {
 impl ToTokenStream for () {
     fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
         quote! {()}
-    }
-}
-
-impl Default for DatabaseSecondaryKeyOptions {
-    fn default() -> Self {
-        Self {
-            unique: false,
-            optional: false,
-        }
     }
 }
 

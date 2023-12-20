@@ -3,6 +3,60 @@
 //! It supports multiple indexes, real-time watch with filters, model migration, hot snapshot, and more.
 //!
 //! See [README.md](https://github.com/vincent-herlemont/native_db) for more information.
+
+#![allow(dead_code)]
+#![forbid(unsafe_code)]
+#![warn(
+    // TODO: frequently check
+    // unreachable_pub,
+    // TODO: Activate if you're feeling like fixing stuff 
+    // clippy::pedantic,
+    // clippy::correctness,
+    // clippy::suspicious,
+    // clippy::complexity,
+    // clippy::perf,
+    // TODO: Fix documentation
+    // missing_docs,
+    // TODO: Implement or derive Debug
+    // missing_debug_implementations,
+    rust_2018_idioms,
+    trivial_casts,
+    unused_lifetimes,
+    unused_qualifications,
+    clippy::nursery,
+    bad_style,
+    dead_code,
+    improper_ctypes,
+    missing_copy_implementations,
+    non_shorthand_field_patterns,
+    no_mangle_generic_items,
+    overflowing_literals,
+    path_statements,
+    patterns_in_fns_without_body,
+    trivial_numeric_casts,
+    unused_results,
+    trivial_casts,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unconditional_recursion,
+    unused,
+    unused_allocation,
+    unused_comparisons,
+    unused_parens,
+    while_true,
+    clippy::cast_lossless,
+    clippy::default_trait_access,
+    clippy::doc_markdown,
+    clippy::manual_string_new,
+    clippy::match_same_arms,
+    clippy::semicolon_if_nothing_returned,
+    clippy::trivially_copy_pass_by_ref
+)]
+#![allow(clippy::type_complexity)]
+// FIXME!
+#![allow(clippy::match_same_arms)]
+
 mod database;
 mod database_builder;
 pub mod db_type;

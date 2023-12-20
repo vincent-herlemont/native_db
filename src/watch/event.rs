@@ -9,11 +9,11 @@ pub enum Event {
 }
 
 impl Event {
-    pub(crate) fn new_insert(value: DatabaseOutputValue) -> Self {
+    pub(crate) const fn new_insert(value: DatabaseOutputValue) -> Self {
         Self::Insert(Insert(value))
     }
 
-    pub(crate) fn new_update(
+    pub(crate) const fn new_update(
         old_value: DatabaseOutputValue,
         new_value: DatabaseOutputValue,
     ) -> Self {
@@ -23,7 +23,7 @@ impl Event {
         })
     }
 
-    pub(crate) fn new_delete(value: DatabaseOutputValue) -> Self {
+    pub(crate) const fn new_delete(value: DatabaseOutputValue) -> Self {
         Self::Delete(Delete(value))
     }
 }
@@ -31,14 +31,14 @@ impl Event {
 impl Debug for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Event::Insert(_) => write!(f, "Insert"),
-            Event::Update(_) => write!(f, "Update"),
-            Event::Delete(_) => write!(f, "Delete"),
+            Self::Insert(_) => write!(f, "Insert"),
+            Self::Update(_) => write!(f, "Update"),
+            Self::Delete(_) => write!(f, "Delete"),
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Insert(pub(crate) DatabaseOutputValue);
 
 impl Insert {
@@ -47,7 +47,7 @@ impl Insert {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Update {
     pub(crate) old: DatabaseOutputValue,
     pub(crate) new: DatabaseOutputValue,
@@ -62,7 +62,7 @@ impl Update {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Delete(pub(crate) DatabaseOutputValue);
 
 impl Delete {

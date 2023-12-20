@@ -5,7 +5,7 @@ use std::fmt::Debug;
 pub struct Batch(Vec<(WatcherRequest, Event)>);
 
 impl Batch {
-    pub(crate) fn new() -> Self {
+    pub(crate) const fn new() -> Self {
         Self(Vec::new())
     }
 
@@ -14,7 +14,7 @@ impl Batch {
     }
 }
 
-impl<'a> Iterator for Batch {
+impl Iterator for Batch {
     type Item = (WatcherRequest, Event);
 
     fn next(&mut self) -> Option<Self::Item> {

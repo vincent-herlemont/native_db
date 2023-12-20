@@ -12,7 +12,7 @@ pub struct DatabaseKeyDefinition<O> {
 }
 
 impl<O: Clone> KeyDefinition<O> for DatabaseKeyDefinition<O> {
-    fn database_key(&self) -> DatabaseKeyDefinition<O> {
+    fn database_key(&self) -> Self {
         self.clone()
     }
 }
@@ -26,7 +26,7 @@ impl<O> DatabaseKeyDefinition<O> {
         }
     }
 
-    pub fn options(&self) -> &O {
+    pub const fn options(&self) -> &O {
         &self.options
     }
 }
@@ -57,7 +57,7 @@ impl Hash for DatabaseKeyDefinition<DatabaseSecondaryKeyOptions> {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct DatabaseSecondaryKeyOptions {
     pub unique: bool,
     pub optional: bool,

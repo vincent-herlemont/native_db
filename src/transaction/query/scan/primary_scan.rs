@@ -16,10 +16,10 @@ impl<PrimaryTable, T: Input> PrimaryScan<PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
 {
-    pub(crate) fn new(table: PrimaryTable) -> Self {
+    pub(crate) const fn new(table: PrimaryTable) -> Self {
         Self {
             primary_table: table,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -52,14 +52,14 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn all(&self) -> PrimaryScanIterator<T> {
+    pub fn all(&self) -> PrimaryScanIterator<'_, T> {
         let range = self
             .primary_table
             .range::<DatabaseInnerKeyValue>(..)
             .unwrap();
         PrimaryScanIterator {
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -92,7 +92,10 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn range<TR: InnerKeyValue, R: RangeBounds<TR>>(&self, range: R) -> PrimaryScanIterator<T> {
+    pub fn range<TR: InnerKeyValue, R: RangeBounds<TR>>(
+        &self,
+        range: R,
+    ) -> PrimaryScanIterator<'_, T> {
         let database_inner_key_value_range = DatabaseInnerKeyValueRange::new(range);
         let range = self
             .primary_table
@@ -100,7 +103,7 @@ where
             .unwrap();
         PrimaryScanIterator {
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -145,7 +148,7 @@ where
         PrimaryScanIteratorStartWith {
             start_with,
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 }

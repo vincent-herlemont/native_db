@@ -107,11 +107,9 @@ impl ItemSecondaryOptional {
         format!("{}", self.id)
     }
     pub fn compute_secondary_key(&self) -> Option<String> {
-        if let Some(name) = &self.name {
-            Some(format!("{}-{}", name, self.id))
-        } else {
-            None
-        }
+        self.name
+            .as_ref()
+            .map(|name| format!("{}-{}", name, self.id))
     }
 }
 
