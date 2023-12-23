@@ -36,7 +36,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 native_db = "0.5.2"
-native_model = "0.4.2"
+native_model = "0.4.6"
 ```
 
 NOTE: `native_db` requires `native_model` to work.
