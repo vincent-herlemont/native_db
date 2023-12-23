@@ -1,0 +1,44 @@
+name: iOS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, next ]
+
+env:
+  RUST_BACKTRACE: full
+
+jobs:
+  build_test:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain: [stable]
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: Add target
+        run: rustup target add x86_64-apple-ios
+      - name: Cache cargo install
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin/
+          key: ${{ runner.os }}-${{ matrix.toolchain }}-${{ github.ref }}-cargo-install-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install cargo-dinghy
+        run: |
+          if ! command -v cargo-dinghy &> /dev/null
+          then
+            cargo install cargo-dinghy
+          fi
+      - name: Start iPhone simulator
+        run: xcrun simctl boot "iPhone 14"
+      - name: List simulators
+        run: xcrun simctl list
+      - name: Build and run tests
+        run: cargo dinghy -d iphone test

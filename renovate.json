@@ -1,5 +1,4 @@
 {
-  "$model": "https://docs.renovatebot.com/renovate-model.json",
   "extends": ["config:base"],
   "semanticCommits": "enabled",
   "semanticCommitType": "chore",
@@ -28,5 +27,6 @@
       "datasourceTemplate": "crate",
       "versioningTemplate": "semver"
     }
-  ]
+  ],
+  "enabled": false
 }

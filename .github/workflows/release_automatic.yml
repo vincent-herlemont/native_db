@@ -1,0 +1,28 @@
+name: Release Automatic
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, next ]
+
+
+jobs:
+  wait-for-workflows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: int128/wait-for-workflows-action@v0.15.0
+        with:
+          token: ${{ secrets.PAT_GLOBAL }}
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: wait-for-workflows
+    steps:
+      - name: Fake step
+        run: |
+          echo "Run the release job"
+

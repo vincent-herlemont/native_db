@@ -1,0 +1,38 @@
+name: Windows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, next ]
+
+env:
+  RUST_BACKTRACE: full
+
+jobs:
+  build_test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [windows-latest]
+        toolchain: [stable]
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - uses: extractions/setup-just@v1
+      - uses: hustcer/setup-nu@v3.7
+        with:
+          version: '0.85'
+        env:
+            GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
+      - name: Just version
+        run: just --version
+      - name: Build
+        run: just build_all
+      - name: Test
+        run: just test_all
