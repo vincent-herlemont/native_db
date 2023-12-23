@@ -1,7 +1,13 @@
 # Native DB
 
 [![Crates.io](https://img.shields.io/crates/v/native_db)](https://crates.io/crates/native_db)
-[![Linux/Windows/macOS/Android/iOS (Build/Test/Release)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_and_test_release.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_and_test_release.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_linux.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_linux.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_macos.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_macos.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_windows.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_windows.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_ios.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_ios.yml)
+[![)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_android.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_android.yml)
+
+
 [![Documentation](https://docs.rs/native_db/badge.svg)](https://docs.rs/native_db)
 [![License](https://img.shields.io/crates/l/native_db)](LICENSE)
 
