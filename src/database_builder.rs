@@ -7,6 +7,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 
 /// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc. and [define](Self::define) models.
+#[derive(Debug)]
 pub struct DatabaseBuilder {
     cache_size_bytes: Option<usize>,
     models_builder: HashMap<String, ModelBuilder>,
@@ -321,6 +322,7 @@ impl DatabaseBuilder {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct ModelBuilder {
     pub(crate) model: DatabaseModel,
     pub(crate) native_model_options: NativeModelOptions,
