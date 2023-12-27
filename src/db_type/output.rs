@@ -15,12 +15,13 @@ impl DatabaseOutputValue {
     }
 }
 
-pub(crate) fn unwrap_item<T: Input>(item: Option<redb::AccessGuard<&'static [u8]>>) -> Option<T> {
-    if let Some(item) = item {
-        let item = item.value();
-        let item = T::native_db_bincode_decode_from_slice(item);
-        Some(item)
-    } else {
-        None
-    }
+pub fn unwrap_item<T: Input>(item: Option<redb::AccessGuard<'_, &'static [u8]>>) -> Option<T> {
+    item.map_or_else(
+        || None,
+        |item| {
+            let item = item.value();
+            let item = T::native_db_bincode_decode_from_slice(item);
+            Some(item)
+        },
+    )
 }

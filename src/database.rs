@@ -15,7 +15,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 use std::u64;
 
-/// The database instance. Allows you to create [rw_transaction](database/struct.Database.html#method.rw_transaction) and [r_transaction](database/struct.Database.html#method.r_transaction), [watch](database/struct.Database.html#method.watch) queries, and [unwatch](database/struct.Database.html#method.unwatch) etc.
+/// The database instance. Allows you to create [`rw_transaction`](database/struct.Database.html#method.rw_transaction) and [`r_transaction`](database/struct.Database.html#method.r_transaction), [watch](database/struct.Database.html#method.watch) queries, and [unwatch](database/struct.Database.html#method.unwatch) etc.
 ///
 /// # Example
 /// ```rust
@@ -40,7 +40,7 @@ pub struct Database<'a> {
 
 impl Database<'_> {
     /// Creates a new read-write transaction.
-    pub fn rw_transaction(&self) -> Result<RwTransaction> {
+    pub fn rw_transaction(&self) -> Result<RwTransaction<'_>> {
         let rw = self.instance.begin_write()?;
         let write_txn = RwTransaction {
             watcher: &self.watchers,
@@ -54,7 +54,7 @@ impl Database<'_> {
     }
 
     /// Creates a new read-only transaction.
-    pub fn r_transaction(&self) -> Result<RTransaction> {
+    pub fn r_transaction(&self) -> Result<RTransaction<'_>> {
         let txn = self.instance.begin_read()?;
         let read_txn = RTransaction {
             internal: InternalRTransaction {
@@ -68,7 +68,7 @@ impl Database<'_> {
 
 impl Database<'_> {
     /// Watch queries.
-    pub fn watch(&self) -> Watch {
+    pub const fn watch(&self) -> Watch<'_> {
         Watch {
             internal: InternalWatch {
                 watchers: &self.watchers,
@@ -82,8 +82,7 @@ impl Database<'_> {
     /// If the `id` is not valid anymore, this function will do nothing.
     /// If the `id` is valid, the corresponding watcher will be removed.
     pub fn unwatch(&self, id: u64) -> Result<()> {
-        let mut watchers = self.watchers.write().unwrap();
-        watchers.remove_sender(id);
+        self.watchers.write().unwrap().remove_sender(id);
         Ok(())
     }
 }
@@ -92,26 +91,22 @@ impl<'a> Database<'a> {
     pub(crate) fn seed_model(&mut self, model_builder: &'a ModelBuilder) -> Result<()> {
         let main_table_definition =
             redb::TableDefinition::new(model_builder.model.primary_key.unique_table_name.as_str());
-        let mut primary_table_definition: PrimaryTableDefinition =
+        let mut primary_table_definition: PrimaryTableDefinition<'_> =
             (model_builder, main_table_definition).into();
 
         let rw = self.instance.begin_write()?;
-        rw.open_table(primary_table_definition.redb.clone())?;
+        _ = rw.open_table(primary_table_definition.redb)?;
 
         for secondary_key in model_builder.model.secondary_keys.iter() {
-            primary_table_definition.secondary_tables.insert(
+            _ = primary_table_definition.secondary_tables.insert(
                 secondary_key.clone(),
                 redb::TableDefinition::new(secondary_key.unique_table_name.as_str()).into(),
             );
-            rw.open_table(
-                primary_table_definition.secondary_tables[&secondary_key]
-                    .redb
-                    .clone(),
-            )?;
+            _ = rw.open_table(primary_table_definition.secondary_tables[&secondary_key].redb)?;
         }
         rw.commit()?;
 
-        self.primary_table_definitions.insert(
+        _ = self.primary_table_definitions.insert(
             model_builder.model.primary_key.unique_table_name.clone(),
             primary_table_definition,
         );
@@ -124,7 +119,7 @@ impl<'a> Database<'a> {
         let rx = self.instance.begin_read()?;
         let mut stats_primary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {
-            let result_table_open = rx.open_table(primary_table.redb.clone());
+            let result_table_open = rx.open_table(primary_table.redb);
             let stats_table = match result_table_open {
                 Err(redb::TableError::TableDoesNotExist(_)) => StatsTable {
                     name: primary_table.redb.name().to_string(),
@@ -146,7 +141,7 @@ impl<'a> Database<'a> {
         let mut stats_secondary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {
             for secondary_table in primary_table.secondary_tables.values() {
-                let result_table_open = rx.open_table(secondary_table.redb.clone());
+                let result_table_open = rx.open_table(secondary_table.redb);
                 let stats_table = match result_table_open {
                     Err(redb::TableError::TableDoesNotExist(_)) => StatsTable {
                         name: secondary_table.redb.name().to_string(),

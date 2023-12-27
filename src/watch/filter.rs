@@ -3,13 +3,13 @@ use crate::db_type::{
 };
 
 #[derive(Eq, PartialEq, Clone)]
-pub(crate) struct TableFilter {
+pub struct TableFilter {
     pub(crate) table_name: String,
     pub(crate) key_filter: KeyFilter,
 }
 
 #[derive(Eq, PartialEq, Clone)]
-pub(crate) enum KeyFilter {
+pub enum KeyFilter {
     Primary(Option<DatabaseInnerKeyValue>),
     PrimaryStartWith(DatabaseInnerKeyValue),
     Secondary(
@@ -23,20 +23,23 @@ pub(crate) enum KeyFilter {
 }
 
 impl TableFilter {
-    pub(crate) fn new_primary(table_name: String, key: Option<DatabaseInnerKeyValue>) -> Self {
+    pub(crate) const fn new_primary(
+        table_name: String,
+        key: Option<DatabaseInnerKeyValue>,
+    ) -> Self {
         Self {
             table_name,
-            key_filter: KeyFilter::Primary(key.map(|k| k.to_owned())),
+            key_filter: KeyFilter::Primary(key),
         }
     }
 
-    pub(crate) fn new_primary_start_with(
+    pub(crate) const fn new_primary_start_with(
         table_name: String,
         key_prefix: DatabaseInnerKeyValue,
     ) -> Self {
         Self {
             table_name,
-            key_filter: KeyFilter::PrimaryStartWith(key_prefix.to_owned()),
+            key_filter: KeyFilter::PrimaryStartWith(key_prefix),
         }
     }
 
@@ -47,7 +50,7 @@ impl TableFilter {
     ) -> Self {
         Self {
             table_name,
-            key_filter: KeyFilter::Secondary(key_def.database_key(), key.map(|k| k.to_owned())),
+            key_filter: KeyFilter::Secondary(key_def.database_key(), key),
         }
     }
 
@@ -58,7 +61,7 @@ impl TableFilter {
     ) -> Self {
         Self {
             table_name,
-            key_filter: KeyFilter::SecondaryStartWith(key.database_key(), key_prefix.to_owned()),
+            key_filter: KeyFilter::SecondaryStartWith(key.database_key(), key_prefix),
         }
     }
 }

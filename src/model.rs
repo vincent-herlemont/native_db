@@ -16,21 +16,20 @@ impl DatabaseModel {
     where
         F: Fn(DatabaseSecondaryKeyOptions) -> bool,
     {
-        let key = self
-            .secondary_keys
-            .get(secondary_key.into())
-            .ok_or_else(|| Error::SecondaryKeyDefinitionNotFound {
+        let key = self.secondary_keys.get(secondary_key).ok_or_else(|| {
+            Error::SecondaryKeyDefinitionNotFound {
                 table: self.primary_key.unique_table_name.to_string(),
                 key: secondary_key.unique_table_name.clone(),
-            })?;
+            }
+        })?;
 
-        if check(key.options.clone()) {
+        if check(key.options) {
             Ok(())
         } else {
             Err(Error::SecondaryKeyConstraintMismatch {
                 table: self.primary_key.unique_table_name.to_string(),
                 key: secondary_key.unique_table_name.clone(),
-                got: key.options.clone(),
+                got: key.options,
             })
         }
     }

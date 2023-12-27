@@ -27,7 +27,7 @@ impl ModelAttributes {
                 } else {
                     panic!(
                         "Unknown attribute: {}",
-                        meta.path.get_ident().unwrap().to_string()
+                        meta.path.get_ident().unwrap()
                     );
                 }
                 Ok(())
@@ -46,7 +46,7 @@ impl ModelAttributes {
                 } else {
                     panic!(
                         "Unknown attribute: {}",
-                        meta.path.get_ident().unwrap().to_string()
+                        meta.path.get_ident().unwrap()
                     );
                 }
                 Ok(())
@@ -55,7 +55,7 @@ impl ModelAttributes {
         } else {
             panic!(
                 "Unknown attribute: {}",
-                meta.path.get_ident().unwrap().to_string()
+                meta.path.get_ident().unwrap()
             );
         }
         Ok(())
@@ -71,7 +71,7 @@ impl ModelAttributes {
                 ));
             } else if attr.path().is_ident("secondary_key") {
                 let mut secondary_options = DatabaseSecondaryKeyOptions::default();
-                if let Ok(_) = attr.meta.require_list() {
+                if attr.meta.require_list().is_ok() {
                     attr.parse_nested_meta(|meta| {
                         if meta.path.is_ident("unique") {
                             secondary_options.unique = true;

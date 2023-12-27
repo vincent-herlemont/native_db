@@ -15,7 +15,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
     where
         Self: 'db_bis;
 
-    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition>;
+    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition<'_>>;
 
     fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable>;
 
@@ -44,13 +44,13 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
     ) -> Result<Option<DatabaseOutputValue>> {
         let secondary_key = key_def.database_key();
         // Provide a better error for the test of unicity of the secondary key
-        model.check_secondary_options(&secondary_key, |options| options.unique == true)?;
+        model.check_secondary_options(&secondary_key, |options| options.unique)?;
 
         let table = self.get_secondary_table(&model, &secondary_key)?;
 
         let value = table.get(key.database_inner_key_value())?;
         let primary_key = if let Some(value) = value {
-            value.value().to_owned()
+            value.value()
         } else {
             return Ok(None);
         };

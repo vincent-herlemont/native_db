@@ -44,15 +44,16 @@ pub(crate) fn push_batch(
     senders: Arc<RwLock<Watchers>>,
     batch: Batch,
 ) -> Result<(), WatchEventError> {
-    let watchers = senders.try_read().map_err(|err| match err {
-        TryLockError::Poisoned(_) => WatchEventError::TryLockErrorPoisoned,
-        TryLockError::WouldBlock => WatchEventError::TryLockErrorWouldBlock,
-    })?;
-
     for (watcher_request, event) in batch {
-        for sender in watchers.find_senders(&watcher_request) {
-            let sender = sender.lock().unwrap();
-            sender.send(event.clone())?;
+        let find_senders = senders
+            .try_read()
+            .map_err(|err| match err {
+                TryLockError::Poisoned(_) => WatchEventError::TryLockErrorPoisoned,
+                TryLockError::WouldBlock => WatchEventError::TryLockErrorWouldBlock,
+            })?
+            .find_senders(&watcher_request);
+        for sender in find_senders {
+            sender.lock().unwrap().send(event.clone())?;
         }
     }
 

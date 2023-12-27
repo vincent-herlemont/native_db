@@ -20,11 +20,11 @@ where
     PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
     SecondaryTable: redb::ReadableTable<DatabaseInnerKeyValue, DatabaseInnerKeyValue>,
 {
-    pub(crate) fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable) -> Self {
+    pub(crate) const fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable) -> Self {
         Self {
             primary_table,
             secondary_table,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -64,7 +64,7 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn all(&self) -> SecondaryScanIterator<PrimaryTable, T> {
+    pub fn all(&self) -> SecondaryScanIterator<'_, PrimaryTable, T> {
         let range = self
             .secondary_table
             .range::<DatabaseInnerKeyValue>(..)
@@ -72,7 +72,7 @@ where
         SecondaryScanIterator {
             primary_table: &self.primary_table,
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -112,7 +112,7 @@ where
     pub fn range<TR: InnerKeyValue, R: RangeBounds<TR>>(
         &self,
         range: R,
-    ) -> SecondaryScanIterator<PrimaryTable, T> {
+    ) -> SecondaryScanIterator<'_, PrimaryTable, T> {
         let database_inner_key_value_range = DatabaseInnerKeyValueRange::new(range);
         let range = self
             .secondary_table
@@ -121,7 +121,7 @@ where
         SecondaryScanIterator {
             primary_table: &self.primary_table,
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -171,7 +171,7 @@ where
             primary_table: &self.primary_table,
             start_with,
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 }
@@ -193,13 +193,10 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.range.next() {
-            Some(Ok((_, key))) => {
-                if let Ok(value) = self.primary_table.get(key.value()) {
-                    unwrap_item(value)
-                } else {
-                    None
-                }
-            }
+            Some(Ok((_, key))) => self
+                .primary_table
+                .get(key.value())
+                .map_or_else(|_| None, |value| unwrap_item(value)),
             _ => None,
         }
     }

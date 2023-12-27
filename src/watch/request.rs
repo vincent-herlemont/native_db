@@ -13,7 +13,7 @@ pub struct WatcherRequest {
 }
 
 impl WatcherRequest {
-    pub fn new(
+    pub const fn new(
         table_name: String,
         primary_key: DatabaseInnerKeyValue,
         secondary_keys: HashMap<

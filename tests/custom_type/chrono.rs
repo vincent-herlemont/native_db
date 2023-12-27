@@ -32,7 +32,7 @@ fn insert_get() {
     let r = db.r_transaction().unwrap();
     let result_item = r
         .get()
-        .secondary(ItemKey::timestamp, &item.timestamp)
+        .secondary(ItemKey::timestamp, item.timestamp)
         .unwrap()
         .unwrap();
     assert_eq!(item, result_item);
