@@ -45,6 +45,10 @@ NOTE: `native_db` requires `native_model` to work.
 
 Active development. The API is not stable yet and may change in the future.
 
+# Usage
+
+- With Tauri: [native_db_tauri_vanilla](https://github.com/vincent-herlemont/native_db_tauri_vanilla)
+
 # Usual API
 - [**DatabaseBuilder**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html)  
     - [**define**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.define) a model.
