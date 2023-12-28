@@ -24,6 +24,8 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           override: true
+      - name: Add target
+        run: rustup target add wasm32-unknown-unknown
       - uses: extractions/setup-just@v1
       - uses: hustcer/setup-nu@v3.8
         with:
