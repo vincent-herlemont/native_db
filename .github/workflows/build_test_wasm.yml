@@ -11,11 +11,10 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
         toolchain: [stable]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -24,6 +23,8 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           override: true
+      - name: Add target
+        run: rustup target add wasm32-unknown-unknown
       - uses: extractions/setup-just@v1
       - uses: hustcer/setup-nu@v3.8
         with:
@@ -34,3 +35,6 @@ jobs:
         run: just --version
       - name: Build
         run: just build_wasm
+      # TODO
+      # - name: Test
+      #   run: just test_wasm

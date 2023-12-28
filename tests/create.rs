@@ -1,3 +1,4 @@
+#![cfg(not(target_arch = "wasm32"))]
 use native_db::*;
 use shortcut_assert_fs::TmpFs;
 

@@ -1,3 +1,4 @@
+#![cfg(not(target_arch = "wasm32"))]
 use bincode;
 use bincode::{config, Decode, Encode};
 use native_db::*;
