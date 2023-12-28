@@ -18,17 +18,23 @@ declare -a directories=("." "native_db_macro")
 
 for directory in "${directories[@]}"
 do
-  # Check if Cargo.toml exists in the directory
-  if [ -f "$directory/Cargo.toml" ]; then
+  # Check if Cargo.toml and README.md exist
+  if [ -f "$directory/Cargo.toml" ] && [ -f "$directory/README.md" ]; then
     echo "Updating version in $directory/Cargo.toml to $NEW_VERSION"
     # Use sed to find and replace the version string in the Cargo.toml
     sed -i -E "s/^version = \"[0-9]+\.[0-9]+\.[0-9]+\"/version = \"$NEW_VERSION\"/g" "$directory/Cargo.toml"
-    # Use sed to find and replace the version string in the README.md
-    sed -i -E "s/native_db = \"[0-9]+\.[0-9]+\.[0-9]+\"/native_db = \"$NEW_VERSION\"/g" "$directory/README.md"
 
     # Update the dependency version for native_db_macro in native_db's Cargo.toml
     if [ "$directory" == "." ]; then
       sed -i -E "s/native_db_macro = \{ version = \"[0-9]+\.[0-9]+\.[0-9]+\", path = \"native_db_macro\" \}/native_db_macro = { version = \"$NEW_VERSION\", path = \"native_db_macro\" }/g" "$directory/Cargo.toml"
+
+      # Extract native_model version from Cargo.toml
+      NATIVE_MODEL_VERSION=$(grep -oP '(?<=native_model = \{ version = ")[^"]*' "$directory/Cargo.toml")
+      echo "Updating native_model version in $directory/Cargo.toml to $NATIVE_MODEL_VERSION"
+
+      # Use sed to find and replace the version string in the README.md
+      sed -i -E "s/native_db = \"[0-9]+\.[0-9]+\.[0-9]+\"/native_db = \"$NEW_VERSION\"/g" "$directory/README.md"
+      sed -i -E "s/native_model = \"[0-9]+\.[0-9]+\.[0-9]+\"/native_model = \"$NATIVE_MODEL_VERSION\"/g" "$directory/README.md"
     fi
   fi
 done
