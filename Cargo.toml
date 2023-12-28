@@ -15,7 +15,8 @@ categories = ["database-implementations", "concurrency", "data-structures", "cac
 members = ["native_db_macro"]
 
 [dependencies]
-redb = "1.4.0"
+# TODO: wait to have a stable version of redb to use it in wasm
+redb = { git = "https://github.com/cberner/redb", rev = "9c28085c8465929b66b2ab10287b7ad087d2b7c7" }
 native_db_macro = { version = "0.5.3", path = "native_db_macro" }
 thiserror = "1.0"
 serde = { version = "1.0" }
