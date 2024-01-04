@@ -22,7 +22,7 @@ Here's a drop-in, fast, embedded database for multi-platform apps (server, deskt
 
 - Simple API 🦀.
 - Support for **multiple indexes** (primary, secondary, unique, non-unique, optional).
-- Minimal boilerplate.
+- Minimal boilerplate see [benchmarks](./benches).
 - Transparent serialization/deserialization using [native_model](https://github.com/vincent-herlemont/native_model).
 - **Automatic model migration** 🌟.
 - **Thread-safe** and fully **ACID-compliant** transactions provided by [redb](https://github.com/cberner/redb).
