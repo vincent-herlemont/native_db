@@ -12,6 +12,9 @@ build_default:
 build_with_optional:
     cargo build -F chrono -F uuid -F tokio
 
+build_wasm:
+    cargo build --target wasm32-unknown-unknown
+
 build_all: build_no_default build_default build_with_optional
 
 test_no_default:
