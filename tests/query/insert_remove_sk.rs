@@ -39,7 +39,8 @@ fn insert_remove() {
     assert_eq!(stats.secondary_tables[0].n_entries, Some(1));
 
     let rw = db.rw_transaction().unwrap();
-    rw.remove(item.clone()).unwrap();
+    let old_value = rw.remove(item.clone()).unwrap();
+    assert_eq!(old_value, item);
     rw.commit().unwrap();
 
     let stats = db.redb_stats().unwrap();
@@ -88,7 +89,8 @@ fn insert_remove_unique_optional() {
     assert_eq!(stats.secondary_tables[0].n_entries, Some(1));
 
     let rw = db.rw_transaction().unwrap();
-    rw.remove(item_1.clone()).unwrap();
+    let old_value = rw.remove(item_1.clone()).unwrap();
+    assert_eq!(old_value, item_1);
     rw.commit().unwrap();
 
     let stats = db.redb_stats().unwrap();
@@ -100,7 +102,8 @@ fn insert_remove_unique_optional() {
     assert_eq!(stats.secondary_tables[0].n_entries, Some(0));
 
     let rw = db.rw_transaction().unwrap();
-    rw.remove(item_2.clone()).unwrap();
+    let old_value = rw.remove(item_2.clone()).unwrap();
+    assert_eq!(old_value, item_2);
     rw.commit().unwrap();
 
     let stats = db.redb_stats().unwrap();

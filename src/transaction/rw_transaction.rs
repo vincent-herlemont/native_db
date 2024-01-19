@@ -152,7 +152,7 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     let rw = db.rw_transaction()?;
     ///
     ///     // Remove a value
-    ///     rw.remove(Data { id: 1 })?;
+    ///     let old_value = rw.remove(Data { id: 1 })?;
     ///
     ///     // /!\ Don't forget to commit the transaction
     ///     rw.commit()?;
@@ -160,14 +160,13 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     Ok(())
     /// }
     /// ```
-    // TODO: Return the Option<T> of the removed value
-    pub fn remove<T: Input>(&self, item: T) -> Result<()> {
+    pub fn remove<T: Input>(&self, item: T) -> Result<T> {
         let (watcher_request, binary_value) = self
             .internal
             .concrete_remove(T::native_db_model(), item.to_item())?;
-        let event = Event::new_delete(binary_value);
+        let event = Event::new_delete(binary_value.clone());
         self.batch.borrow_mut().add(watcher_request, event);
-        Ok(())
+        Ok(binary_value.inner())
     }
 
     /// Update a value in the database.

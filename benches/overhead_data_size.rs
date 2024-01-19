@@ -127,7 +127,8 @@ fn use_native_db_get(db: &Database, x: u32) -> Data {
 
 fn native_db_remove(db: &Database, data: Data) {
     let rw = db.rw_transaction().unwrap();
-    rw.remove(data).unwrap();
+    // Remove the old value
+    let _ = rw.remove(data).unwrap();
     rw.commit().unwrap();
 }
 
