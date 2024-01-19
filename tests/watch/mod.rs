@@ -407,7 +407,8 @@ fn watch_all_delete() {
     recv.recv_timeout(TIMEOUT).unwrap();
 
     let rw = db.rw_transaction().unwrap();
-    rw.remove(item_a.clone()).unwrap();
+    let old = rw.remove(item_a.clone()).unwrap();
+    assert_eq!(old, item_a);
     rw.commit().unwrap();
 
     for _ in 0..1 {
