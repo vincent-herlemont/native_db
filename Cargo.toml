@@ -15,7 +15,7 @@ categories = ["database-implementations", "concurrency", "data-structures", "cac
 members = ["native_db_macro"]
 
 [dependencies]
-redb = "1.5.0"
+redb = "1.5.1"
 native_db_macro = { version = "0.5.3", path = "native_db_macro" }
 thiserror = "1.0"
 serde = { version = "1.0" }
