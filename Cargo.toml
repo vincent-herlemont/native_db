@@ -21,7 +21,7 @@ thiserror = "1.0"
 serde = { version = "1.0" }
 native_model = { version = "0.4.12" }
 
-uuid = { version = "1.7" , optional = true }
+uuid = { version = "1.8" , optional = true }
 chrono = { version = "0.4" , optional = true }
 
 # Optional tokio support
