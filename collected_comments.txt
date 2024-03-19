@@ -1,0 +1,988 @@
+All database interactions here,[`r_transaction`](transaction/struct.RTransaction.html), [`rw_transaction`](transaction/struct.RwTransaction.html) and [`query`](transaction/query/index.html).
+Watch data in real-time.
+Macro which link [`native_model`](https://crates.io/crates/native_model) to the Native DB. See [`DatabaseBuilder.define`](struct.DatabaseBuilder.html#method.define) for more information.
+All database interactions.
+Read-only transaction.
+Read-write transaction.
+Get a value from the database.
+    ///
+Same as [`RTransaction::get()`](struct.RTransaction.html#method.get).
+Get values from the database.
+    ///
+Same as [`RTransaction::scan()`](struct.RTransaction.html#method.scan).
+Get the number of values in the database.
+    ///
+Same as [`RTransaction::len()`](struct.RTransaction.html#method.len).
+Get all values from the database.
+    ///
+Same as [`RTransaction::drain()`](struct.RTransaction.html#method.drain).
+Commit the transaction.
+All changes will be applied to the database. If the commit fails, the transaction will be aborted. The
+database will be unchanged.
+    ///
+# Example
+```rust
+use native_db::*;
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let rw = db.rw_transaction()?;
+    // Do some stuff..
+    rw.commit()?;
+    ///
+    Ok(())
+}
+```
+Insert a value into the database.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let rw = db.rw_transaction()?;
+    ///
+    // Insert a value
+    rw.insert(Data { id: 1 })?;
+    ///
+    // /!\ Don't forget to commit the transaction
+    rw.commit()?;
+    ///
+    Ok(())
+}
+```
+Remove a value from the database.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let rw = db.rw_transaction()?;
+    ///
+    // Remove a value
+    rw.remove(Data { id: 1 })?;
+    ///
+    // /!\ Don't forget to commit the transaction
+    rw.commit()?;
+    ///
+    Ok(())
+}
+```
+Update a value in the database.
+    ///
+That allow to update all keys (primary and secondary) of the value.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let rw = db.rw_transaction()?;
+    ///
+    // Remove a value
+    rw.update(Data { id: 1 }, Data { id: 2 })?;
+    ///
+    // /!\ Don't forget to commit the transaction
+    rw.commit()?;
+    ///
+    Ok(())
+}
+```
+Convert all values from the database.
+    ///
+This is useful when you want to change the type/model of a value.
+You have to define [`From<SourceModel> for TargetModel`](https://doc.rust-lang.org/std/convert/trait.From.html) to convert the value.
+    ///
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize, Clone)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Dog {
+    #[primary_key]
+    name: String,
+}
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=2, version=1)]
+#[native_db]
+struct Animal {
+    #[primary_key]
+    name: String,
+    #[secondary_key]
+    specie: String,
+}
+    ///
+impl From<Dog> for Animal {
+    fn from(dog: Dog) -> Self {
+       Animal {
+          name: dog.name,
+          specie: "dog".to_string(),
+        }
+    }
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Dog>()?;
+    builder.define::<Animal>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let rw = db.rw_transaction()?;
+    ///
+    // Convert all values from Dog to Animal
+    rw.convert_all::<Dog, Animal>()?;
+    ///
+    // /!\ Don't forget to commit the transaction
+    rw.commit()?;
+    ///
+    Ok(())
+}
+```
+Automatically migrate the data from the old model to the new model. **No matter the state of the database**,
+if all models remain defined in the application as they are, the data will be migrated to the most recent version automatically.
+    ///
+Native DB use the [`native_model`](https://crates.io/crates/native_model) identifier `id` to identify the model and `version` to identify the version of the model.
+We can define a model with the same identifier `id` but with a different version `version`.
+    ///
+In the example below we define one model with the identifier `id=1` with tow versions `version=1` and `version=2`.
+- You **must** link the previous version from the new one with `from` option like `#[native_model(id=1, version=2, from=LegacyData)]`.
+- You **must** define the interoperability between the two versions with implement `From<LegacyData> for Data` and `From<Data> for LegacyData` or implement `TryFrom<LegacyData> for Data` and `TryFrom<Data> for LegacyData`.
+- You **must** define all models (by calling [`define`](#method.define)) before to call [`migration`](#method.migrate).
+- You **must** call use the most recent/bigger version as the target version when you call [`migration`](#method.migrate): `migration::<Data>()`.
+  That means you can't call `migration::<LegacyData>()` because `LegacyData` has version `1` and `Data` has version `2`.
+    ///
+After call `migration::<Data>()` all data of the model `LegacyData` will be migrated to the model `Data`.
+    ///
+Under the hood, when you call [`migration`](#method.migrate) `native_model` is used to convert the data from the old model to the new model
+using the `From` or `TryFrom` implementation for each to target the version defined when you call [`migration::<LastVersion>()`](#method.migrate).
+    ///
+It's advisable to perform all migrations within a **single transaction** to ensure that all migrations are successfully completed.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize, Debug)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct LegacyData {
+    #[primary_key]
+    id: u32,
+}
+    ///
+impl From<Data> for LegacyData {
+    fn from(data: Data) -> Self {
+        LegacyData {
+            id: data.id as u32,
+        }
+    }
+}
+    ///
+#[derive(Serialize, Deserialize, Debug)]
+#[native_model(id=1, version=2, from=LegacyData)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+impl From<LegacyData> for Data {
+    fn from(legacy_data: LegacyData) -> Self {
+        Data {
+            id: legacy_data.id as u64,
+        }
+    }
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<LegacyData>()?;
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    ///
+    let rw = db.rw_transaction()?;
+    rw.migrate::<Data>()?;
+    // Other migrations if needed..
+    rw.commit()
+}
+```
+Get a value from the database.
+Get values from the database.
+Get the number of values in the database.
+Get values from the database.
+Get a values from the database by primary key.
+Get a values from the database by secondary key.
+Scan values from the database.
+Iterate over all values.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get all values
+    let _values: Vec<Data> = r.scan().primary()?.all().collect();
+    Ok(())
+}
+```
+Iterate over all values in a range.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get the values from 5 to the end
+    let _values: Vec<Data> = r.scan().primary()?.range(5u64..).collect();
+    Ok(())
+}
+```
+Iterate over all values starting with a prefix.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get the values starting with "victor"
+    let _values: Vec<Data> = r.scan().primary()?.start_with("victor").collect();
+    Ok(())
+}
+```
+Scan values from the database by secondary key.
+Iterate over all values by secondary key.
+    ///
+If the secondary key is [`optional`](struct.DatabaseBuilder.html#optional) you will
+get all values that have the secondary key set.
+    ///
+Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key(optional)]
+    name: Option<String>,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get only values that have the secondary key set (name is not None)
+    let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().collect();
+    Ok(())
+}
+```
+Iterate over all values by secondary key.
+    ///
+Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get only values that have the secondary key name from C to the end
+    let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).collect();
+    Ok(())
+}
+```
+Iterate over all values by secondary key.
+    ///
+Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get only values that have the secondary key name starting with "hello"
+    let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").collect();
+    Ok(())
+}
+```
+Get the number of values in the database.
+Get the number of values.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get all values
+    let _number:u64 = r.len().primary::<Data>()?;
+    Ok(())
+}
+```
+**TODO: needs to be implemented**
+    ///
+Get the number of values by secondary key.
+    ///
+Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+If the secondary key is [`optional`](struct.DatabaseBuilder.html#optional) you will
+get all values that have the secondary key set.
+Get the number of values.
+    ///
+Same as [`RLen::primary()`](struct.RLen.html#method.primary).
+Get the number of values by secondary key.
+    ///
+Same as [`RLen::secondary()`](struct.RLen.html#method.secondary).
+Get a value from the database.
+Get a value from the database by primary key.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get a value by primary key
+    let _value: Option<Data> = r.get().primary(1u64)?;
+    Ok(())
+}
+```
+Get a value from the database by secondary key.
+    ///
+/!\ The secondary key **must** be [`unique`](crate::DatabaseBuilder#unique) else this method will return an error [`SecondaryKeyConstraintMismatch`](crate::db_type::Error::SecondaryKeyConstraintMismatch).
+    If the secondary key is not unique, use [`scan()`](crate::transaction::RTransaction::scan) instead.
+    ///
+Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key(unique)] // Must be unique to use get()
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Get a value by primary key
+    let _value: Option<Data> = r.get().secondary(DataKey::name, "test")?;
+    Ok(())
+}
+```
+Get a value from the database by primary key.
+    ///
+Same as [`RGet::primary()`](struct.RGet.html#method.primary).
+Get a value from the database by secondary key.
+    ///
+Same as [`RGet::secondary()`](struct.RGet.html#method.secondary).
+**TODO: needs to be implemented**
+Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc. and [define](Self::define) models.
+Similar to [redb::Builder::new()](https://docs.rs/redb/latest/redb/struct.Builder.html#method.new).
+Similar to [redb::Builder::set_cache_size()](https://docs.rs/redb/latest/redb/struct.Builder.html#method.set_cache_size).
+Creates a new `Db` instance using the given path.
+    ///
+Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
+Similar to [redb::Builder::open(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.open)
+Creates a new [`Database`](crate::Database) instance in memory.
+Defines a table using the given model.
+    ///
+Native DB depends of `native_model` to define the model.
+And `native_model` by default uses [`serde`](https://serde.rs/) to serialize and deserialize the data but
+you can use any other serialization library see the documentation of [`native_model`](https://github.com/vincent-herlemont/native_model) for more information.
+So in the example below we import `serde` and we use the `Serialize` and `Deserialize` traits.
+    ///
+# Primary key
+    ///
+The primary key is *strict*, you **must**:
+- define it.
+- define only one.
+    ///
+If the primary key is not defined, the compiler will return an error `Primary key is not set`.
+    ///
+You can define with two ways:
+- `#[primary_key]` on the field
+- `#[native_db(primary_key(<method_name>))]` on any type `enum`, `struct`, `tuple struct` or `unit struct`.
+    ///
+The primary key is **unique**, so you can't have two instances of the model with the same primary key saved in the database.
+    ///
+## Define a simple model with a primary key
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()
+}
+```
+## Define a model with a method as primary key
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db(
+    primary_key(custom_id)
+)]
+struct Data(u64);
+    ///
+impl Data {
+  fn custom_id(&self) -> u32 {
+    (self.0 + 1) as u32
+  }
+}
+    ///
+```
+    ///
+## Secondary key
+    ///
+The secondary key is *flexible*, you can:
+- define it or not.
+- define one or more.
+    ///
+You can define with two ways:
+- `#[secondary_key]` on the field
+- `#[native_db(secondary_key(<method_name>, <options>))]` on any type `enum`, `struct`, `tuple struct` or `unit struct`.
+    ///
+The secondary key can have two options:
+- [`unique`](#unique) (default: false)
+- [`optional`](#optional) (default: false)
+    ///
+## Define a model with a secondary key
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+    name: String,
+}
+```
+    ///
+## Define a model wit a secondary key optional and unique
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key(unique, optional)]
+    name: Option<String>,
+}
+```
+- Note: the secondary key can be `unique` **or** `optional` as well.
+    ///
+## Unique
+    ///
+This means that each instance of the model must have a unique value for the secondary key.
+If the value is not unique, the [`insert`](crate::transaction::RwTransaction::insert) method will return an error.
+    ///
+## Optional
+    ///
+This means that an instance of the model can have a value for the secondary key or not.
+When`optional` is set the value **must** be an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html).
+if the value is not an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html) the compiler will return
+an error `error[E0282]: type annotations needed: cannot infer type`.
+ 
+Under the hood, the secondary key is stored in a separate redb table. So if the secondary key is optional,
+the value will be stored in the table only if the value is not `None`.
+    ///
+# Define a model with a secondary key and a custom secondary key optional
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db(
+    secondary_key(custom_name, optional)
+)]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+    name: String,
+    flag: bool,
+}
+    ///
+impl Data {
+    fn custom_name(&self) -> Option<String> {
+        if self.flag {
+            Some(self.name.clone().to_uppercase())
+        } else {
+            None
+        }
+    }
+}
+```
+# Define multiple models
+    ///
+To define multiple models, you **must** use different `id` for each model. If you use the same `id` for two models,
+the program will panic with the message `The table <table_name> has the same native model version as the table <table_name> and it's not allowed`.
+    ///
+Example:
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Animal {
+    #[primary_key]
+    name: String,
+}
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=2, version=1)]
+#[native_db]
+struct Vegetable {
+    #[primary_key]
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Animal>()?;
+    builder.define::<Vegetable>()
+}
+```
+The database instance. Allows you to create [rw_transaction](database/struct.Database.html#method.rw_transaction) and [r_transaction](database/struct.Database.html#method.r_transaction), [watch](database/struct.Database.html#method.watch) queries, and [unwatch](database/struct.Database.html#method.unwatch) etc.
+///
+# Example
+```rust
+use native_db::*;
+///
+fn main() -> Result<(), db_type::Error> {
+   let builder = DatabaseBuilder::new();
+   // Define models ...
+   let db = builder.create_in_memory()?;
+   // Open transactions
+   // Watch data
+   // Create snapshots
+   // etc...
+   Ok(())
+}
+Creates a new read-write transaction.
+Creates a new read-only transaction.
+Watch queries.
+Unwatch the given `id`.
+You can get the `id` from the return value of [`watch`](Self::watch).
+If the `id` is not valid anymore, this function will do nothing.
+If the `id` is valid, the corresponding watcher will be removed.
+Watch multiple values.
+Watch multiple values.
+Watch all values.
+Watch all values by secondary key.
+Watch all values.
+Watch all values.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Watch all values
+    let (_recv, _id) = db.watch().scan().primary().all::<Data>()?;
+    Ok(())
+}
+```
+**TODO: needs to be implemented**
+Watch all values starting with the given key.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Watch all values starting with "test"
+    let (_recv, _id) = db.watch().scan().primary().start_with::<Data>("test")?;
+    Ok(())
+}
+```
+Watch all values by secondary key.
+Watch all values by secondary key.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Watch all values by secondary key "name"
+    let (_recv, _id) = db.watch().scan().secondary(DataKey::name).all::<Data>()?;
+    Ok(())
+}
+```
+Watch all values starting with the given key.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+    name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Open a read transaction
+    let r = db.r_transaction()?;
+    
+    // Watch all values by secondary key "name" starting with "test"
+    let (_recv, _id) = db.watch().scan().secondary(DataKey::name).start_with::<Data>("test")?;
+    Ok(())
+}
+```
+Watch queries.
+Watch only one value.
+Watch multiple values.
+Watch only one value.
+Watch the primary key.
+    ///
+Returns a channel receiver and the watcher id.
+The watcher id can be used to unwatch the channel.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Watch the primary key
+    let (_recv, _id) = db.watch().get().primary::<Data>(1u64)?;
+    Ok(())
+}
+```
+Watch the secondary key.
+    ///
+Returns a channel receiver and the watcher id.
+The watcher id can be used to unwatch the channel.
+    ///
+# Example
+```rust
+use native_db::*;
+use native_model::{native_model, Model};
+use serde::{Deserialize, Serialize};
+    ///
+#[derive(Serialize, Deserialize)]
+#[native_model(id=1, version=1)]
+#[native_db]
+struct Data {
+    #[primary_key]
+    id: u64,
+    #[secondary_key]
+   name: String,
+}
+    ///
+fn main() -> Result<(), db_type::Error> {
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Data>()?;
+    let db = builder.create_in_memory()?;
+    
+    // Watch the secondary key name
+    let (_recv, _id) = db.watch().get().secondary::<Data>(DataKey::name, "test")?;
+    Ok(())
+}
+```
+Index selection Enum for [#struct_name]

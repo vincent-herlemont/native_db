@@ -36,3 +36,10 @@ bench:
 expand test_file_name:
     rm -f {{test_file_name}}.expanded.rs; \
     cargo expand --test {{test_file_name}} | save --raw {{test_file_name}}.expanded.rs
+
+serve_docs:
+    cd book; mdbook serve --open
+
+bot_collect_rust_docs:
+    #!/usr/bin/env bash
+    find . -name '*.rs' -exec grep -h '^\s*///' {} \; | sed 's/^\s*\/\/\/ //' > collected_comments.txt
