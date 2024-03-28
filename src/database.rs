@@ -8,7 +8,7 @@ use crate::transaction::RTransaction;
 use crate::transaction::RwTransaction;
 use crate::watch;
 use crate::watch::query::{InternalWatch, Watch};
-use redb::TableHandle;
+use redb::{ReadableTableMetadata, TableHandle};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
@@ -120,7 +120,6 @@ impl<'a> Database<'a> {
     }
 
     pub fn redb_stats(&self) -> Result<Stats> {
-        use redb::ReadableTable;
         let rx = self.instance.begin_read()?;
         let mut stats_primary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {

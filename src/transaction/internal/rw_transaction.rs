@@ -7,12 +7,13 @@ use crate::transaction::internal::private_readable_transaction::PrivateReadableT
 use crate::watch::WatcherRequest;
 use crate::{DatabaseModel, Input};
 use redb::ReadableTable;
+use redb::ReadableTableMetadata;
 use redb::TableHandle;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 
 pub struct InternalRwTransaction<'db> {
-    pub(crate) redb_transaction: redb::WriteTransaction<'db>,
+    pub(crate) redb_transaction: redb::WriteTransaction,
     pub(crate) primary_table_definitions: &'db HashMap<String, PrimaryTableDefinition<'db>>,
 }
 
@@ -21,10 +22,10 @@ where
     Self: 'txn,
     Self: 'db,
 {
-    type RedbPrimaryTable = redb::Table<'db, 'txn, DatabaseInnerKeyValue, &'static [u8]>;
-    type RedbSecondaryTable = redb::Table<'db, 'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
+    type RedbPrimaryTable = redb::Table<'txn, DatabaseInnerKeyValue, &'static [u8]>;
+    type RedbSecondaryTable = redb::Table<'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
 
-    type RedbTransaction<'db_bis> = redb::WriteTransaction<'db> where Self: 'db_bis;
+    type RedbTransaction<'db_bis> = redb::WriteTransaction where Self: 'db_bis;
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
         &self.primary_table_definitions
@@ -171,7 +172,7 @@ impl<'db> InternalRwTransaction<'db> {
 
         let mut primary_table = self.get_primary_table(&model)?;
         // Drain primary table
-        let drain = primary_table.drain::<DatabaseInnerKeyValue>(..)?;
+        let drain = primary_table.extract_from_if::<DatabaseInnerKeyValue, _>(.., |_, _| true)?;
         for result in drain {
             let (primary_key, value) = result?;
             // TODO: we should delay to an drain scan

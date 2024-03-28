@@ -36,7 +36,7 @@ fn insert_get() {
 
     let rw = db.rw_transaction().unwrap();
     let old_value = rw.remove(item.clone()).unwrap();
-    assert_eq!(old_value, item); 
+    assert_eq!(old_value, item);
     rw.commit().unwrap();
 
     let stats = db.redb_stats().unwrap();

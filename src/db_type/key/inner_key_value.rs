@@ -1,4 +1,4 @@
-use redb::{RedbKey, RedbValue, TypeName};
+use redb::{Key, TypeName, Value};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
 
@@ -255,7 +255,7 @@ where
     }
 }
 
-impl RedbValue for DatabaseInnerKeyValue {
+impl Value for DatabaseInnerKeyValue {
     type SelfType<'a> = DatabaseInnerKeyValue;
     type AsBytes<'a> = &'a [u8] where Self: 'a;
 
@@ -283,7 +283,7 @@ impl RedbValue for DatabaseInnerKeyValue {
     }
 }
 
-impl RedbKey for DatabaseInnerKeyValue {
+impl Key for DatabaseInnerKeyValue {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
         data1.cmp(&data2)
     }
