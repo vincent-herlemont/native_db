@@ -20,8 +20,7 @@ impl<'txn> RScan<'_, 'txn> {
     /// Get a values from the database by primary key.
     pub fn primary<T: Input>(
         &self,
-    ) -> Result<PrimaryScan<redb::ReadOnlyTable<'txn, DatabaseInnerKeyValue, &'static [u8]>, T>>
-    {
+    ) -> Result<PrimaryScan<redb::ReadOnlyTable<DatabaseInnerKeyValue, &'static [u8]>, T>> {
         let model = T::native_db_model();
         let table = self.internal.get_primary_table(&model)?;
         let out = PrimaryScan::new(table);
@@ -34,8 +33,8 @@ impl<'txn> RScan<'_, 'txn> {
         key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
     ) -> Result<
         SecondaryScan<
-            redb::ReadOnlyTable<'txn, DatabaseInnerKeyValue, &'static [u8]>,
-            redb::ReadOnlyTable<'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>,
+            redb::ReadOnlyTable<DatabaseInnerKeyValue, &'static [u8]>,
+            redb::ReadOnlyTable<DatabaseInnerKeyValue, DatabaseInnerKeyValue>,
             T,
         >,
     > {
@@ -52,10 +51,13 @@ pub struct RwScan<'db, 'txn> {
     pub(crate) internal: &'txn InternalRwTransaction<'db>,
 }
 
-impl<'db, 'txn> RwScan<'db, 'txn> {
+impl<'db, 'txn> RwScan<'db, 'txn>
+where
+    'txn: 'db,
+{
     pub fn primary<T: Input>(
         &self,
-    ) -> Result<PrimaryScan<redb::Table<'db, 'txn, DatabaseInnerKeyValue, &'static [u8]>, T>> {
+    ) -> Result<PrimaryScan<redb::Table<'db, DatabaseInnerKeyValue, &'static [u8]>, T>> {
         let model = T::native_db_model();
         let table = self.internal.get_primary_table(&model)?;
         let out = PrimaryScan::new(table);
@@ -67,8 +69,8 @@ impl<'db, 'txn> RwScan<'db, 'txn> {
         key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
     ) -> Result<
         SecondaryScan<
-            redb::Table<'db, 'txn, DatabaseInnerKeyValue, &'static [u8]>,
-            redb::Table<'db, 'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>,
+            redb::Table<'db, DatabaseInnerKeyValue, &'static [u8]>,
+            redb::Table<'db, DatabaseInnerKeyValue, DatabaseInnerKeyValue>,
             T,
         >,
     > {

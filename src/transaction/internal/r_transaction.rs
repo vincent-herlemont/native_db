@@ -7,7 +7,7 @@ use crate::DatabaseModel;
 use std::collections::HashMap;
 
 pub struct InternalRTransaction<'db> {
-    pub(crate) redb_transaction: redb::ReadTransaction<'db>,
+    pub(crate) redb_transaction: redb::ReadTransaction,
     pub(crate) table_definitions: &'db HashMap<String, PrimaryTableDefinition<'db>>,
 }
 
@@ -16,11 +16,10 @@ where
     Self: 'txn,
     Self: 'db,
 {
-    type RedbPrimaryTable = redb::ReadOnlyTable<'txn, DatabaseInnerKeyValue, &'static [u8]>;
-    type RedbSecondaryTable =
-        redb::ReadOnlyTable<'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
+    type RedbPrimaryTable = redb::ReadOnlyTable<DatabaseInnerKeyValue, &'static [u8]>;
+    type RedbSecondaryTable = redb::ReadOnlyTable<DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
 
-    type RedbTransaction<'db_bis> = redb::ReadTransaction<'db> where Self: 'db_bis;
+    type RedbTransaction<'db_bis> = redb::ReadTransaction where Self: 'db_bis;
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
         &self.table_definitions

@@ -5,6 +5,7 @@ use crate::db_type::{
 use crate::table_definition::PrimaryTableDefinition;
 use crate::DatabaseModel;
 use redb::ReadableTable;
+use redb::ReadableTableMetadata;
 use std::collections::HashMap;
 
 pub trait PrivateReadableTransaction<'db, 'txn> {
