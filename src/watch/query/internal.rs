@@ -24,7 +24,6 @@ impl InternalWatch<'_> {
         let id = self.generate_watcher_id()?;
         let mut watchers = self.watchers.write().unwrap();
         watchers.add_sender(id, &table_filter, Arc::clone(&event_sender));
-        drop(watchers);
         Ok((event_receiver, id))
     }
 
