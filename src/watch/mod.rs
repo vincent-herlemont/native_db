@@ -11,17 +11,22 @@ pub(crate) use filter::*;
 pub(crate) use request::*;
 pub(crate) use sender::*;
 
-use std::sync::{Arc, RwLock, TryLockError};
+use std::{
+    sync::{Arc, RwLock},
+    vec,
+};
+
+#[cfg(not(feature = "tokio"))]
+use std::sync::mpsc::SendError;
+#[cfg(feature = "tokio")]
+use tokio::sync::mpsc::error::SendError;
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum WatchEventError {
-    #[error("TryLockErrorPoisoned")]
-    // TryLockErrorPoisoned(Batch<'a>), // TODO: remove 'a lifetime from Batch Error
-    TryLockErrorPoisoned,
-    #[error("TryLockErrorWouldBlock")]
-    // TryLockErrorWouldBlock(Batch<'a>), // TODO: remove 'a lifetime from Batch Error
-    TryLockErrorWouldBlock,
+    #[error("LockErrorPoisoned")]
+    LockErrorPoisoned,
     #[cfg(not(feature = "tokio"))]
     #[error("SendError")]
     SendError(#[from] std::sync::mpsc::SendError<Event>),
@@ -44,15 +49,28 @@ pub(crate) fn push_batch(
     senders: Arc<RwLock<Watchers>>,
     batch: Batch,
 ) -> Result<(), WatchEventError> {
-    let watchers = senders.try_read().map_err(|err| match err {
-        TryLockError::Poisoned(_) => WatchEventError::TryLockErrorPoisoned,
-        TryLockError::WouldBlock => WatchEventError::TryLockErrorWouldBlock,
+    let watchers = senders.read().map_err(|err| match err {
+        _ => WatchEventError::LockErrorPoisoned,
     })?;
 
+    let mut unused_watchers = vec![];
     for (watcher_request, event) in batch {
-        for sender in watchers.find_senders(&watcher_request) {
-            let sender = sender.lock().unwrap();
-            sender.send(event.clone())?;
+        for (id, sender) in watchers.find_senders(&watcher_request) {
+            let l_sender = sender.lock().unwrap();
+            if let Err(SendError(_)) = l_sender.send(event.clone()) {
+                println!("Failed to send event to watcher {}", id);
+                unused_watchers.push(id);
+            }
+        }
+    }
+    // Drop the lock before removing the watchers to avoid deadlock
+    drop(watchers);
+
+    // Remove unused watchers
+    if unused_watchers.len() > 0 {
+        let mut w = senders.write().unwrap();
+        for id in unused_watchers {
+            w.remove_sender(id);
         }
     }
 

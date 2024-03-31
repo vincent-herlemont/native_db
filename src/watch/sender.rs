@@ -28,18 +28,18 @@ impl Watchers {
     pub(crate) fn find_senders(
         &self,
         request: &WatcherRequest,
-    ) -> Vec<Arc<Mutex<MpscSender<Event>>>> {
+    ) -> Vec<(u64, Arc<Mutex<MpscSender<Event>>>)> {
         let mut event_senders = Vec::new();
-        for (_, (filter, event_sender)) in &self.0 {
+        for (id, (filter, event_sender)) in &self.0 {
             if filter.table_name == request.table_name {
                 match &filter.key_filter {
                     KeyFilter::Primary(value) => {
                         if let Some(key) = &value {
                             if key == &request.primary_key {
-                                event_senders.push(Arc::clone(event_sender));
+                                event_senders.push((*id, Arc::clone(event_sender)));
                             }
                         } else {
-                            event_senders.push(Arc::clone(event_sender));
+                            event_senders.push((*id, Arc::clone(event_sender)));
                         }
                     }
                     KeyFilter::PrimaryStartWith(key_prefix) => {
@@ -48,7 +48,7 @@ impl Watchers {
                             .as_slice()
                             .starts_with(key_prefix.as_slice())
                         {
-                            event_senders.push(Arc::clone(event_sender));
+                            event_senders.push((*id, Arc::clone(event_sender)));
                         }
                     }
                     KeyFilter::Secondary(key_def, key) => {
@@ -60,19 +60,20 @@ impl Watchers {
                                     match request_secondary_key {
                                         DatabaseKeyValue::Default(value) => {
                                             if value == filter_value {
-                                                event_senders.push(Arc::clone(event_sender));
+                                                event_senders.push((*id, Arc::clone(event_sender)));
                                             }
                                         }
                                         DatabaseKeyValue::Optional(value) => {
                                             if let Some(value) = value {
                                                 if value == filter_value {
-                                                    event_senders.push(Arc::clone(event_sender));
+                                                    event_senders
+                                                        .push((*id, Arc::clone(event_sender)));
                                                 }
                                             }
                                         }
                                     }
                                 } else {
-                                    event_senders.push(Arc::clone(event_sender));
+                                    event_senders.push((*id, Arc::clone(event_sender)));
                                 }
                             }
                         }
@@ -85,7 +86,7 @@ impl Watchers {
                                 DatabaseKeyValue::Default(value) => {
                                     if key_def == request_secondary_key_def {
                                         if value.as_slice().starts_with(key_prefix.as_slice()) {
-                                            event_senders.push(Arc::clone(event_sender));
+                                            event_senders.push((*id, Arc::clone(event_sender)));
                                         }
                                     }
                                 }
@@ -93,7 +94,7 @@ impl Watchers {
                                     if let Some(value) = value {
                                         if key_def == request_secondary_key_def {
                                             if value.as_slice().starts_with(key_prefix.as_slice()) {
-                                                event_senders.push(Arc::clone(event_sender));
+                                                event_senders.push((*id, Arc::clone(event_sender)));
                                             }
                                         }
                                     }

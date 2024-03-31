@@ -292,6 +292,42 @@ fn unwatch() {
     assert!(recv.try_recv().is_err());
 }
 
+#[test]
+fn unwatch_by_deleted_receiver() {
+    let tf = TmpFs::new().unwrap();
+
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<ItemA>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+
+    let item_a = ItemA { id: 1 };
+
+    let (recv, recv_id) = db.watch().get().primary::<ItemA>(item_a.id).unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(item_a.clone()).unwrap();
+    rw.commit().unwrap();
+
+    for _ in 0..1 {
+        let inner_event: ItemA = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
+            event.inner()
+        } else {
+            panic!("wrong event")
+        };
+        assert_eq!(inner_event, item_a);
+    }
+
+    drop(recv);
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(item_a.clone()).unwrap();
+    // The watcher is removed during the commit because the receiver is dropped
+    rw.commit().unwrap();
+
+    // Check if the watcher is removed
+    assert!(!db.unwatch(recv_id).unwrap());
+}
+
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 4, version = 1)]
 #[native_db]
