@@ -21,8 +21,8 @@ impl Watchers {
         self.0.insert(id, (table_filter.clone(), event_sender));
     }
 
-    pub(crate) fn remove_sender(&mut self, id: u64) {
-        self.0.remove(&id);
+    pub(crate) fn remove_sender(&mut self, id: u64) -> bool {
+        self.0.remove(&id).is_some()
     }
 
     pub(crate) fn find_senders(

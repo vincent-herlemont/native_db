@@ -282,7 +282,7 @@ fn unwatch() {
         assert_eq!(inner_event, item_a);
     }
 
-    db.unwatch(recv_id).unwrap();
+    assert!(db.unwatch(recv_id).unwrap());
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item_a.clone()).unwrap();
