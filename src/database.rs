@@ -79,12 +79,12 @@ impl Database<'_> {
 
     /// Unwatch the given `id`.
     /// You can get the `id` from the return value of [`watch`](Self::watch).
-    /// If the `id` is not valid anymore, this function will do nothing.
-    /// If the `id` is valid, the corresponding watcher will be removed.
-    pub fn unwatch(&self, id: u64) -> Result<()> {
+    /// If the `id` is not valid anymore, this function will do nothing and return `false`.
+    /// If the `id` is valid, the corresponding watcher will be removed and return `true`.
+    /// If the `id` is valid but the watcher is already removed, this function will return `false`.
+    pub fn unwatch(&self, id: u64) -> Result<bool> {
         let mut watchers = self.watchers.write().unwrap();
-        watchers.remove_sender(id);
-        Ok(())
+        Ok(watchers.remove_sender(id))
     }
 }
 
