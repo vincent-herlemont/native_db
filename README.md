@@ -9,6 +9,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/native_db)](https://crates.io/crates/native_db)
 [![Documentation](https://docs.rs/native_db/badge.svg)](https://docs.rs/native_db)
+[![Help with Chat GPT](https://img.shields.io/badge/Help%20with%20Chat%20GPT-purple?logo=openai)](https://chat.openai.com/g/g-gydO9ATky-native-db-helper)
 [![License](https://img.shields.io/crates/l/native_db)](LICENSE)
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
