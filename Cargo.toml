@@ -2,7 +2,7 @@
 name = "native_db"
 version = "0.5.3"
 authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
-edition = "2018"
+edition = "2021"
 description = "Drop-in embedded database"
 license = "MIT"
 repository = "https://github.com/vincent-herlemont/native_db"
