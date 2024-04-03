@@ -1,30 +1,48 @@
-use crate::db_type::Result;
+use crate::database_instance::DatabaseInstance;
+use crate::db_type::{Error, Result};
 use crate::table_definition::NativeModelOptions;
-use crate::{watch, Database, DatabaseModel, Input};
+use crate::{upgrade, watch, Database, DatabaseModel, Input};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
 
-/// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc. and [define](Self::define) models.
 #[derive(Debug)]
-pub struct DatabaseBuilder {
-    cache_size_bytes: Option<usize>,
-    models_builder: HashMap<String, ModelBuilder>,
+pub(crate) struct DatabaseConfiguration {
+    pub(crate) cache_size_bytes: Option<usize>,
 }
 
-impl DatabaseBuilder {
-    fn new_rdb_builder(&self) -> redb::Builder {
+impl DatabaseConfiguration {
+    pub(crate) fn new_rdb_builder(&self) -> redb::Builder {
         let mut redb_builder = redb::Builder::new();
         if let Some(cache_size_bytes) = self.cache_size_bytes {
             redb_builder.set_cache_size(cache_size_bytes);
         }
         redb_builder
     }
+}
 
-    fn init<'a>(&'a self, redb_database: redb::Database) -> Result<Database<'a>> {
+#[cfg(feature = "redb1")]
+impl DatabaseConfiguration {
+    pub(crate) fn redb1_new_rdb1_builder(&self) -> redb1::Builder {
+        let mut redb_builder = redb1::Builder::new();
+        if let Some(cache_size_bytes) = self.cache_size_bytes {
+            redb_builder.set_cache_size(cache_size_bytes);
+        }
+        redb_builder
+    }
+}
+/// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc. and [define](Self::define) models.
+#[derive(Debug)]
+pub struct DatabaseBuilder {
+    database_configuration: DatabaseConfiguration,
+    models_builder: HashMap<String, ModelBuilder>,
+}
+
+impl DatabaseBuilder {
+    fn init<'a>(&'a self, database_instance: DatabaseInstance) -> Result<Database<'a>> {
         let mut database = Database {
-            instance: redb_database,
+            instance: database_instance,
             primary_table_definitions: HashMap::new(),
             watchers: Arc::new(RwLock::new(watch::Watchers::new())),
             watchers_counter_id: AtomicU64::new(0),
@@ -42,14 +60,16 @@ impl DatabaseBuilder {
     /// Similar to [redb::Builder::new()](https://docs.rs/redb/latest/redb/struct.Builder.html#method.new).
     pub fn new() -> Self {
         Self {
-            cache_size_bytes: None,
+            database_configuration: DatabaseConfiguration {
+                cache_size_bytes: None,
+            },
             models_builder: HashMap::new(),
         }
     }
 
     /// Similar to [redb::Builder::set_cache_size()](https://docs.rs/redb/latest/redb/struct.Builder.html#method.set_cache_size).
     pub fn set_cache_size(&mut self, bytes: usize) -> &mut Self {
-        self.cache_size_bytes = Some(bytes);
+        self.database_configuration.cache_size_bytes = Some(bytes);
         self
     }
 
@@ -57,25 +77,30 @@ impl DatabaseBuilder {
     ///
     /// Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
     pub fn create(&self, path: impl AsRef<Path>) -> Result<Database> {
-        let db = self.new_rdb_builder().create(path)?;
-        // Ok(Self::from_redb(db))
-        self.init(db)
+        let builder = self.database_configuration.new_rdb_builder();
+        let database_instance = DatabaseInstance::create_on_disk(builder, path)?;
+        self.init(database_instance)
     }
 
     /// Similar to [redb::Builder::open(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.open)
+    /// But it also upgrades the database if needed if 
     pub fn open(&self, path: impl AsRef<Path>) -> Result<Database> {
-        let db = self.new_rdb_builder().open(path)?;
-        // Ok(Self::from_redb(db))
-        self.init(db)
+        let builder = self.database_configuration.new_rdb_builder();
+        let database_instance = match DatabaseInstance::open_on_disk(builder, &path) {
+            Err(Error::RedbDatabaseError(redb::DatabaseError::UpgradeRequired(_))) => {
+                upgrade::upgrade(&self.database_configuration, &path, &self.models_builder)
+            }
+            Err(error) => return Err(error),
+            Ok(database_instance) => Ok(database_instance),
+        }?;
+        self.init(database_instance)
     }
 
     /// Creates a new [`Database`](crate::Database) instance in memory.
     pub fn create_in_memory(&self) -> Result<Database> {
-        let in_memory_backend = redb::backends::InMemoryBackend::new();
-        let db = self.new_rdb_builder();
-        let db = db.create_with_backend(in_memory_backend)?;
-        // Ok(Self::from_redb(db))
-        self.init(db)
+        let builder = self.database_configuration.new_rdb_builder();
+        let database_instance = DatabaseInstance::create_in_memory(builder)?;
+        self.init(database_instance)
     }
 
     /// Defines a table using the given model.

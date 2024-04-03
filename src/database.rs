@@ -1,4 +1,5 @@
 use crate::database_builder::ModelBuilder;
+use crate::database_instance::DatabaseInstance;
 use crate::db_type::Result;
 use crate::stats::{Stats, StatsTable};
 use crate::table_definition::PrimaryTableDefinition;
@@ -32,7 +33,7 @@ use std::u64;
 ///    Ok(())
 /// }
 pub struct Database<'a> {
-    pub(crate) instance: redb::Database,
+    pub(crate) instance: DatabaseInstance,
     pub(crate) primary_table_definitions: HashMap<String, PrimaryTableDefinition<'a>>,
     pub(crate) watchers: Arc<RwLock<watch::Watchers>>,
     pub(crate) watchers_counter_id: AtomicU64,
@@ -41,7 +42,7 @@ pub struct Database<'a> {
 impl Database<'_> {
     /// Creates a new read-write transaction.
     pub fn rw_transaction(&self) -> Result<RwTransaction> {
-        let rw = self.instance.begin_write()?;
+        let rw = self.instance.redb_database()?.begin_write()?;
         let write_txn = RwTransaction {
             watcher: &self.watchers,
             batch: RefCell::new(watch::Batch::new()),
@@ -55,7 +56,7 @@ impl Database<'_> {
 
     /// Creates a new read-only transaction.
     pub fn r_transaction(&self) -> Result<RTransaction> {
-        let txn = self.instance.begin_read()?;
+        let txn = self.instance.redb_database()?.begin_read()?;
         let read_txn = RTransaction {
             internal: InternalRTransaction {
                 redb_transaction: txn,
@@ -95,7 +96,7 @@ impl<'a> Database<'a> {
         let mut primary_table_definition: PrimaryTableDefinition =
             (model_builder, main_table_definition).into();
 
-        let rw = self.instance.begin_write()?;
+        let rw = self.instance.redb_database()?.begin_write()?;
         rw.open_table(primary_table_definition.redb.clone())?;
 
         for secondary_key in model_builder.model.secondary_keys.iter() {
@@ -120,7 +121,7 @@ impl<'a> Database<'a> {
     }
 
     pub fn redb_stats(&self) -> Result<Stats> {
-        let rx = self.instance.begin_read()?;
+        let rx = self.instance.redb_database()?.begin_read()?;
         let mut stats_primary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {
             let result_table_open = rx.open_table(primary_table.redb.clone());

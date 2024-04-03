@@ -9,8 +9,16 @@ pub enum Error {
     #[error("Redb database error")]
     RedbDatabaseError(#[from] redb::DatabaseError),
 
+    #[cfg(feature = "redb1")]
+    #[error("Legacy redb1 database error")]
+    LegacyRedb1DatabaseError(#[from] redb1::DatabaseError),
+
     #[error("Redb transaction error")]
     RedbTransactionError(#[from] redb::TransactionError),
+
+    #[cfg(feature = "redb1")]
+    #[error("Redb redb1 transaction error")]
+    Redb1TransactionError(#[from] redb1::TransactionError),
 
     #[error("Redb storage error")]
     RedbStorageError(#[from] redb::StorageError),
@@ -20,6 +28,12 @@ pub enum Error {
 
     #[error("Redb commit error")]
     RedbCommitError(#[from] redb::CommitError),
+
+    #[error("Redb compaction error")]
+    RedbCompactionError(#[from] redb::CompactionError),
+
+    #[error("Database instance need upgrade")]
+    DatabaseInstanceNeedUpgrade(u8),
 
     #[error("IO error")]
     Io(#[from] std::io::Error),

@@ -7,8 +7,8 @@ impl Database<'_> {
     pub fn snapshot<'a>(&self, builder: &'a DatabaseBuilder, path: &Path) -> Result<Database<'a>> {
         // TODO: builder must have well defined models
         let new_db = builder.create(path)?;
-        let r = self.instance.begin_read()?;
-        let w = new_db.instance.begin_write()?;
+        let r = self.instance.redb_database()?.begin_read()?;
+        let w = new_db.instance.redb_database()?.begin_write()?;
         {
             // Copy primary tables
             for (_, primary_table_definition) in &self.primary_table_definitions {

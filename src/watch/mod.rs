@@ -58,7 +58,6 @@ pub(crate) fn push_batch(
         for (id, sender) in watchers.find_senders(&watcher_request) {
             let l_sender = sender.lock().unwrap();
             if let Err(SendError(_)) = l_sender.send(event.clone()) {
-                println!("Failed to send event to watcher {}", id);
                 unused_watchers.push(id);
             }
         }

@@ -6,6 +6,10 @@
   "platformAutomerge": true,
   "packageRules": [
     {
+      "excludePackageNames": ["native_db_0_5_3", "redb1"],
+      "enabled": false
+    },
+    {
       "description": "Automerge non-major updates",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
