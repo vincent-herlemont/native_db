@@ -7,9 +7,9 @@ use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
+use std::time::Duration;
 use std::sync::Arc;
 use std::thread;
-use std::time::Duration;
 
 pub const TIMEOUT: Duration = Duration::from_secs(1);
 
@@ -84,8 +84,7 @@ fn watch_all_primary_key() {
     assert!(recv.try_recv().is_err());
 }
 
-// Ignore this test on macOS and ios because it fails with: Result::unwrap()` on an `Err` value: WatchEventError(SendError(SendError { .. }))
-#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+
 #[test]
 fn watch_multithreading() {
     let tf = TmpFs::new().unwrap();

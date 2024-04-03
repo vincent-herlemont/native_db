@@ -218,7 +218,7 @@ fn bench_remove_random(c: &mut Criterion) {
     group.plot_config(plot_config.clone());
     group.sampling_mode(criterion::SamplingMode::Flat);
 
-    for (nb_bytes, nb_items) in ITERATIONS {
+    for (nb_bytes, _nb_items) in ITERATIONS {
         group.throughput(criterion::Throughput::Bytes(*nb_bytes as u64));
 
         let (redb_db, native_db) = init_database();
