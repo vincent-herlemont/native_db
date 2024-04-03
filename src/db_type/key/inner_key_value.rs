@@ -381,7 +381,7 @@ mod tests {
 
     #[test]
     fn test_range() {
-        use redb::{ReadableTable, TableDefinition};
+        use redb::TableDefinition;
 
         const TABLE: TableDefinition<DatabaseInnerKeyValue, u64> = TableDefinition::new("my_data");
 
