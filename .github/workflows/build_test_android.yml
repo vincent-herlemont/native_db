@@ -5,34 +5,78 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main, next ]
+  schedule:
+    # At 23:00 on Thursday.
+    - cron:  '0 23 * * 4'
 
 env:
   RUST_BACKTRACE: full
 
 jobs:
   build_test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: true
       matrix:
-        target: [i686-linux-android, aarch64-linux-android, armv7-linux-androideabi, thumbv7neon-linux-androideabi, x86_64-linux-android]
+        #target: [i686-linux-android, aarch64-linux-android, armv7-linux-androideabi, thumbv7neon-linux-androideabi, x86_64-linux-android]
+        #target: [aarch64-linux-android, x86_64-linux-android, armv7-linux-androideabi]
         toolchain: [stable]
+        profile:
+          - target: aarch64-linux-android
+            image: "system-images;android-34;google_apis;x86_64"
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
-          override: true
-      - name: Build
-        uses: actions-rs/cargo@v1
+          targets: ${{ matrix.profile.target }}
+      - name: Cache emulator
+        uses: actions/cache@v4
+        if: always()
         with:
-          use-cross: true
-          command: build
-          args: --release --target ${{ matrix.target }}
-      - name: Run tests
-        uses: actions-rs/cargo@v1
+          path: |
+            /Users/runner/Library/Android/sdk/emulator
+          key: android-emulator-global
+      - name: Cache system-images
+        uses: actions/cache@v4
+        if: always()
         with:
-          use-cross: true
-          command: test
-          args: --release --target ${{ matrix.target }}
+          path: |
+            /Users/runner/Library/Android/sdk/system-images
+          key: android-system-images-global-${{ matrix.profile.image }}
+      - run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
+      - run: echo "/Users/runner/Library/Android/sdk/emulator" >> $GITHUB_PATH
+      - run: echo "/Users/runner/Library/Android/sdk/platform-tools" >> $GITHUB_PATH
+      - run: echo "/Users/runner/Library/Android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+      # Install utilities
+      - name: Cache cargo install
+        uses: actions/cache@v4
+        if: always()
+        with:
+          path: |
+            ~/.cargo/bin/
+          key: cargo-global-${{ matrix.toolchain }}-${{ github.ref }}-${{ hashFiles('**/Cargo.lock') }}
+      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.6.8 cargo-dinghy; fi
+      - run: if ! command -v just &> /dev/null; then cargo install --version 1.25.2 just; fi
+      - run: just --version
+      - uses: hustcer/setup-nu@v3.9
+        with:
+          version: '0.85'
+        env:
+            GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
+      # End install utilities
+      - run: adb start-server
+      - run: sdkmanager emulator
+      - run: echo "/Users/runner/Library/Android/sdk/emulator" >> $GITHUB_PATH
+      - run: yes | sdkmanager --install "${{ matrix.profile.image }}"
+      # - run: sdkmanager --list_installed
+      # - run: sdkmanager --list
+      - run: echo "no" | avdmanager create avd -n testDevice -k "${{ matrix.profile.image }}"
+      - run: emulator -avd testDevice -no-audio -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -camera-back none -camera-front none -selinux permissive -qemu -m 2048 &
+      - run: adb wait-for-device
+      # - name: just test_mobile_all_platforms
+      # - run: emulator -list-avds
+      # - run: avdmanager list
+      - run: just test_mobile_all_devices
+      - run: just test_android
