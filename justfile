@@ -6,6 +6,7 @@ default:
 build_no_default *args:
     cargo build --no-default-features {{args}}
 
+# E.g. just build_default --test modules breaking_release_migration::from_0_5_x_to_0_6_x
 build_default *args:
     cargo build {{args}}
 

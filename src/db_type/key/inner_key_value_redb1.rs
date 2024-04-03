@@ -1,4 +1,9 @@
-use redb::{Key, TypeName, Value};
+#![allow(dead_code)]
+
+/// This module contains a legacy implementation of the `InnerKeyValue` trait for the `redb1` crate.
+
+use super::DatabaseInnerKeyValue as NewDatabaseInnerKeyValue;
+use redb1::{RedbKey as Key, RedbValue as Value, TypeName};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
 
@@ -6,7 +11,7 @@ use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, Ra
 pub struct DatabaseInnerKeyValue(Vec<u8>);
 
 impl DatabaseInnerKeyValue {
-    pub(crate) fn new(data: Vec<u8>) -> Self {
+    fn new(data: Vec<u8>) -> Self {
         Self(data)
     }
 
@@ -16,6 +21,12 @@ impl DatabaseInnerKeyValue {
 
     pub(crate) fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
+    }
+}
+
+impl From<DatabaseInnerKeyValue> for NewDatabaseInnerKeyValue {
+    fn from(data: DatabaseInnerKeyValue) -> Self {
+        NewDatabaseInnerKeyValue::new(data.0)
     }
 }
 
@@ -381,12 +392,13 @@ mod tests {
 
     #[test]
     fn test_range() {
-        use redb::TableDefinition;
+        use redb1::ReadableTable;
+        use redb1::TableDefinition;
 
         const TABLE: TableDefinition<DatabaseInnerKeyValue, u64> = TableDefinition::new("my_data");
 
-        let backend = redb::backends::InMemoryBackend::new();
-        let db = redb::Database::builder()
+        let backend = redb1::backends::InMemoryBackend::new();
+        let db = redb1::Database::builder()
             .create_with_backend(backend)
             .unwrap();
         let write_txn = db.begin_write().unwrap();

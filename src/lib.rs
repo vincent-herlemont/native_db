@@ -5,12 +5,14 @@
 //! See [README.md](https://github.com/vincent-herlemont/native_db) for more information.
 mod database;
 mod database_builder;
+mod database_instance;
 pub mod db_type;
 mod model;
 mod serialization;
 mod snapshot;
 mod stats;
 mod table_definition;
+pub mod upgrade;
 
 /// All database interactions here,[`r_transaction`](transaction/struct.RTransaction.html), [`rw_transaction`](transaction/struct.RwTransaction.html) and [`query`](transaction/query/index.html).
 pub mod transaction;
