@@ -1,3 +1,4 @@
+#![cfg(not(target_arch = "wasm32"))]
 #![cfg(feature = "tokio")]
 
 use native_db::watch::Event;

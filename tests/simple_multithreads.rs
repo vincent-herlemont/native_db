@@ -1,3 +1,5 @@
+#![cfg(not(target_arch = "wasm32"))]
+
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};

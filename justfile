@@ -17,6 +17,9 @@ build_all *args:
     just build_default {{args}};
     just build_with_optional {{args}}
 
+build_wasm:
+    cargo build --target wasm32-unknown-unknown
+
 test_no_default *args:
     cargo test --no-default-features {{args}} -- --nocapture
 
@@ -31,6 +34,8 @@ test_all *args:
     just test_default {{args}};
     just test_with_optional {{args}}
 
+test_wasm:
+    cargo test --target wasm32-unknown-unknown
 
 # List all available devices
 test_mobile_all_devices:

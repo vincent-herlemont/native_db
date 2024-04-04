@@ -1,0 +1,40 @@
+name: Wasm (in-memory only)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, next ]
+
+env:
+  RUST_BACKTRACE: full
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain: [stable]
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: Add target
+        run: rustup target add wasm32-unknown-unknown
+      - uses: extractions/setup-just@v1
+      - uses: hustcer/setup-nu@v3.8
+        with:
+          version: '0.85'
+        env:
+            GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
+      - name: Just version
+        run: just --version
+      - name: Build
+        run: just build_wasm
+      # TODO
+      # - name: Test
+      #   run: just test_wasm

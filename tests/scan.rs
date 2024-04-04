@@ -1,3 +1,4 @@
+#![cfg(not(target_arch = "wasm32"))]
 // TODO: refactor and move to query/ folder
 
 use native_db::*;
