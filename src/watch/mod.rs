@@ -68,7 +68,9 @@ pub(crate) fn push_batch(
 
     // Remove unused watchers
     if unused_watchers.len() > 0 {
-        let mut w = senders.write().unwrap();
+        let mut w = senders.write().map_err(|err| match err {
+            _ => WatchEventError::LockErrorPoisoned,
+        })?;
         for id in unused_watchers {
             w.remove_sender(id);
         }
