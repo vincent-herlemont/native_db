@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/vincent-herlemont/native_db"
 readme = "README.md"
 build = "build.rs"
-keywords = ["embedded", "database", "multi-platform", "android", "ios"]
+keywords = ["embedded-database", "database", "multi-platform", "android", "ios"]
 categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
 [workspace]
