@@ -14,7 +14,7 @@ env:
 
 jobs:
   build_test:
-    runs-on: macos-13
+    runs-on: macos-14
     strategy:
       fail-fast: true
       matrix:
