@@ -35,8 +35,8 @@ Here's a drop-in, fast, embedded database for multi-platform apps (server, deskt
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-native_db = "0.5.3"
-native_model = "0.4.6"
+native_db = "0.6.0"
+native_model = "0.4.14"
 ```
 
 NOTE: `native_db` requires `native_model` to work.
