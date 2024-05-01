@@ -195,7 +195,7 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
     ///
-    ///     // Remove a value
+    ///     // Update a value
     ///     rw.update(Data { id: 1 }, Data { id: 2 })?;
     ///
     ///     // /!\ Don't forget to commit the transaction
