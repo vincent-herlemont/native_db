@@ -16,7 +16,7 @@ members = ["native_db_macro"]
 
 [dependencies]
 redb = "2.1.0"
-redb1 = { version = "=1.5.1", package = "redb", optional = true }
+redb1 = { version = "=2.1.0", package = "redb", optional = true }
 native_db_macro = { version = "0.5.3", path = "native_db_macro" }
 thiserror = "1.0"
 serde = { version = "1.0" }
