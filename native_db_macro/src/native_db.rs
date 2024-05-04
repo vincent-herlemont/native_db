@@ -44,11 +44,11 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
 
         impl native_db::db_type::Input for #struct_name {
             fn native_db_bincode_encode_to_vec(&self) -> Vec<u8> {
-                native_db::bincode_encode_to_vec(self).expect("Failed to serialize the struct #struct_name")
+                native_db::bincode_encode_to_vec(self).expect(format!("Failed to serialize the struct {}", stringify!(#struct_name)).as_str())
             }
 
             fn native_db_bincode_decode_from_slice(slice: &[u8]) -> Self {
-                native_db::bincode_decode_from_slice(slice).expect("Failed to deserialize the struct #struct_name").0
+                native_db::bincode_decode_from_slice(slice).expect(format!("Failed to deserialize the struct {}", stringify!(#struct_name)).as_str()).0
             }
 
             #native_db_model
