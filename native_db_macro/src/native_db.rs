@@ -56,7 +56,6 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
             #native_db_gks
         }
 
-        /// Index selection Enum for [#struct_name]
         pub(crate) enum #keys_enum_name {
             #(#keys_enum),*
         }
