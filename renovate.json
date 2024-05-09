@@ -6,7 +6,7 @@
   "platformAutomerge": true,
   "packageRules": [
     {
-      "excludePackageNames": ["native_db_0_5_3", "redb1"],
+      "matchDepNames": ["redb1"],
       "enabled": false
     },
     {
