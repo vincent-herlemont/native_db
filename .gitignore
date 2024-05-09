@@ -4,7 +4,7 @@ target/
 node_modules/
 package-lock.json
 package.json
-*.expanded.rs
+*_expanded.rs
 
 # Related to [Why do binaries have Cargo.lock in version control, but not libraries?](https://doc.rust-lang.org/cargo/faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries)
 Cargo.lock

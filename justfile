@@ -77,6 +77,9 @@ bench:
     CRITERION_DEBUG=1 cargo bench; \
     start ./target/criterion/report/index.html
 
-expand test_file_name:
+expand test_file_name="util":
     rm -f {{test_file_name}}.expanded.rs; \
-    cargo expand --test {{test_file_name}} | save --raw {{test_file_name}}.expanded.rs
+    cargo expand --test {{test_file_name}} | save -f --raw src/{{test_file_name}}_expanded.rs
+
+expand_clean:
+    rm -f src/*_expanded.rs
