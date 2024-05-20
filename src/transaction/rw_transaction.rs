@@ -82,6 +82,11 @@ impl<'db, 'txn> RwTransaction<'db> {
         watch::push_batch(Arc::clone(&self.watcher), batch)?;
         Ok(())
     }
+
+    /// Abort the transaction.
+    pub fn abort(self) -> Result<()> {
+        Ok(self.internal.redb_transaction.abort()?)
+    }
 }
 
 impl<'db, 'txn> RwTransaction<'db> {

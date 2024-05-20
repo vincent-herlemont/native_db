@@ -74,6 +74,31 @@ fn test_transaction_obj_1_and_obj_2() {
     assert_eq!(result.id, 2);
 }
 
+#[test]
+fn test_abort_transaction_obj_1_and_obj_2() {
+    let tf = TmpFs::new().unwrap();
+
+    let mut builder = DatabaseBuilder::new();
+    builder.define::<Item>().unwrap();
+    builder.define::<Item2>().unwrap();
+    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+
+    let item_1 = Item {
+        id: 1,
+        name: "test".to_string(),
+    };
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(item_1).unwrap();
+    rw.abort().unwrap();
+    // After abort, the transaction, the transaction can not be used anymore.
+    //rw.insert(item_2).unwrap();
+    //rw.commit().unwrap();
+
+    let r = db.r_transaction().unwrap();
+    assert!(r.get().primary::<Item>(1u32).unwrap().is_none());
+}
+
 #[allow(unreachable_code)]
 #[test]
 fn test_transaction_fail() {
