@@ -61,6 +61,7 @@ Active development. The API is not stable yet and may change in the future.
         - [**update**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.update) an existing item.
         - [**remove**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.remove) an existing item.
         - [**commit**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.commit) the transaction.
+        - [**abort**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.abort) the transaction.
         - [**migrate**](https://docs.rs/native_db/latest/native_db/transaction/struct.RwTransaction.html#method.migrate) a model.
         - plus all read-only transaction APIs.
     - **r_transaction** open a read-only transaction.
