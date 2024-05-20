@@ -71,4 +71,7 @@ pub enum Error {
 
     #[error("You can not migrate the table {0} because it is a legacy model")]
     MigrateLegacyModel(String),
+
+    #[error("Model error")]
+    ModelError(#[from] native_model::Error),
 }

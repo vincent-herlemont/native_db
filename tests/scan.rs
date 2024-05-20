@@ -4,6 +4,8 @@ use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
+use native_db::db_type::Result;
+use itertools::Itertools;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
@@ -49,7 +51,7 @@ fn test_iter() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result: Vec<Item> = r.scan().primary().unwrap().all().collect();
+    let result: Vec<Item>= r.scan().primary().unwrap().all().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -80,7 +82,7 @@ fn test_iter_many_items_to_be_bytes() {
 
     let r = db.r_transaction().unwrap();
     {
-        let iter: Vec<Item> = r.scan().primary().unwrap().all().collect();
+        let iter: Vec<Item> = r.scan().primary().unwrap().all().try_collect().unwrap();
         assert_eq!(iter.len(), 257);
 
         let obj1 = iter.get(0).unwrap();
@@ -113,7 +115,7 @@ fn test_double_ended_iter() {
     let r = db.r_transaction().unwrap();
     let scan = r.scan().primary().unwrap();
     let iter = scan.all();
-    let result: Vec<Item> = iter.rev().collect();
+    let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 2);
 
@@ -142,14 +144,14 @@ fn test_iter_range() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result: Vec<Item> = r.scan().primary().unwrap().range(..2_i32).collect();
+    let result: Vec<Item> = r.scan().primary().unwrap().range(..2_i32).try_collect().unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
-    let result: Vec<Item> = r.scan().primary().unwrap().range(2_i32..).collect();
+    let result: Vec<Item> = r.scan().primary().unwrap().range(2_i32..).try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -160,7 +162,7 @@ fn test_iter_range() {
     assert_eq!(obj2.id, 3);
     assert_eq!(obj2.name, "test3");
 
-    let result: Vec<Item> = r.scan().primary().unwrap().range(2_i32..3_i32).collect();
+    let result: Vec<Item> = r.scan().primary().unwrap().range(2_i32..3_i32).try_collect().unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
@@ -187,7 +189,7 @@ fn test_iter_by_key() {
         .secondary(ItemKey::secondary_key_1)
         .unwrap()
         .all()
-        .collect();
+        .try_collect().unwrap();
 
     assert_eq!(result.len(), 2);
 
@@ -216,7 +218,7 @@ fn test_double_ended_iter_by_key() {
     let r = db.r_transaction().unwrap();
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
     let iter = scan.all();
-    let result: Vec<Item> = iter.rev().collect();
+    let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 2);
 
@@ -246,7 +248,7 @@ fn test_double_ended_iter_by_key_range() {
     let r = db.r_transaction().unwrap();
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
     let iter = scan.range(..b"2".as_slice());
-    let result: Vec<Item> = iter.rev().collect();
+    let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 1);
 
@@ -256,8 +258,7 @@ fn test_double_ended_iter_by_key_range() {
 
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
     let iter = scan.range(b"2".as_slice()..);
-    let result: Vec<Item> = iter.rev().collect();
-
+    let result: Vec<Item> = iter.rev().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -270,7 +271,7 @@ fn test_double_ended_iter_by_key_range() {
 
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
     let iter = scan.range(b"2".as_slice()..b"3".as_slice());
-    let result: Vec<Item> = iter.rev().collect();
+    let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 1);
 
@@ -324,12 +325,12 @@ fn test_start_with_scenario() {
     for p in ["red:", "blue:", "green:"] {
         let r = db.r_transaction().unwrap();
 
-        let result = r
+        let result: Vec<ItemFlag> = r
             .scan()
             .primary()
             .unwrap()
             .start_with(p.to_string().as_str())
-            .collect::<Vec<ItemFlag>>();
+            .try_collect().unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();
@@ -400,7 +401,7 @@ fn test_start_with_by_key_scenario_write_txn() {
             .secondary(ItemIdFlagKey::flag)
             .unwrap()
             .start_with(p.to_string().as_str())
-            .collect();
+            .try_collect().unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();
@@ -444,7 +445,7 @@ fn test_start_with_by_key_scenario_readonly_txn() {
             .secondary(ItemIdFlagKey::flag)
             .unwrap()
             .start_with(p.to_string().as_str())
-            .collect();
+            .try_collect().unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();
@@ -472,7 +473,7 @@ fn test_txn_write_iter() {
     rw.commit().unwrap();
 
     let rw = db.rw_transaction().unwrap();
-    let result: Vec<Item> = rw.scan().primary().unwrap().all().collect();
+    let result: Vec<Item> = rw.scan().primary().unwrap().all().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -504,7 +505,7 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(..2_i32.to_be_bytes().as_slice())
-        .collect();
+        .try_collect().unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
@@ -516,7 +517,7 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32.to_be_bytes().as_slice()..)
-        .collect();
+        .try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -532,7 +533,7 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32.to_be_bytes().as_slice()..3_i32.to_be_bytes().as_slice())
-        .collect();
+        .try_collect().unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
@@ -571,7 +572,7 @@ fn test_txn_write_start_with_scenario() {
             .primary()
             .unwrap()
             .start_with(p.to_string().as_str())
-            .collect();
+            .try_collect().unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();

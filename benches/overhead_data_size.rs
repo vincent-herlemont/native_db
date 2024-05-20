@@ -5,6 +5,7 @@ use once_cell::sync::Lazy;
 use rand::prelude::SliceRandom;
 use redb::{ReadableTable, TableDefinition};
 use serde::{Deserialize, Serialize};
+use itertools::Itertools;
 
 // 1 byte * 10000, 10 bytes * 10000, 100 bytes * 5000, 1KB * 1000, 1MB * 100, 10MB * 10
 const ITERATIONS: &'static [(usize, usize)] = &[
@@ -133,7 +134,7 @@ fn use_native_db_insert(db: &Database, data: Data) {
 
 fn use_native_db_scan(db: &Database) -> Vec<Data> {
     let r = db.r_transaction().unwrap();
-    let out = r.scan().primary().unwrap().all().collect::<Vec<_>>();
+    let out= r.scan().primary().unwrap().all().try_collect().unwrap();
     out
 }
 

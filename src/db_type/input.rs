@@ -54,14 +54,14 @@ pub trait Input: Sized + native_model::Model {
         DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
         DatabaseKeyValue,
     >;
-    fn native_db_bincode_encode_to_vec(&self) -> Vec<u8>;
-    fn native_db_bincode_decode_from_slice(slice: &[u8]) -> Self;
+    fn native_db_bincode_encode_to_vec(&self) -> Result<Vec<u8>>;
+    fn native_db_bincode_decode_from_slice(slice: &[u8]) -> Result<Self>;
 
-    fn to_item(&self) -> DatabaseInput {
-        DatabaseInput {
+    fn to_item(&self) -> Result<DatabaseInput> {
+        Ok(DatabaseInput {
             primary_key: self.native_db_primary_key(),
             secondary_keys: self.native_db_secondary_keys(),
-            value: self.native_db_bincode_encode_to_vec(),
-        }
+            value: self.native_db_bincode_encode_to_vec()?,
+        })
     }
 }

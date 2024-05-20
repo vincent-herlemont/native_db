@@ -47,7 +47,7 @@ fn watch_one_primary_key() {
 
     for _ in 0..1 {
         let inner_event: ItemA = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -75,7 +75,7 @@ fn watch_all_primary_key() {
 
     for _ in 0..2 {
         let inner_event: ItemA = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -110,7 +110,7 @@ fn watch_multithreading() {
             for _ in 0..1 {
                 let inner_event: ItemA =
                     if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-                        event.inner()
+                        event.inner().unwrap()
                     } else {
                         panic!("wrong event")
                     };
@@ -130,7 +130,7 @@ fn watch_multithreading() {
         for _ in 0..2 {
             let inner_event: ItemA =
                 if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-                    event.inner()
+                    event.inner().unwrap()
                 } else {
                     panic!("wrong event")
                 };
@@ -163,7 +163,7 @@ fn watch_outside() {
 
     // Check that recv receives only 1 insert event
     let inner_event: ItemB = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-        event.inner()
+        event.inner().unwrap()
     } else {
         panic!("wrong event")
     };
@@ -207,7 +207,7 @@ fn watch_one_secondary_key() {
     for _ in 0..1 {
         let inner_event: ItemA1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap()
         {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -248,7 +248,7 @@ fn watch_all_secondary_keys() {
     for _ in 0..2 {
         let inner_event: ItemA1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap()
         {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -275,7 +275,7 @@ fn unwatch() {
 
     for _ in 0..1 {
         let inner_event: ItemA = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -308,7 +308,7 @@ fn unwatch_by_deleted_receiver() {
 
     for _ in 0..1 {
         let inner_event: ItemA = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -367,7 +367,7 @@ fn watch_start_with() {
 
     for _ in 0..2 {
         let inner_event: ItemC = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -413,7 +413,7 @@ fn watch_start_with_by_key() {
     for _ in 0..2 {
         let inner_event: ItemA1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap()
         {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -447,7 +447,7 @@ fn watch_all_delete() {
 
     for _ in 0..1 {
         let r_a: ItemA = if let Event::Delete(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };
@@ -482,7 +482,7 @@ fn watch_all_update() {
     for _ in 0..1 {
         let (old_r_a, new_r_a): (ItemA, ItemA) =
             if let Event::Update(event) = recv.recv_timeout(TIMEOUT).unwrap() {
-                (event.inner_old(), event.inner_new())
+                (event.inner_old().unwrap(), event.inner_new().unwrap())
             } else {
                 panic!("wrong event")
             };

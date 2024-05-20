@@ -1,4 +1,4 @@
-use crate::db_type::{unwrap_item, DatabaseInnerKeyValue, DatabaseInnerKeyValueRange, Input};
+use crate::db_type::{unwrap_item, DatabaseInnerKeyValue, DatabaseInnerKeyValueRange, Input, Result};
 use crate::InnerKeyValue;
 use redb;
 use std::marker::PhantomData;
@@ -40,6 +40,7 @@ where
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
     ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
@@ -60,7 +61,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key set (name is not None)
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().collect();
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -85,6 +86,7 @@ where
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
     ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
@@ -105,7 +107,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key name from C to the end
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).collect();
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -134,6 +136,7 @@ where
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
     ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
@@ -154,7 +157,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key name starting with "hello"
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").collect();
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -189,7 +192,7 @@ impl<'a, PrimaryTable, T: Input> Iterator for SecondaryScanIterator<'a, PrimaryT
 where
     PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
 {
-    type Item = T;
+    type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.range.next() {
@@ -233,7 +236,7 @@ where
     PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
     T: Input,
 {
-    type Item = T;
+    type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.range.next() {

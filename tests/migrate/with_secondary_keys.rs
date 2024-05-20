@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
 use std::convert::TryFrom;
 use std::convert::TryInto;
+use native_db::db_type::Result;
+use itertools::Itertools;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
@@ -160,7 +162,7 @@ fn test_migrate() {
         .secondary(ItemV2Key::first_name_key)
         .unwrap()
         .start_with("Alexandre")
-        .collect();
+        .try_collect().unwrap();
     assert_eq!(
         item,
         vec![ItemV2 {
@@ -176,7 +178,7 @@ fn test_migrate() {
         .secondary(ItemV2Key::last_name_key)
         .unwrap()
         .start_with("Verne")
-        .collect();
+        .try_collect().unwrap();
     assert_eq!(
         item,
         vec![ItemV2 {
@@ -200,7 +202,7 @@ struct ItemV3 {
 
 impl TryFrom<ItemV3> for ItemV2 {
     type Error = db_type::Error;
-    fn try_from(item: ItemV3) -> Result<Self, Self::Error> {
+    fn try_from(item: ItemV3) -> std::result::Result<Self, Self::Error> {
         Ok(ItemV2 {
             id: item.id,
             first_name: item.first_name,
@@ -211,7 +213,7 @@ impl TryFrom<ItemV3> for ItemV2 {
 
 impl TryFrom<ItemV2> for ItemV3 {
     type Error = db_type::Error;
-    fn try_from(item: ItemV2) -> Result<Self, Self::Error> {
+    fn try_from(item: ItemV2) -> std::result::Result<Self, Self::Error> {
         Ok(ItemV3 {
             id: item.id,
             first_name: item.first_name,

@@ -41,7 +41,11 @@ impl RGet<'_, '_> {
     pub fn primary<T: Input>(&self, key: impl InnerKeyValue) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
-        Ok(result.map(|value| value.inner()))
+        if let Some(value) = result {
+            Ok(Some(value.inner()?))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Get a value from the database by secondary key.
@@ -87,7 +91,11 @@ impl RGet<'_, '_> {
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_secondary_key(model, key_def, key)?;
-        Ok(result.map(|value| value.inner()))
+        if let Some(value) = result {
+            Ok(Some(value.inner()?))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -102,7 +110,11 @@ impl RwGet<'_, '_> {
     pub fn primary<T: Input>(&self, key: impl InnerKeyValue) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
-        Ok(result.map(|value| value.inner()))
+        if let Some(value) = result {
+            Ok(Some(value.inner()?))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Get a value from the database by secondary key.
@@ -115,6 +127,10 @@ impl RwGet<'_, '_> {
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_secondary_key(model, key_def, key)?;
-        Ok(result.map(|value| value.inner()))
+        if let Some(value) = result {
+            Ok(Some(value.inner()?))
+        } else {
+            Ok(None)
+        }
     }
 }
