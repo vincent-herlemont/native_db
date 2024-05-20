@@ -121,7 +121,7 @@ impl<'db, 'txn> RwTransaction<'db> {
     pub fn insert<T: Input>(&self, item: T) -> Result<()> {
         let (watcher_request, binary_value) = self
             .internal
-            .concrete_insert(T::native_db_model(), item.to_item())?;
+            .concrete_insert(T::native_db_model(), item.to_item()?)?;
         let event = Event::new_insert(binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
@@ -163,10 +163,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     pub fn remove<T: Input>(&self, item: T) -> Result<T> {
         let (watcher_request, binary_value) = self
             .internal
-            .concrete_remove(T::native_db_model(), item.to_item())?;
+            .concrete_remove(T::native_db_model(), item.to_item()?)?;
         let event = Event::new_delete(binary_value.clone());
         self.batch.borrow_mut().add(watcher_request, event);
-        Ok(binary_value.inner())
+        binary_value.inner()
     }
 
     /// Update a value in the database.
@@ -207,8 +207,8 @@ impl<'db, 'txn> RwTransaction<'db> {
     pub fn update<T: Input>(&self, old_item: T, updated_item: T) -> Result<()> {
         let (watcher_request, old_binary_value, new_binary_value) = self.internal.concrete_update(
             T::native_db_model(),
-            old_item.to_item(),
-            updated_item.to_item(),
+            old_item.to_item()?,
+            updated_item.to_item()?,
         )?;
         let event = Event::new_update(old_binary_value, new_binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
@@ -275,13 +275,14 @@ impl<'db, 'txn> RwTransaction<'db> {
         OldType: Input + Clone,
         NewType: Input + From<OldType>,
     {
-        let find_all_old: Vec<OldType> = self.scan().primary()?.all().collect();
+        let find_all_old: Result<Vec<OldType>> = self.scan().primary()?.all().collect();
+        let find_all_old = find_all_old?;
         for old in find_all_old {
             let new: NewType = old.clone().into();
             self.internal
-                .concrete_insert(NewType::native_db_model(), new.to_item())?;
+                .concrete_insert(NewType::native_db_model(), new.to_item()?)?;
             self.internal
-                .concrete_remove(OldType::native_db_model(), old.to_item())?;
+                .concrete_remove(OldType::native_db_model(), old.to_item()?)?;
         }
         Ok(())
     }

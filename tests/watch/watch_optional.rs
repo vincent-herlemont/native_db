@@ -40,7 +40,7 @@ fn watch_one_secondary_key_some() {
     for _ in 0..1 {
         let inner_event: ItemAOptional =
             if let Event::Insert(event) = recv.recv_timeout(super::TIMEOUT).unwrap() {
-                event.inner()
+                event.inner().unwrap()
             } else {
                 panic!("wrong event")
             };
@@ -117,7 +117,7 @@ fn watch_start_with_by_key() {
     for _ in 0..2 {
         let inner_event: ItemAOptional =
             if let Event::Insert(event) = recv.recv_timeout(super::TIMEOUT).unwrap() {
-                event.inner()
+                event.inner().unwrap()
             } else {
                 panic!("wrong event")
             };

@@ -32,7 +32,7 @@ async fn watch_one_primary_key() {
 
     for _ in 0..1 {
         let inner_event: ItemA = if let Event::Insert(event) = recv.recv().await.unwrap() {
-            event.inner()
+            event.inner().unwrap()
         } else {
             panic!("wrong event")
         };

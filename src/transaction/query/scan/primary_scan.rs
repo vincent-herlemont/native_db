@@ -1,4 +1,4 @@
-use crate::db_type::{unwrap_item, DatabaseInnerKeyValue, DatabaseInnerKeyValueRange, Input};
+use crate::db_type::{unwrap_item, DatabaseInnerKeyValue, DatabaseInnerKeyValueRange, Input, Result};
 use crate::InnerKeyValue;
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
@@ -30,6 +30,7 @@ where
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
     ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
@@ -48,7 +49,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get all values
-    ///     let _values: Vec<Data> = r.scan().primary()?.all().collect();
+    ///     let _values: Vec<Data> = r.scan().primary()?.all().try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -70,6 +71,7 @@ where
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
     ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
@@ -88,7 +90,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get the values from 5 to the end
-    ///     let _values: Vec<Data> = r.scan().primary()?.range(5u64..).collect();
+    ///     let _values: Vec<Data> = r.scan().primary()?.range(5u64..).try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -111,6 +113,7 @@ where
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
     ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
@@ -129,7 +132,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get the values starting with "victor"
-    ///     let _values: Vec<Data> = r.scan().primary()?.start_with("victor").collect();
+    ///     let _values: Vec<Data> = r.scan().primary()?.start_with("victor").try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -156,7 +159,7 @@ pub struct PrimaryScanIterator<'a, T: Input> {
 }
 
 impl<'a, T: Input> Iterator for PrimaryScanIterator<'a, T> {
-    type Item = T;
+    type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.range.next() {
@@ -181,7 +184,7 @@ pub struct PrimaryScanIteratorStartWith<'a, T: Input> {
 }
 
 impl<'a, T: Input> Iterator for PrimaryScanIteratorStartWith<'a, T> {
-    type Item = T;
+    type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.range.next() {

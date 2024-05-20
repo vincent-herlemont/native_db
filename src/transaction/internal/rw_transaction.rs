@@ -284,7 +284,7 @@ impl<'db> InternalRwTransaction<'db> {
         // List all data from the old table
         for old_data in self.concrete_primary_drain(old_table_definition.model.clone())? {
             let (decoded_item, _) = native_model::decode::<T>(old_data.0).unwrap();
-            let decoded_item = decoded_item.to_item();
+            let decoded_item = decoded_item.to_item()?;
             self.concrete_insert(T::native_db_model(), decoded_item)?;
         }
 
