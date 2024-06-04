@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseOutputValue, Input, Result};
+use crate::db_type::{Input, Output, Result};
 use std::fmt::Debug;
 
 #[derive(Clone)]
@@ -9,21 +9,18 @@ pub enum Event {
 }
 
 impl Event {
-    pub(crate) fn new_insert(value: DatabaseOutputValue) -> Self {
+    pub(crate) fn new_insert(value: Output) -> Self {
         Self::Insert(Insert(value))
     }
 
-    pub(crate) fn new_update(
-        old_value: DatabaseOutputValue,
-        new_value: DatabaseOutputValue,
-    ) -> Self {
+    pub(crate) fn new_update(old_value: Output, new_value: Output) -> Self {
         Self::Update(Update {
             old: old_value,
             new: new_value,
         })
     }
 
-    pub(crate) fn new_delete(value: DatabaseOutputValue) -> Self {
+    pub(crate) fn new_delete(value: Output) -> Self {
         Self::Delete(Delete(value))
     }
 }
@@ -39,7 +36,7 @@ impl Debug for Event {
 }
 
 #[derive(Clone)]
-pub struct Insert(pub(crate) DatabaseOutputValue);
+pub struct Insert(pub(crate) Output);
 
 impl Insert {
     pub fn inner<T: Input>(&self) -> Result<T> {
@@ -49,8 +46,8 @@ impl Insert {
 
 #[derive(Clone)]
 pub struct Update {
-    pub(crate) old: DatabaseOutputValue,
-    pub(crate) new: DatabaseOutputValue,
+    pub(crate) old: Output,
+    pub(crate) new: Output,
 }
 
 impl Update {
@@ -63,7 +60,7 @@ impl Update {
 }
 
 #[derive(Clone)]
-pub struct Delete(pub(crate) DatabaseOutputValue);
+pub struct Delete(pub(crate) Output);
 
 impl Delete {
     pub fn inner<T: Input>(&self) -> Result<T> {

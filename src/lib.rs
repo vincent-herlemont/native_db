@@ -6,6 +6,8 @@
 mod database;
 mod database_builder;
 mod database_instance;
+
+/// A collection of type used by native_db internally (macro included).
 pub mod db_type;
 mod model;
 mod serialization;
@@ -20,8 +22,10 @@ pub mod transaction;
 pub mod watch;
 
 // Re-export
-pub use db_type::InnerKeyValue;
 pub use db_type::Input;
+pub use db_type::Key;
+/// Allow to use a type as a key in the database.
+pub use db_type::ToKey;
 
 // Export
 pub use database::*;

@@ -1,6 +1,4 @@
-use crate::db_type::{
-    DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseSecondaryKeyOptions, KeyDefinition,
-};
+use crate::db_type::{DatabaseKey, Key, KeyDefinition, KeyOptions};
 
 #[derive(Eq, PartialEq, Clone)]
 pub(crate) struct TableFilter {
@@ -10,40 +8,31 @@ pub(crate) struct TableFilter {
 
 #[derive(Eq, PartialEq, Clone)]
 pub(crate) enum KeyFilter {
-    Primary(Option<DatabaseInnerKeyValue>),
-    PrimaryStartWith(DatabaseInnerKeyValue),
-    Secondary(
-        DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
-        Option<DatabaseInnerKeyValue>,
-    ),
-    SecondaryStartWith(
-        DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
-        DatabaseInnerKeyValue,
-    ),
+    Primary(Option<Key>),
+    PrimaryStartWith(Key),
+    Secondary(KeyDefinition<KeyOptions>, Option<Key>),
+    SecondaryStartWith(KeyDefinition<KeyOptions>, Key),
 }
 
 impl TableFilter {
-    pub(crate) fn new_primary(table_name: String, key: Option<DatabaseInnerKeyValue>) -> Self {
+    pub(crate) fn new_primary(table_name: String, key: Option<Key>) -> Self {
         Self {
             table_name,
             key_filter: KeyFilter::Primary(key.map(|k| k.to_owned())),
         }
     }
 
-    pub(crate) fn new_primary_start_with(
-        table_name: String,
-        key_prefix: DatabaseInnerKeyValue,
-    ) -> Self {
+    pub(crate) fn new_primary_start_with(table_name: String, key_prefix: Key) -> Self {
         Self {
             table_name,
             key_filter: KeyFilter::PrimaryStartWith(key_prefix.to_owned()),
         }
     }
 
-    pub(crate) fn new_secondary<K: KeyDefinition<DatabaseSecondaryKeyOptions>>(
+    pub(crate) fn new_secondary<K: DatabaseKey<KeyOptions>>(
         table_name: String,
         key_def: &K,
-        key: Option<DatabaseInnerKeyValue>,
+        key: Option<Key>,
     ) -> Self {
         Self {
             table_name,
@@ -51,10 +40,10 @@ impl TableFilter {
         }
     }
 
-    pub(crate) fn new_secondary_start_with<K: KeyDefinition<DatabaseSecondaryKeyOptions>>(
+    pub(crate) fn new_secondary_start_with<K: DatabaseKey<KeyOptions>>(
         table_name: String,
         key: &K,
-        key_prefix: DatabaseInnerKeyValue,
+        key_prefix: Key,
     ) -> Self {
         Self {
             table_name,

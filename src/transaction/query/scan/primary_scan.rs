@@ -1,12 +1,12 @@
-use crate::db_type::{unwrap_item, DatabaseInnerKeyValue, DatabaseInnerKeyValueRange, Input, Result};
-use crate::InnerKeyValue;
+use crate::db_type::ToKey;
+use crate::db_type::{unwrap_item, Input, Key, KeyRange, Result};
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
 /// Scan values from the database.
 pub struct PrimaryScan<PrimaryTable, T: Input>
 where
-    PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
+    PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
     pub(crate) primary_table: PrimaryTable,
     pub(crate) _marker: PhantomData<T>,
@@ -14,7 +14,7 @@ where
 
 impl<PrimaryTable, T: Input> PrimaryScan<PrimaryTable, T>
 where
-    PrimaryTable: redb::ReadableTable<DatabaseInnerKeyValue, &'static [u8]>,
+    PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
     pub(crate) fn new(table: PrimaryTable) -> Self {
         Self {
@@ -54,10 +54,7 @@ where
     /// }
     /// ```
     pub fn all(&self) -> PrimaryScanIterator<T> {
-        let range = self
-            .primary_table
-            .range::<DatabaseInnerKeyValue>(..)
-            .unwrap();
+        let range = self.primary_table.range::<Key>(..).unwrap();
         PrimaryScanIterator {
             range,
             _marker: PhantomData::default(),
@@ -94,11 +91,11 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn range<TR: InnerKeyValue, R: RangeBounds<TR>>(&self, range: R) -> PrimaryScanIterator<T> {
-        let database_inner_key_value_range = DatabaseInnerKeyValueRange::new(range);
+    pub fn range<TR: ToKey, R: RangeBounds<TR>>(&self, range: R) -> PrimaryScanIterator<T> {
+        let database_inner_key_value_range = KeyRange::new(range);
         let range = self
             .primary_table
-            .range::<DatabaseInnerKeyValue>(database_inner_key_value_range)
+            .range::<Key>(database_inner_key_value_range)
             .unwrap();
         PrimaryScanIterator {
             range,
@@ -138,12 +135,12 @@ where
     /// ```
     pub fn start_with<'a>(
         &'a self,
-        start_with: impl InnerKeyValue + 'a,
+        start_with: impl ToKey + 'a,
     ) -> PrimaryScanIteratorStartWith<'a, T> {
-        let start_with = start_with.database_inner_key_value();
+        let start_with = start_with.to_key();
         let range = self
             .primary_table
-            .range::<DatabaseInnerKeyValue>(start_with.clone()..)
+            .range::<Key>(start_with.clone()..)
             .unwrap();
         PrimaryScanIteratorStartWith {
             start_with,
@@ -154,7 +151,7 @@ where
 }
 
 pub struct PrimaryScanIterator<'a, T: Input> {
-    pub(crate) range: redb::Range<'a, DatabaseInnerKeyValue, &'static [u8]>,
+    pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -178,8 +175,8 @@ impl<'a, T: Input> DoubleEndedIterator for PrimaryScanIterator<'a, T> {
 }
 
 pub struct PrimaryScanIteratorStartWith<'a, T: Input> {
-    pub(crate) range: redb::Range<'a, DatabaseInnerKeyValue, &'static [u8]>,
-    pub(crate) start_with: DatabaseInnerKeyValue,
+    pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
+    pub(crate) start_with: Key,
     pub(crate) _marker: PhantomData<T>,
 }
 

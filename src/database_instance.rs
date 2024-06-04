@@ -3,7 +3,6 @@ use redb::Builder;
 use std::path::Path;
 use std::path::PathBuf;
 
-
 pub(crate) struct DatabaseInstance {
     kind: DatabaseInstanceKind,
 }
@@ -33,9 +32,7 @@ impl DatabaseInstance {
         let in_memory_backend = redb::backends::InMemoryBackend::new();
         let db = builder.create_with_backend(in_memory_backend)?;
         Ok(Self {
-            kind: DatabaseInstanceKind::InMemory {
-                redb_database: db,
-            },
+            kind: DatabaseInstanceKind::InMemory { redb_database: db },
         })
     }
 
@@ -52,14 +49,14 @@ enum DatabaseInstanceKind {
         redb_database: redb::Database,
         #[allow(dead_code)]
         path: PathBuf,
-    }
+    },
 }
 
 impl DatabaseInstanceKind {
     pub(crate) fn redb_database(&self) -> Result<&redb::Database> {
         match self {
             DatabaseInstanceKind::InMemory { redb_database } => Ok(redb_database),
-            DatabaseInstanceKind::OnDisk { redb_database, .. } => Ok(redb_database)
+            DatabaseInstanceKind::OnDisk { redb_database, .. } => Ok(redb_database),
         }
     }
 }

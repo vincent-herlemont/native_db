@@ -1,4 +1,4 @@
-use crate::keys::{DatabaseKeyDefinition, DatabaseSecondaryKeyOptions};
+use crate::keys::{KeyDefinition, KeyOptions};
 use crate::struct_name::StructName;
 use std::collections::HashSet;
 use syn::meta::ParseNestedMeta;
@@ -8,19 +8,18 @@ use syn::Field;
 #[derive(Clone)]
 pub(crate) struct ModelAttributes {
     pub(crate) struct_name: StructName,
-    pub(crate) primary_key: Option<DatabaseKeyDefinition<()>>,
-    pub(crate) secondary_keys: HashSet<DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>>,
+    pub(crate) primary_key: Option<KeyDefinition<()>>,
+    pub(crate) secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
 }
 
 impl ModelAttributes {
-    pub(crate) fn primary_key(&self) -> DatabaseKeyDefinition<()> {
+    pub(crate) fn primary_key(&self) -> KeyDefinition<()> {
         self.primary_key.clone().expect("Primary key is not set")
     }
 
     pub(crate) fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
         if meta.path.is_ident("primary_key") {
-            let mut key: DatabaseKeyDefinition<()> =
-                DatabaseKeyDefinition::new_empty(self.struct_name.clone());
+            let mut key: KeyDefinition<()> = KeyDefinition::new_empty(self.struct_name.clone());
             meta.parse_nested_meta(|meta| {
                 if key.is_empty() {
                     key.set_function_name(meta.path.get_ident().unwrap().clone());
@@ -34,8 +33,8 @@ impl ModelAttributes {
             })?;
             self.primary_key = Some(key);
         } else if meta.path.is_ident("secondary_key") {
-            let mut key: DatabaseKeyDefinition<DatabaseSecondaryKeyOptions> =
-                DatabaseKeyDefinition::new_empty(self.struct_name.clone());
+            let mut key: KeyDefinition<KeyOptions> =
+                KeyDefinition::new_empty(self.struct_name.clone());
             meta.parse_nested_meta(|meta| {
                 if key.is_empty() {
                     key.set_function_name(meta.path.get_ident().unwrap().clone());
@@ -64,13 +63,13 @@ impl ModelAttributes {
     pub(crate) fn parse_field(&mut self, field: &Field) -> Result<()> {
         for attr in &field.attrs {
             if attr.path().is_ident("primary_key") {
-                self.primary_key = Some(DatabaseKeyDefinition::new_field(
+                self.primary_key = Some(KeyDefinition::new_field(
                     self.struct_name.clone(),
                     field.ident.clone().unwrap(),
                     (),
                 ));
             } else if attr.path().is_ident("secondary_key") {
-                let mut secondary_options = DatabaseSecondaryKeyOptions::default();
+                let mut secondary_options = KeyOptions::default();
                 if let Ok(_) = attr.meta.require_list() {
                     attr.parse_nested_meta(|meta| {
                         if meta.path.is_ident("unique") {
@@ -84,7 +83,7 @@ impl ModelAttributes {
                     })?;
                 }
 
-                self.secondary_keys.insert(DatabaseKeyDefinition::new_field(
+                self.secondary_keys.insert(KeyDefinition::new_field(
                     self.struct_name.clone(),
                     field.ident.clone().unwrap(),
                     secondary_options,

@@ -1,7 +1,7 @@
-use crate::db_type::DatabaseInnerKeyValue;
+use crate::db_type::Key;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DatabaseKeyValue {
-    Default(DatabaseInnerKeyValue),
-    Optional(Option<DatabaseInnerKeyValue>),
+pub enum KeyEntry {
+    Default(Key),
+    Optional(Option<Key>),
 }

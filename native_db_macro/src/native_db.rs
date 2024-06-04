@@ -60,7 +60,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
             #(#keys_enum),*
         }
 
-        impl native_db::db_type::KeyDefinition<native_db::db_type::DatabaseSecondaryKeyOptions> for #keys_enum_name {
+        impl native_db::db_type::DatabaseKey<native_db::db_type::KeyOptions> for #keys_enum_name {
             #keys_enum_database_key
         }
     };

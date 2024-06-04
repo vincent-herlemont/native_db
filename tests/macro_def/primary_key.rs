@@ -24,5 +24,5 @@ fn test_insert_my_item() {
     };
 
     let key = item.native_db_primary_key();
-    assert_eq!(key, "1-test".database_inner_key_value());
+    assert_eq!(key, "1-test".to_key());
 }

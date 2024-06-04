@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseSecondaryKeyOptions, InnerKeyValue, Input, KeyDefinition, Result};
+use crate::db_type::{DatabaseKey, Input, KeyOptions, Result, ToKey};
 use crate::watch;
 use crate::watch::query::internal;
 use crate::watch::MpscReceiver;
@@ -38,10 +38,7 @@ impl WatchGet<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn primary<T: Input>(
-        &self,
-        key: impl InnerKeyValue,
-    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
+    pub fn primary<T: Input>(&self, key: impl ToKey) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_primary::<T>(key)
     }
 
@@ -78,8 +75,8 @@ impl WatchGet<'_, '_> {
     /// ```
     pub fn secondary<T: Input>(
         &self,
-        key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-        key: impl InnerKeyValue,
+        key_def: impl DatabaseKey<KeyOptions>,
+        key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_secondary::<T>(&key_def, key)
     }

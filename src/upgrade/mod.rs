@@ -11,7 +11,6 @@ pub(crate) fn upgrade(
     path: impl AsRef<Path>,
     model_builder: &HashMap<String, ModelBuilder>,
 ) -> Result<DatabaseInstance> {
-
     #[cfg(feature = "redb1")]
     redb1_to_redb2::upgrade_redb1_to_redb2(&database_configuration, &path, model_builder)?;
 

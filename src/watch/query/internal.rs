@@ -1,6 +1,4 @@
-use crate::db_type::{
-    DatabaseSecondaryKeyOptions, Error, InnerKeyValue, Input, KeyDefinition, Result,
-};
+use crate::db_type::{DatabaseKey, Error, Input, KeyOptions, Result, ToKey};
 use crate::watch;
 use crate::watch::{MpscReceiver, TableFilter};
 use std::sync::atomic::AtomicU64;
@@ -40,10 +38,10 @@ impl InternalWatch<'_> {
 
     pub(crate) fn watch_primary<T: Input>(
         &self,
-        key: impl InnerKeyValue,
+        key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
-        let key = key.database_inner_key_value();
+        let key = key.to_key();
         let table_filter =
             TableFilter::new_primary(table_name.unique_table_name.clone(), Some(key));
         self.watch_generic(table_filter)
@@ -57,10 +55,10 @@ impl InternalWatch<'_> {
 
     pub(crate) fn watch_primary_start_with<T: Input>(
         &self,
-        start_with: impl InnerKeyValue,
+        start_with: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
-        let start_with = start_with.database_inner_key_value();
+        let start_with = start_with.to_key();
         let table_filter =
             TableFilter::new_primary_start_with(table_name.unique_table_name.clone(), start_with);
         self.watch_generic(table_filter)
@@ -68,11 +66,11 @@ impl InternalWatch<'_> {
 
     pub(crate) fn watch_secondary<T: Input>(
         &self,
-        key_def: &impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-        key: impl InnerKeyValue,
+        key_def: &impl DatabaseKey<KeyOptions>,
+        key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
-        let key = key.database_inner_key_value();
+        let key = key.to_key();
         let table_filter =
             TableFilter::new_secondary(table_name.unique_table_name.clone(), key_def, Some(key));
         self.watch_generic(table_filter)
@@ -80,7 +78,7 @@ impl InternalWatch<'_> {
 
     pub(crate) fn watch_secondary_all<T: Input>(
         &self,
-        key_def: &impl KeyDefinition<DatabaseSecondaryKeyOptions>,
+        key_def: &impl DatabaseKey<KeyOptions>,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
         let table_filter =
@@ -90,11 +88,11 @@ impl InternalWatch<'_> {
 
     pub(crate) fn watch_secondary_start_with<T: Input>(
         &self,
-        key_def: &impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-        start_with: impl InnerKeyValue,
+        key_def: &impl DatabaseKey<KeyOptions>,
+        start_with: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
-        let start_with = start_with.database_inner_key_value();
+        let start_with = start_with.to_key();
         let table_filter = TableFilter::new_secondary_start_with(
             table_name.unique_table_name.clone(),
             key_def,

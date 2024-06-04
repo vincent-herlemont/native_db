@@ -1,20 +1,20 @@
-use crate::db_type::{DatabaseKeyDefinition, DatabaseSecondaryKeyOptions, Error, Result};
+use crate::db_type::{Error, KeyDefinition, KeyOptions, Result};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug)]
 pub struct DatabaseModel {
-    pub primary_key: DatabaseKeyDefinition<()>,
-    pub secondary_keys: HashSet<DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>>,
+    pub primary_key: KeyDefinition<()>,
+    pub secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
 }
 
 impl DatabaseModel {
     pub fn check_secondary_options<F>(
         &self,
-        secondary_key: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
+        secondary_key: &KeyDefinition<KeyOptions>,
         check: F,
     ) -> Result<()>
     where
-        F: Fn(DatabaseSecondaryKeyOptions) -> bool,
+        F: Fn(KeyOptions) -> bool,
     {
         let key = self
             .secondary_keys

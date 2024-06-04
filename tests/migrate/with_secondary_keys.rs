@@ -1,11 +1,10 @@
+use itertools::Itertools;
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
 use std::convert::TryFrom;
 use std::convert::TryInto;
-use native_db::db_type::Result;
-use itertools::Itertools;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
@@ -162,7 +161,8 @@ fn test_migrate() {
         .secondary(ItemV2Key::first_name_key)
         .unwrap()
         .start_with("Alexandre")
-        .try_collect().unwrap();
+        .try_collect()
+        .unwrap();
     assert_eq!(
         item,
         vec![ItemV2 {
@@ -178,7 +178,8 @@ fn test_migrate() {
         .secondary(ItemV2Key::last_name_key)
         .unwrap()
         .start_with("Verne")
-        .try_collect().unwrap();
+        .try_collect()
+        .unwrap();
     assert_eq!(
         item,
         vec![ItemV2 {

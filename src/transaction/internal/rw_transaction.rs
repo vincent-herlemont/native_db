@@ -1,11 +1,10 @@
 use crate::db_type::{
-    DatabaseInnerKeyValue, DatabaseInput, DatabaseKeyDefinition, DatabaseKeyValue,
-    DatabaseOutputValue, DatabaseSecondaryKeyOptions, Error, Result,
+    DatabaseInput, Error, Key, KeyDefinition, KeyEntry, KeyOptions, Output, Result,
 };
 use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::watch::WatcherRequest;
-use crate::{DatabaseModel, Input};
+use crate::{db_type::Input, DatabaseModel};
 use redb::ReadableTable;
 use redb::ReadableTableMetadata;
 use redb::TableHandle;
@@ -22,8 +21,8 @@ where
     Self: 'txn,
     Self: 'db,
 {
-    type RedbPrimaryTable = redb::Table<'txn, DatabaseInnerKeyValue, &'static [u8]>;
-    type RedbSecondaryTable = redb::Table<'txn, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
+    type RedbPrimaryTable = redb::Table<'txn, Key, &'static [u8]>;
+    type RedbSecondaryTable = redb::Table<'txn, Key, Key>;
 
     type RedbTransaction<'db_bis> = redb::WriteTransaction where Self: 'db_bis;
 
@@ -45,7 +44,7 @@ where
     fn get_secondary_table(
         &'txn self,
         model: &DatabaseModel,
-        secondary_key: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
+        secondary_key: &KeyDefinition<KeyOptions>,
     ) -> Result<Self::RedbSecondaryTable> {
         let main_table_definition = self
             .table_definitions()
@@ -76,7 +75,7 @@ impl<'db> InternalRwTransaction<'db> {
         &self,
         model: DatabaseModel,
         item: DatabaseInput,
-    ) -> Result<(WatcherRequest, DatabaseOutputValue)> {
+    ) -> Result<(WatcherRequest, Output)> {
         let already_exists;
         {
             let mut table = self.get_primary_table(&model)?;
@@ -88,10 +87,8 @@ impl<'db> InternalRwTransaction<'db> {
         for (secondary_key_def, _value) in &item.secondary_keys {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             let result = match item.secondary_key_value(secondary_key_def)? {
-                DatabaseKeyValue::Default(value) => {
-                    secondary_table.insert(value, &item.primary_key)?
-                }
-                DatabaseKeyValue::Optional(value) => {
+                KeyEntry::Default(value) => secondary_table.insert(value, &item.primary_key)?,
+                KeyEntry::Optional(value) => {
                     if let Some(value) = value {
                         secondary_table.insert(value, &item.primary_key)?
                     } else {
@@ -113,7 +110,7 @@ impl<'db> InternalRwTransaction<'db> {
                 item.primary_key,
                 item.secondary_keys,
             ),
-            DatabaseOutputValue(item.value),
+            Output(item.value),
         ))
     }
 
@@ -121,7 +118,7 @@ impl<'db> InternalRwTransaction<'db> {
         &self,
         model: DatabaseModel,
         item: DatabaseInput,
-    ) -> Result<(WatcherRequest, DatabaseOutputValue)> {
+    ) -> Result<(WatcherRequest, Output)> {
         let keys = &item.secondary_keys;
         {
             let mut table = self.get_primary_table(&model)?;
@@ -131,10 +128,10 @@ impl<'db> InternalRwTransaction<'db> {
         for (secondary_key_def, _value) in keys {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             match &item.secondary_key_value(secondary_key_def)? {
-                DatabaseKeyValue::Default(value) => {
+                KeyEntry::Default(value) => {
                     secondary_table.remove(value)?;
                 }
-                DatabaseKeyValue::Optional(value) => {
+                KeyEntry::Optional(value) => {
                     if let Some(value) = value {
                         secondary_table.remove(value)?;
                     }
@@ -148,7 +145,7 @@ impl<'db> InternalRwTransaction<'db> {
                 item.primary_key,
                 item.secondary_keys,
             ),
-            DatabaseOutputValue(item.value),
+            Output(item.value),
         ))
     }
 
@@ -157,31 +154,28 @@ impl<'db> InternalRwTransaction<'db> {
         model: DatabaseModel,
         old_item: DatabaseInput,
         updated_item: DatabaseInput,
-    ) -> Result<(WatcherRequest, DatabaseOutputValue, DatabaseOutputValue)> {
+    ) -> Result<(WatcherRequest, Output, Output)> {
         let (_, old_binary_value) = self.concrete_remove(model.clone(), old_item)?;
         let (watcher_request, new_binary_value) = self.concrete_insert(model, updated_item)?;
         Ok((watcher_request, old_binary_value, new_binary_value))
     }
 
-    pub(crate) fn concrete_primary_drain<'a>(
-        &self,
-        model: DatabaseModel,
-    ) -> Result<Vec<DatabaseOutputValue>> {
+    pub(crate) fn concrete_primary_drain<'a>(&self, model: DatabaseModel) -> Result<Vec<Output>> {
         let mut items = vec![];
         let mut key_items = HashSet::new();
 
         let mut primary_table = self.get_primary_table(&model)?;
         // Drain primary table
-        let drain = primary_table.extract_from_if::<DatabaseInnerKeyValue, _>(.., |_, _| true)?;
+        let drain = primary_table.extract_from_if::<Key, _>(.., |_, _| true)?;
         for result in drain {
             let (primary_key, value) = result?;
             // TODO: we should delay to an drain scan
-            let binary_value = DatabaseOutputValue(value.value().to_vec());
+            let binary_value = Output(value.value().to_vec());
             key_items.insert(primary_key.value().to_owned());
             items.push(binary_value);
         }
 
-        let secondary_table_names: Vec<&DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>> = self
+        let secondary_table_names: Vec<&KeyDefinition<KeyOptions>> = self
             .primary_table_definitions
             .get(model.primary_key.unique_table_name.as_str())
             .ok_or(Error::TableDefinitionNotFound {

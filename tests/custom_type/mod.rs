@@ -3,3 +3,5 @@ mod chrono;
 
 #[cfg(feature = "uuid")]
 mod uuid;
+
+mod custom;

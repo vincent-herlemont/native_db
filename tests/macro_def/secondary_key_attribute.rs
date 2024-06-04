@@ -1,4 +1,4 @@
-use native_db::db_type::{DatabaseKeyDefinition, DatabaseKeyValue, Input};
+use native_db::db_type::{Input, KeyDefinition, KeyEntry};
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
@@ -22,20 +22,15 @@ fn test_secondary() {
     };
 
     let primary_key = item.native_db_primary_key();
-    assert_eq!(primary_key, 1u32.database_inner_key_value());
+    assert_eq!(primary_key, 1u32.to_key());
 
-    let secondary_key: HashMap<_, DatabaseKeyValue> = item.native_db_secondary_keys();
+    let secondary_key: HashMap<_, KeyEntry> = item.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                1,
-                1,
-                "name",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(1, 1, "name", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Default("test".database_inner_key_value())
+        &KeyEntry::Default("test".to_key())
     );
 }
 
@@ -57,35 +52,25 @@ fn test_secondary_optional() {
     };
 
     let primary_key = item.native_db_primary_key();
-    assert_eq!(primary_key, 1u32.database_inner_key_value());
+    assert_eq!(primary_key, 1u32.to_key());
 
-    let secondary_key: HashMap<_, DatabaseKeyValue> = item.native_db_secondary_keys();
+    let secondary_key: HashMap<_, KeyEntry> = item.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                2,
-                1,
-                "name",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(2, 1, "name", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Optional(Some("test".database_inner_key_value()))
+        &KeyEntry::Optional(Some("test".to_key()))
     );
 
     let item_none = ItemSecondaryOptional { id: 2, name: None };
-    let secondary_key: HashMap<_, DatabaseKeyValue> = item_none.native_db_secondary_keys();
+    let secondary_key: HashMap<_, KeyEntry> = item_none.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                2,
-                1,
-                "name",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(2, 1, "name", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Optional(None)
+        &KeyEntry::Optional(None)
     );
 }
 
@@ -107,20 +92,15 @@ fn test_secondary_unique() {
     };
 
     let primary_key = item.native_db_primary_key();
-    assert_eq!(primary_key, 1u32.database_inner_key_value());
+    assert_eq!(primary_key, 1u32.to_key());
 
-    let secondary_key: HashMap<_, DatabaseKeyValue> = item.native_db_secondary_keys();
+    let secondary_key: HashMap<_, KeyEntry> = item.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                3,
-                1,
-                "name",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(3, 1, "name", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Default("test".database_inner_key_value())
+        &KeyEntry::Default("test".to_key())
     );
 }
 
@@ -145,30 +125,20 @@ fn test_secondary_others() {
     };
 
     let primary_key = item.native_db_primary_key();
-    assert_eq!(primary_key, 1u32.database_inner_key_value());
+    assert_eq!(primary_key, 1u32.to_key());
 
-    let secondary_key: HashMap<_, DatabaseKeyValue> = item.native_db_secondary_keys();
+    let secondary_key: HashMap<_, KeyEntry> = item.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 2);
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                4,
-                1,
-                "name",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(4, 1, "name", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Default("test".database_inner_key_value())
+        &KeyEntry::Default("test".to_key())
     );
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                4,
-                1,
-                "name2",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(4, 1, "name2", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Default("test2".database_inner_key_value())
+        &KeyEntry::Default("test2".to_key())
     );
 }

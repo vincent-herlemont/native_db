@@ -48,7 +48,7 @@ pub enum Error {
     SecondaryKeyConstraintMismatch {
         table: String,
         key: String,
-        got: db_type::DatabaseSecondaryKeyOptions,
+        got: db_type::KeyOptions,
     },
 
     #[error("The secondary key {key_name} is not unique ")]

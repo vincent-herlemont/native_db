@@ -26,25 +26,25 @@ impl ModelNativeDB {
                 let out = if key.is_field() {
                     if key.options.optional {
                         quote! {
-                            let value: Option<native_db::db_type::DatabaseInnerKeyValue>  = self.#key_ident.as_ref().map(|v|v.database_inner_key_value());
-                            let value = native_db::db_type::DatabaseKeyValue::Optional(value);
+                            let value: Option<native_db::db_type::Key>  = self.#key_ident.as_ref().map(|v|(&v).to_key());
+                            let value = native_db::db_type::KeyEntry::Optional(value);
                         }
                     } else {
                         quote! {
-                            let value: native_db::db_type::DatabaseInnerKeyValue  = self.#key_ident.database_inner_key_value();
-                            let value = native_db::db_type::DatabaseKeyValue::Default(value);
+                            let value: native_db::db_type::Key  = (&self.#key_ident).to_key();
+                            let value = native_db::db_type::KeyEntry::Default(value);
                         }
                     }
                 } else if key.is_function() {
                     if key.options.optional {
                         quote! {
-                            let value: Option<native_db::db_type::DatabaseInnerKeyValue> = self.#key_ident().map(|v|v.database_inner_key_value());
-                            let value = native_db::db_type::DatabaseKeyValue::Optional(value);
+                            let value: Option<native_db::db_type::Key> = self.#key_ident().map(|v|(&v).to_key());
+                            let value = native_db::db_type::KeyEntry::Optional(value);
                         }
                     } else {
                         quote! {
-                            let value: native_db::db_type::DatabaseInnerKeyValue = self.#key_ident().database_inner_key_value();
-                            let value = native_db::db_type::DatabaseKeyValue::Default(value);
+                            let value: native_db::db_type::Key = (&self.#key_ident()).to_key();
+                            let value = native_db::db_type::KeyEntry::Default(value);
                         }
                     }
                 } else {
@@ -59,7 +59,7 @@ impl ModelNativeDB {
             .collect::<Vec<_>>();
 
         quote! {
-            fn native_db_secondary_keys(&self) -> std::collections::HashMap<native_db::db_type::DatabaseKeyDefinition<native_db::db_type::DatabaseSecondaryKeyOptions>, native_db::db_type::DatabaseKeyValue> {
+            fn native_db_secondary_keys(&self) -> std::collections::HashMap<native_db::db_type::KeyDefinition<native_db::db_type::KeyOptions>, native_db::db_type::KeyEntry> {
                 let mut secondary_tables_name = std::collections::HashMap::new();
                 #(#tokens)*
                 secondary_tables_name
@@ -72,14 +72,14 @@ impl ModelNativeDB {
         let ident = primary_key.ident();
         if primary_key.is_function() {
             quote! {
-                fn native_db_primary_key(&self) -> native_db::db_type::DatabaseInnerKeyValue {
-                    self.#ident().database_inner_key_value()
+                fn native_db_primary_key(&self) -> native_db::db_type::Key {
+                    (&self.#ident()).to_key()
                 }
             }
         } else {
             quote! {
-                fn native_db_primary_key(&self) -> native_db::db_type::DatabaseInnerKeyValue {
-                    self.#ident.database_inner_key_value()
+                fn native_db_primary_key(&self) -> native_db::db_type::Key {
+                    (&self.#ident).to_key()
                 }
             }
         }
@@ -142,7 +142,7 @@ impl ModelNativeDB {
         });
 
         quote! {
-            fn database_key(&self) -> native_db::db_type::DatabaseKeyDefinition<native_db::db_type::DatabaseSecondaryKeyOptions> {
+            fn database_key(&self) -> native_db::db_type::KeyDefinition<native_db::db_type::KeyOptions> {
                 match self {
                     #(#insert_secondary_key_def)*
                     _ => panic!("Unknown key"),

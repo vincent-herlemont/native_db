@@ -1,6 +1,4 @@
-use crate::db_type::{
-    DatabaseKeyDefinition, DatabaseSecondaryKeyOptions, InnerKeyValue, Input, KeyDefinition, Result,
-};
+use crate::db_type::{DatabaseKey, Input, KeyDefinition, KeyOptions, Result, ToKey};
 use crate::watch;
 use crate::watch::query::internal;
 use crate::watch::MpscReceiver;
@@ -21,10 +19,7 @@ impl WatchScan<'_, '_> {
     }
 
     /// Watch all values by secondary key.
-    pub fn secondary(
-        &self,
-        key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-    ) -> WatchScanSecondary {
+    pub fn secondary(&self, key_def: impl DatabaseKey<KeyOptions>) -> WatchScanSecondary {
         WatchScanSecondary {
             key_def: key_def.database_key(),
             internal: &self.internal,
@@ -110,7 +105,7 @@ impl WatchScanPrimary<'_, '_> {
     /// ```
     pub fn start_with<T: Input>(
         &self,
-        start_with: impl InnerKeyValue,
+        start_with: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_primary_start_with::<T>(start_with)
     }
@@ -118,7 +113,7 @@ impl WatchScanPrimary<'_, '_> {
 
 /// Watch all values by secondary key.
 pub struct WatchScanSecondary<'db, 'w> {
-    pub(crate) key_def: DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
+    pub(crate) key_def: KeyDefinition<KeyOptions>,
     pub(crate) internal: &'w internal::InternalWatch<'db>,
 }
 
@@ -198,7 +193,7 @@ impl WatchScanSecondary<'_, '_> {
     /// ```
     pub fn start_with<T: Input>(
         &self,
-        start_with: impl InnerKeyValue,
+        start_with: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal
             .watch_secondary_start_with::<T>(&self.key_def, start_with)
