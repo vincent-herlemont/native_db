@@ -5,50 +5,50 @@ use std::hash::Hash;
 use syn::Ident;
 
 #[derive(Clone)]
-pub(crate) struct DatabaseKeyDefinition<O: ToTokenStream> {
+pub(crate) struct KeyDefinition<O: ToTokenStream> {
     pub(super) struct_name: StructName,
     field_name: Option<Ident>,
     function_name: Option<Ident>,
     pub(crate) options: O,
 }
 
-impl<O: ToTokenStream> PartialEq for DatabaseKeyDefinition<O> {
+impl<O: ToTokenStream> PartialEq for KeyDefinition<O> {
     fn eq(&self, other: &Self) -> bool {
         self.ident() == other.ident()
     }
 }
 
-impl<O: ToTokenStream> Eq for DatabaseKeyDefinition<O> {}
+impl<O: ToTokenStream> Eq for KeyDefinition<O> {}
 
-impl<O: ToTokenStream> Hash for DatabaseKeyDefinition<O> {
+impl<O: ToTokenStream> Hash for KeyDefinition<O> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.ident().hash(state);
     }
 }
 
-impl<O: ToTokenStream> ToTokenStream for DatabaseKeyDefinition<O> {
+impl<O: ToTokenStream> ToTokenStream for KeyDefinition<O> {
     fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
         let options = self.options.new_to_token_stream();
         let struct_name = self.struct_name.ident();
         let key_name = self.name();
         quote! {
-            native_db::db_type::DatabaseKeyDefinition::new(#struct_name::native_model_id(), #struct_name::native_model_version(), #key_name, #options)
+            native_db::db_type::KeyDefinition::new(#struct_name::native_model_id(), #struct_name::native_model_version(), #key_name, #options)
         }
     }
 }
 
 #[derive(Clone)]
-pub(crate) struct DatabaseSecondaryKeyOptions {
+pub(crate) struct KeyOptions {
     pub(crate) unique: bool,
     pub(crate) optional: bool,
 }
 
-impl ToTokenStream for DatabaseSecondaryKeyOptions {
+impl ToTokenStream for KeyOptions {
     fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
         let unique = self.unique;
         let optional = self.optional;
         quote! {
-            native_db::db_type::DatabaseSecondaryKeyOptions {
+            native_db::db_type::KeyOptions {
                 unique: #unique,
                 optional: #optional,
             }
@@ -62,7 +62,7 @@ impl ToTokenStream for () {
     }
 }
 
-impl Default for DatabaseSecondaryKeyOptions {
+impl Default for KeyOptions {
     fn default() -> Self {
         Self {
             unique: false,
@@ -71,7 +71,7 @@ impl Default for DatabaseSecondaryKeyOptions {
     }
 }
 
-impl<O: ToTokenStream> DatabaseKeyDefinition<O> {
+impl<O: ToTokenStream> KeyDefinition<O> {
     pub(crate) fn name(&self) -> String {
         if let Some(field_name) = &self.field_name {
             field_name.to_string().to_lowercase()

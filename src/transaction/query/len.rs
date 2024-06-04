@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseSecondaryKeyOptions, Input, KeyDefinition, Result};
+use crate::db_type::{DatabaseKey, Input, KeyOptions, Result};
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
@@ -52,10 +52,7 @@ impl RLen<'_, '_> {
     ///
     /// If the secondary key is [`optional`](struct.DatabaseBuilder.html#optional) you will
     /// get all values that have the secondary key set.
-    pub fn secondary<T: Input>(
-        &self,
-        _key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-    ) -> Result<Option<T>> {
+    pub fn secondary<T: Input>(&self, _key_def: impl DatabaseKey<KeyOptions>) -> Result<Option<T>> {
         todo!()
     }
 }
@@ -77,10 +74,7 @@ impl RwLen<'_, '_> {
     /// Get the number of values by secondary key.
     ///
     /// Same as [`RLen::secondary()`](struct.RLen.html#method.secondary).
-    pub fn secondary<T: Input>(
-        &self,
-        _key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-    ) -> Result<Option<T>> {
+    pub fn secondary<T: Input>(&self, _key_def: impl DatabaseKey<KeyOptions>) -> Result<Option<T>> {
         todo!()
     }
 }

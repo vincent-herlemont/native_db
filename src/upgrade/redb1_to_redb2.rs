@@ -1,5 +1,5 @@
 use crate::db_type::inner_key_value_redb1::DatabaseInnerKeyValue as Redb1DatabaseInnerKeyValue;
-use crate::db_type::DatabaseInnerKeyValue as Redb2DatabaseInnerKeyValue;
+use crate::db_type::Key as Redb2DatabaseInnerKeyValue;
 use crate::db_type::Result;
 use crate::table_definition::{
     RedbPrimaryTableDefinition as Redb2PrimaryTableDefinition,

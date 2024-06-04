@@ -1,6 +1,4 @@
-use crate::db_type::{
-    DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseSecondaryKeyOptions, Error, Result,
-};
+use crate::db_type::{Error, Key, KeyDefinition, KeyOptions, Result};
 use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::DatabaseModel;
@@ -16,8 +14,8 @@ where
     Self: 'txn,
     Self: 'db,
 {
-    type RedbPrimaryTable = redb::ReadOnlyTable<DatabaseInnerKeyValue, &'static [u8]>;
-    type RedbSecondaryTable = redb::ReadOnlyTable<DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
+    type RedbPrimaryTable = redb::ReadOnlyTable<Key, &'static [u8]>;
+    type RedbSecondaryTable = redb::ReadOnlyTable<Key, Key>;
 
     type RedbTransaction<'db_bis> = redb::ReadTransaction where Self: 'db_bis;
 
@@ -39,7 +37,7 @@ where
     fn get_secondary_table(
         &'txn self,
         model: &DatabaseModel,
-        secondary_key: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
+        secondary_key: &KeyDefinition<KeyOptions>,
     ) -> Result<Self::RedbSecondaryTable> {
         let main_table_definition = self
             .table_definitions()

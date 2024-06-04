@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseSecondaryKeyOptions, InnerKeyValue, Input, KeyDefinition, Result};
+use crate::db_type::{DatabaseKey, Input, KeyOptions, Result, ToKey};
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
@@ -38,7 +38,7 @@ impl RGet<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn primary<T: Input>(&self, key: impl InnerKeyValue) -> Result<Option<T>> {
+    pub fn primary<T: Input>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
@@ -86,8 +86,8 @@ impl RGet<'_, '_> {
     /// ```
     pub fn secondary<T: Input>(
         &self,
-        key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-        key: impl InnerKeyValue,
+        key_def: impl DatabaseKey<KeyOptions>,
+        key: impl ToKey,
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_secondary_key(model, key_def, key)?;
@@ -107,7 +107,7 @@ impl RwGet<'_, '_> {
     /// Get a value from the database by primary key.
     ///
     /// Same as [`RGet::primary()`](struct.RGet.html#method.primary).
-    pub fn primary<T: Input>(&self, key: impl InnerKeyValue) -> Result<Option<T>> {
+    pub fn primary<T: Input>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
@@ -122,8 +122,8 @@ impl RwGet<'_, '_> {
     /// Same as [`RGet::secondary()`](struct.RGet.html#method.secondary).
     pub fn secondary<T: Input>(
         &self,
-        key_def: impl KeyDefinition<DatabaseSecondaryKeyOptions>,
-        key: impl InnerKeyValue,
+        key_def: impl DatabaseKey<KeyOptions>,
+        key: impl ToKey,
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_secondary_key(model, key_def, key)?;

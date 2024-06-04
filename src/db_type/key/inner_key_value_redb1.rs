@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
 /// This module contains a legacy implementation of the `InnerKeyValue` trait for the `redb1` crate.
-
-use super::DatabaseInnerKeyValue as NewDatabaseInnerKeyValue;
+use super::Key as NewDatabaseInnerKeyValue;
 use redb1::{RedbKey as Key, RedbValue as Value, TypeName};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};

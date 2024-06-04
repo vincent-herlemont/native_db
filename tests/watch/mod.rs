@@ -197,7 +197,7 @@ fn watch_one_secondary_key() {
     let (recv, _) = db
         .watch()
         .get()
-        .secondary::<ItemA1K>(ItemA1KKey::name, a.name.clone())
+        .secondary::<ItemA1K>(ItemA1KKey::name, &a.name)
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();

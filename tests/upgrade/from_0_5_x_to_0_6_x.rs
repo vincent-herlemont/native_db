@@ -51,9 +51,7 @@ fn try_to_open_legacy_database_without_upgrade_feature() {
 fn try_to_open_legacy_database_with_upgrade_feature() {
     use std::path::PathBuf;
     #[cfg(any(target_os = "android", target_os = "ios"))]
-    let database_path = {
-        dinghy_test::test_project_path().join("tests/data/db_0_5_x")
-    };
+    let database_path = { dinghy_test::test_project_path().join("tests/data/db_0_5_x") };
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     let database_path = {

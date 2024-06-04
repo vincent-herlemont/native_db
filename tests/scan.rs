@@ -1,11 +1,10 @@
 // TODO: refactor and move to query/ folder
 
+use itertools::Itertools;
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
-use native_db::db_type::Result;
-use itertools::Itertools;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
@@ -51,7 +50,7 @@ fn test_iter() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result: Vec<Item>= r.scan().primary().unwrap().all().try_collect().unwrap();
+    let result: Vec<Item> = r.scan().primary().unwrap().all().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -144,14 +143,26 @@ fn test_iter_range() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result: Vec<Item> = r.scan().primary().unwrap().range(..2_i32).try_collect().unwrap();
+    let result: Vec<Item> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .range(..2_i32)
+        .try_collect()
+        .unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
-    let result: Vec<Item> = r.scan().primary().unwrap().range(2_i32..).try_collect().unwrap();
+    let result: Vec<Item> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .range(2_i32..)
+        .try_collect()
+        .unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -162,7 +173,13 @@ fn test_iter_range() {
     assert_eq!(obj2.id, 3);
     assert_eq!(obj2.name, "test3");
 
-    let result: Vec<Item> = r.scan().primary().unwrap().range(2_i32..3_i32).try_collect().unwrap();
+    let result: Vec<Item> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .range(2_i32..3_i32)
+        .try_collect()
+        .unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
@@ -189,7 +206,8 @@ fn test_iter_by_key() {
         .secondary(ItemKey::secondary_key_1)
         .unwrap()
         .all()
-        .try_collect().unwrap();
+        .try_collect()
+        .unwrap();
 
     assert_eq!(result.len(), 2);
 
@@ -330,7 +348,8 @@ fn test_start_with_scenario() {
             .primary()
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect().unwrap();
+            .try_collect()
+            .unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();
@@ -401,7 +420,8 @@ fn test_start_with_by_key_scenario_write_txn() {
             .secondary(ItemIdFlagKey::flag)
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect().unwrap();
+            .try_collect()
+            .unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();
@@ -445,7 +465,8 @@ fn test_start_with_by_key_scenario_readonly_txn() {
             .secondary(ItemIdFlagKey::flag)
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect().unwrap();
+            .try_collect()
+            .unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();
@@ -505,7 +526,8 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(..2_i32.to_be_bytes().as_slice())
-        .try_collect().unwrap();
+        .try_collect()
+        .unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
@@ -517,7 +539,8 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32.to_be_bytes().as_slice()..)
-        .try_collect().unwrap();
+        .try_collect()
+        .unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -533,7 +556,8 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32.to_be_bytes().as_slice()..3_i32.to_be_bytes().as_slice())
-        .try_collect().unwrap();
+        .try_collect()
+        .unwrap();
     assert_eq!(result.len(), 1);
 
     let obj1 = result.get(0).unwrap();
@@ -572,7 +596,8 @@ fn test_txn_write_start_with_scenario() {
             .primary()
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect().unwrap();
+            .try_collect()
+            .unwrap();
         assert_eq!(result.len(), 3);
 
         let obj1 = result.get(0).unwrap();

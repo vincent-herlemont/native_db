@@ -1,23 +1,23 @@
-use crate::db_type::DatabaseInnerKeyValue;
+use crate::db_type::Key;
 use std::hash::Hash;
 
-pub trait KeyDefinition<O> {
-    fn database_key(&self) -> DatabaseKeyDefinition<O>;
+pub trait DatabaseKey<O> {
+    fn database_key(&self) -> KeyDefinition<O>;
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct DatabaseKeyDefinition<O> {
+pub struct KeyDefinition<O> {
     pub(crate) unique_table_name: String,
     pub(crate) options: O,
 }
 
-impl<O: Clone> KeyDefinition<O> for DatabaseKeyDefinition<O> {
-    fn database_key(&self) -> DatabaseKeyDefinition<O> {
+impl<O: Clone> DatabaseKey<O> for KeyDefinition<O> {
+    fn database_key(&self) -> KeyDefinition<O> {
         self.clone()
     }
 }
 
-impl<O> DatabaseKeyDefinition<O> {
+impl<O> KeyDefinition<O> {
     pub fn new(model_id: u32, model_version: u32, name: &'static str, options: O) -> Self {
         let table_name = format!("{}_{}_{}", model_id, model_version, name);
         Self {
@@ -31,42 +31,39 @@ impl<O> DatabaseKeyDefinition<O> {
     }
 }
 
-impl From<&'static str> for DatabaseKeyDefinition<()> {
+impl From<&'static str> for KeyDefinition<()> {
     fn from(name: &'static str) -> Self {
         Self::new(0, 0, name, ())
     }
 }
 
-impl From<&'static str> for DatabaseKeyDefinition<DatabaseSecondaryKeyOptions> {
+impl From<&'static str> for KeyDefinition<KeyOptions> {
     fn from(name: &'static str) -> Self {
-        Self::new(0, 0, name, DatabaseSecondaryKeyOptions::default())
+        Self::new(0, 0, name, KeyOptions::default())
     }
 }
 
-impl PartialEq for DatabaseKeyDefinition<DatabaseSecondaryKeyOptions> {
+impl PartialEq for KeyDefinition<KeyOptions> {
     fn eq(&self, other: &Self) -> bool {
         self.unique_table_name == other.unique_table_name
     }
 }
 
-impl Eq for DatabaseKeyDefinition<DatabaseSecondaryKeyOptions> {}
+impl Eq for KeyDefinition<KeyOptions> {}
 
-impl Hash for DatabaseKeyDefinition<DatabaseSecondaryKeyOptions> {
+impl Hash for KeyDefinition<KeyOptions> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.unique_table_name.hash(state);
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct DatabaseSecondaryKeyOptions {
+pub struct KeyOptions {
     pub unique: bool,
     pub optional: bool,
 }
 
-pub fn composite_key(
-    secondary_key: &DatabaseInnerKeyValue,
-    primary_key: &DatabaseInnerKeyValue,
-) -> DatabaseInnerKeyValue {
+pub fn composite_key(secondary_key: &Key, primary_key: &Key) -> Key {
     let mut secondary_key = secondary_key.clone();
     secondary_key.extend(primary_key);
     secondary_key

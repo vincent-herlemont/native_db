@@ -1,23 +1,17 @@
-use crate::db_type::{
-    composite_key, DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseKeyValue,
-    DatabaseSecondaryKeyOptions, Error, Result,
-};
+use crate::db_type::{composite_key, Error, Key, KeyDefinition, KeyEntry, KeyOptions, Result};
 
 #[derive(Debug)]
-pub struct DatabaseInput {
-    pub(crate) primary_key: DatabaseInnerKeyValue,
-    pub(crate) secondary_keys: std::collections::HashMap<
-        DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
-        DatabaseKeyValue,
-    >,
+pub(crate) struct DatabaseInput {
+    pub(crate) primary_key: Key,
+    pub(crate) secondary_keys: std::collections::HashMap<KeyDefinition<KeyOptions>, KeyEntry>,
     pub(crate) value: Vec<u8>,
 }
 
 impl DatabaseInput {
     pub(crate) fn secondary_key_value(
         &self,
-        secondary_key_def: &DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
-    ) -> Result<DatabaseKeyValue> {
+        secondary_key_def: &KeyDefinition<KeyOptions>,
+    ) -> Result<KeyEntry> {
         let secondary_key = self.secondary_keys.get(secondary_key_def).ok_or(
             Error::SecondaryKeyDefinitionNotFound {
                 table: "".to_string(),
@@ -26,14 +20,14 @@ impl DatabaseInput {
         )?;
         let out = if !secondary_key_def.options.unique {
             match secondary_key {
-                DatabaseKeyValue::Default(value) => {
-                    DatabaseKeyValue::Default(composite_key(value, &self.primary_key))
+                KeyEntry::Default(value) => {
+                    KeyEntry::Default(composite_key(value, &self.primary_key))
                 }
-                DatabaseKeyValue::Optional(value) => {
+                KeyEntry::Optional(value) => {
                     let value = value
                         .as_ref()
                         .map(|value| composite_key(value, &self.primary_key));
-                    DatabaseKeyValue::Optional(value)
+                    KeyEntry::Optional(value)
                 }
             }
         } else {
@@ -46,14 +40,11 @@ impl DatabaseInput {
 pub trait Input: Sized + native_model::Model {
     fn native_db_model() -> crate::DatabaseModel;
 
-    fn native_db_primary_key(&self) -> DatabaseInnerKeyValue;
+    fn native_db_primary_key(&self) -> Key;
 
     fn native_db_secondary_keys(
         &self,
-    ) -> std::collections::HashMap<
-        DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>,
-        DatabaseKeyValue,
-    >;
+    ) -> std::collections::HashMap<KeyDefinition<KeyOptions>, KeyEntry>;
     fn native_db_bincode_encode_to_vec(&self) -> Result<Vec<u8>>;
     fn native_db_bincode_decode_from_slice(slice: &[u8]) -> Result<Self>;
 

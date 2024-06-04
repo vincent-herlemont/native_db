@@ -51,7 +51,6 @@ struct Item1 {
     name: String,
 }
 
-
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 #[native_model(id = 2, version = 1)]
 #[native_db]
@@ -63,7 +62,6 @@ struct Item2 {
     #[secondary_key]
     name: String,
 }
-
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 #[test]

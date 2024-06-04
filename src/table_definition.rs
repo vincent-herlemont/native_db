@@ -1,18 +1,15 @@
 use crate::database_builder::ModelBuilder;
-use crate::db_type::{DatabaseInnerKeyValue, DatabaseKeyDefinition, DatabaseSecondaryKeyOptions};
+use crate::db_type::{Key, KeyDefinition, KeyOptions};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub(crate) type RedbPrimaryTableDefinition<'a> =
-    redb::TableDefinition<'a, DatabaseInnerKeyValue, &'static [u8]>;
-pub(crate) type RedbSecondaryTableDefinition<'a> =
-    redb::TableDefinition<'a, DatabaseInnerKeyValue, DatabaseInnerKeyValue>;
+pub(crate) type RedbPrimaryTableDefinition<'a> = redb::TableDefinition<'a, Key, &'static [u8]>;
+pub(crate) type RedbSecondaryTableDefinition<'a> = redb::TableDefinition<'a, Key, Key>;
 
 pub struct PrimaryTableDefinition<'a> {
     pub(crate) model: crate::DatabaseModel,
     pub(crate) redb: RedbPrimaryTableDefinition<'a>,
-    pub(crate) secondary_tables:
-        HashMap<DatabaseKeyDefinition<DatabaseSecondaryKeyOptions>, SecondaryTableDefinition<'a>>,
+    pub(crate) secondary_tables: HashMap<KeyDefinition<KeyOptions>, SecondaryTableDefinition<'a>>,
     pub(crate) native_model_options: NativeModelOptions,
 }
 

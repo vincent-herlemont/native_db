@@ -1,5 +1,5 @@
 use native_db::db_type::Input;
-use native_db::db_type::{DatabaseKeyDefinition, DatabaseKeyValue};
+use native_db::db_type::{KeyDefinition, KeyEntry};
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
@@ -31,31 +31,24 @@ fn test_secondary() {
     };
 
     let primary_key = item.native_db_primary_key();
-    assert_eq!(primary_key, "1-test".database_inner_key_value());
+    assert_eq!(primary_key, "1-test".to_key());
 
-    let secondary_key: HashMap<_, DatabaseKeyValue> = item.native_db_secondary_keys();
+    let secondary_key: HashMap<_, KeyEntry> = item.native_db_secondary_keys();
     assert_eq!(secondary_key.len(), 2);
     assert_eq!(
-        secondary_key.get(&DatabaseKeyDefinition::new(
+        secondary_key.get(&KeyDefinition::new(
             1,
             1,
             "compute_secondary_key",
             Default::default()
         )),
-        Some(&DatabaseKeyValue::Default(
-            "test-1".database_inner_key_value()
-        ))
+        Some(&KeyEntry::Default("test-1".to_key()))
     );
 
     assert_eq!(
         secondary_key
-            .get(&DatabaseKeyDefinition::new(
-                1,
-                1,
-                "name",
-                Default::default()
-            ))
+            .get(&KeyDefinition::new(1, 1, "name", Default::default()))
             .unwrap(),
-        &DatabaseKeyValue::Default("test".database_inner_key_value())
+        &KeyEntry::Default("test".to_key())
     );
 }

@@ -1,7 +1,7 @@
 use crate::database_instance::DatabaseInstance;
 use crate::db_type::{Error, Result};
 use crate::table_definition::NativeModelOptions;
-use crate::{upgrade, watch, Database, DatabaseModel, Input};
+use crate::{db_type::Input, upgrade, watch, Database, DatabaseModel};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::AtomicU64;
@@ -83,7 +83,7 @@ impl DatabaseBuilder {
     }
 
     /// Similar to [redb::Builder::open(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.open)
-    /// But it also upgrades the database if needed if 
+    /// But it also upgrades the database if needed if
     pub fn open(&self, path: impl AsRef<Path>) -> Result<Database> {
         let builder = self.database_configuration.new_rdb_builder();
         let database_instance = match DatabaseInstance::open_on_disk(builder, &path) {
