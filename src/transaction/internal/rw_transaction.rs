@@ -232,9 +232,14 @@ impl<'db> InternalRwTransaction<'db> {
             ));
         }
 
-        // Check which table have the data
         let mut old_table_definition = None;
-        for new_primary_table_definition in self.primary_table_definitions.values() {
+        let model_table_definitions = self.primary_table_definitions.values().filter(|t| {
+            t.native_model_options.native_model_id
+                == new_table_definition.native_model_options.native_model_id
+        });
+
+        // Find the old model table with data
+        for new_primary_table_definition in model_table_definitions {
             // check if table exists, if the table does not exist continue
             if self
                 .redb_transaction
