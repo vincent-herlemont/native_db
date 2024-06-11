@@ -232,7 +232,7 @@ impl<'db> InternalRwTransaction<'db> {
             ));
         }
 
-        let mut old_table_definition = None;
+        let mut old_table_definition: Option<&PrimaryTableDefinition> = None;
         let model_table_definitions = self.primary_table_definitions.values().filter(|t| {
             t.native_model_options.native_model_id
                 == new_table_definition.native_model_options.native_model_id
@@ -256,9 +256,10 @@ impl<'db> InternalRwTransaction<'db> {
             let len = table.len()?;
             if len > 0 && old_table_definition.is_some() {
                 panic!(
-                    "Impossible to migrate the table {} because the table {} has data",
+                    "Impossible to migrate the table {} because multiple old tables with data exist: {}, {}",
                     T::native_db_model().primary_key.unique_table_name,
-                    new_primary_table_definition.redb.name()
+                    new_primary_table_definition.redb.name(),
+                    old_table_definition.unwrap().redb.name()
                 );
             } else if table.len()? > 0 {
                 old_table_definition = Some(new_primary_table_definition);
