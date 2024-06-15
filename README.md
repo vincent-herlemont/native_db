@@ -50,6 +50,9 @@ Active development. The API is not stable yet and may change in the future.
 - With Tauri: [native_db_tauri_vanilla](https://github.com/vincent-herlemont/native_db_tauri_vanilla)
 
 # Usual API
+
+### ⚠️ The current release is `0.6.1`, follow this [link](https://github.com/vincent-herlemont/native_db/tree/0.6.1?tab=readme-ov-file#usual-api) to see the documentation.
+
 - [**Models**](https://docs.rs/native_db/latest/native_db/struct.Models.html)
     - [**new**](https://docs.rs/native_db/latest/native_db/struct.Models.html#method.new) a new model.
     - [**define**](https://docs.rs/native_db/latest/native_db/struct.Models.html#method.define) a model.
