@@ -17,10 +17,10 @@ const ITERATIONS: &'static [(usize, usize)] = &[
     (10 * 1024 * 1024, 10),
 ];
 
-static DATABASE_BUILDER: Lazy<DatabaseBuilder> = Lazy::new(|| {
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Data>().unwrap();
-    builder
+static DATABASE_MODELS: Lazy<Models> = Lazy::new(|| {
+    let mut models = Models::new();
+    models.define::<Data>().unwrap();
+    models
 });
 
 fn init_database() -> (redb::Database, Database<'static>) {
@@ -29,7 +29,7 @@ fn init_database() -> (redb::Database, Database<'static>) {
         .create_with_backend(redb_backend)
         .unwrap();
 
-    let native_db = DATABASE_BUILDER.create_in_memory().unwrap();
+    let native_db = Builder::new().create_in_memory(&DATABASE_MODELS).unwrap();
     (redb_db, native_db)
 }
 

@@ -34,9 +34,9 @@ fn try_to_open_legacy_database_without_upgrade_feature() {
     let database_path = format!("{}/tests/data/db_0_5_x", root_project_path);
 
     // Try to open the legacy database. This must fail with an UpgradeRequired error.
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item1>().unwrap();
-    let db_error: Result<Database<'_>, db_type::Error> = builder.open(&database_path);
+    let mut models = Models::new();
+    models.define::<Item1>().unwrap();
+    let db_error: Result<Database<'_>, db_type::Error> = Builder::new().open(&models,&database_path);
     assert!(db_error.is_err());
     assert!(matches!(
         db_error,
@@ -66,10 +66,10 @@ fn try_to_open_legacy_database_with_upgrade_feature() {
     std::fs::copy(&database_path, &tmp_database_path).unwrap();
 
     // Open the legacy database with the upgrade feature. This must succeed.
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item1>().unwrap();
-    builder.define::<Item2>().unwrap();
-    let db = builder.open(&tmp_database_path).unwrap();
+    let mut models = Models::new();
+    models.define::<Item1>().unwrap();
+    models.define::<Item2>().unwrap();
+    let db = Builder::new().open(&models, &tmp_database_path).unwrap();
     // TODO: during open, the database must be upgraded to the latest version.
 
     tmp.display_dir_entries();

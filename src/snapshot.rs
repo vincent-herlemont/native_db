@@ -1,12 +1,11 @@
 use crate::db_type::Result;
-use crate::{Database, DatabaseBuilder};
+use crate::{Builder, Database, Models};
 use redb::ReadableTable;
 use std::path::Path;
 
 impl Database<'_> {
-    pub fn snapshot<'a>(&self, builder: &'a DatabaseBuilder, path: &Path) -> Result<Database<'a>> {
-        // TODO: builder must have well defined models
-        let new_db = builder.create(path)?;
+    pub fn snapshot<'a>(&self, models: &'a Models, path: &Path) -> Result<Database<'a>> {
+        let new_db = Builder::new().create(models, path)?;
         let r = self.instance.redb_database()?.begin_read()?;
         let w = new_db.instance.redb_database()?.begin_write()?;
         {

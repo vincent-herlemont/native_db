@@ -43,9 +43,11 @@ fn drain_all() {
         tag: "red".to_string(),
     };
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     // Insert 5 items
     let rw = db.rw_transaction().unwrap();

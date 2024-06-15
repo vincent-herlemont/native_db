@@ -30,9 +30,11 @@ fn insert_get_read_write_transaction() {
         name: "test".to_string(),
     };
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item.clone()).unwrap();
@@ -57,9 +59,11 @@ fn insert_get_read_transaction() {
         name: "test".to_string(),
     };
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item.clone()).unwrap();
@@ -94,9 +98,11 @@ fn test_insert_duplicate_key() {
         name: "test".to_string(),
     };
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemDuplicate>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemDuplicate>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item_1).unwrap();
@@ -128,9 +134,11 @@ fn test_insert_optional() {
     };
     let item_2 = ItemOptional { id: 2, name: None };
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemOptional>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemOptional>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item_1.clone()).unwrap();

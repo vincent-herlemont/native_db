@@ -1,4 +1,4 @@
-use crate::db_type::{Input, Output, Result};
+use crate::db_type::{Output, Result, ToInput};
 use std::fmt::Debug;
 
 #[derive(Clone)]
@@ -39,7 +39,7 @@ impl Debug for Event {
 pub struct Insert(pub(crate) Output);
 
 impl Insert {
-    pub fn inner<T: Input>(&self) -> Result<T> {
+    pub fn inner<T: ToInput>(&self) -> Result<T> {
         self.0.inner()
     }
 }
@@ -51,10 +51,10 @@ pub struct Update {
 }
 
 impl Update {
-    pub fn inner_old<T: Input>(&self) -> Result<T> {
+    pub fn inner_old<T: ToInput>(&self) -> Result<T> {
         self.old.inner()
     }
-    pub fn inner_new<T: Input>(&self) -> Result<T> {
+    pub fn inner_new<T: ToInput>(&self) -> Result<T> {
         self.new.inner()
     }
 }
@@ -63,7 +63,7 @@ impl Update {
 pub struct Delete(pub(crate) Output);
 
 impl Delete {
-    pub fn inner<T: Input>(&self) -> Result<T> {
+    pub fn inner<T: ToInput>(&self) -> Result<T> {
         self.0.inner()
     }
 }

@@ -1,4 +1,4 @@
-use crate::db_type::{Input, Result};
+use crate::db_type::{Result, ToInput};
 
 #[derive(Clone, Debug)]
 pub(crate) struct Output(pub(crate) Vec<u8>);
@@ -10,12 +10,12 @@ impl From<&[u8]> for Output {
 }
 
 impl Output {
-    pub fn inner<T: Input>(&self) -> Result<T> {
+    pub fn inner<T: ToInput>(&self) -> Result<T> {
         T::native_db_bincode_decode_from_slice(&self.0)
     }
 }
 
-pub(crate) fn unwrap_item<T: Input>(
+pub(crate) fn unwrap_item<T: ToInput>(
     item: Option<redb::AccessGuard<&'static [u8]>>,
 ) -> Option<Result<T>> {
     if let Some(item) = item {

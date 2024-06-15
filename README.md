@@ -50,10 +50,10 @@ Active development. The API is not stable yet and may change in the future.
 - With Tauri: [native_db_tauri_vanilla](https://github.com/vincent-herlemont/native_db_tauri_vanilla)
 
 # Usual API
-- [**DatabaseBuilder**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html)  
-    - [**define**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.define) a model.
-    - [**create**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.create) / [**open**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.open) a database.
-    - [**create_in_memory**](https://docs.rs/native_db/latest/native_db/struct.DatabaseBuilder.html#method.create_in_memory) an in-memory database.
+- [**Builder**](https://docs.rs/native_db/latest/native_db/struct.Builder.html)  
+    - [**define**](https://docs.rs/native_db/latest/native_db/struct.Builder.html#method.define) a model.
+    - [**create**](https://docs.rs/native_db/latest/native_db/struct.Builder.html#method.create) / [**open**](https://docs.rs/native_db/latest/native_db/struct.Builder.html#method.open) a database.
+    - [**create_in_memory**](https://docs.rs/native_db/latest/native_db/struct.Builder.html#method.create_in_memory) an in-memory database.
 - [**Database**](https://docs.rs/native_db/latest/native_db/struct.Database.html)
     - [**snapshot**](https://docs.rs/native_db/latest/native_db/struct.Database.html#method.snapshot) the database.
     - **rw_transaction** open a read-write transaction.
@@ -113,12 +113,12 @@ struct Item {
 }
 
 fn main() -> Result<(), db_type::Error> {
-    let mut builder = DatabaseBuilder::new();
+    let mut models = Models::new();
     // Initialize the model
-    builder.define::<Item>()?;
+    models.define::<Item>()?;
     
     // Create a database in memory
-    let mut db = builder.create_in_memory()?;
+    let mut db = Builder::new().create_in_memory(&models)?;
     
     // Insert data (open a read-write transaction)
     let rw = db.rw_transaction().unwrap();

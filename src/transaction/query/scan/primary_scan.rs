@@ -1,10 +1,10 @@
 use crate::db_type::ToKey;
-use crate::db_type::{unwrap_item, Input, Key, KeyRange, Result};
+use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
 /// Scan values from the database.
-pub struct PrimaryScan<PrimaryTable, T: Input>
+pub struct PrimaryScan<PrimaryTable, T: ToInput>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
@@ -12,7 +12,7 @@ where
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<PrimaryTable, T: Input> PrimaryScan<PrimaryTable, T>
+impl<PrimaryTable, T: ToInput> PrimaryScan<PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
@@ -41,9 +41,9 @@ where
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -79,9 +79,9 @@ where
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -121,9 +121,9 @@ where
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -150,12 +150,12 @@ where
     }
 }
 
-pub struct PrimaryScanIterator<'a, T: Input> {
+pub struct PrimaryScanIterator<'a, T: ToInput> {
     pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, T: Input> Iterator for PrimaryScanIterator<'a, T> {
+impl<'a, T: ToInput> Iterator for PrimaryScanIterator<'a, T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -165,7 +165,7 @@ impl<'a, T: Input> Iterator for PrimaryScanIterator<'a, T> {
         }
     }
 }
-impl<'a, T: Input> DoubleEndedIterator for PrimaryScanIterator<'a, T> {
+impl<'a, T: ToInput> DoubleEndedIterator for PrimaryScanIterator<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         match self.range.next_back() {
             Some(Ok((_, v))) => unwrap_item(Some(v)),
@@ -174,13 +174,13 @@ impl<'a, T: Input> DoubleEndedIterator for PrimaryScanIterator<'a, T> {
     }
 }
 
-pub struct PrimaryScanIteratorStartWith<'a, T: Input> {
+pub struct PrimaryScanIteratorStartWith<'a, T: ToInput> {
     pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
     pub(crate) start_with: Key,
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, T: Input> Iterator for PrimaryScanIteratorStartWith<'a, T> {
+impl<'a, T: ToInput> Iterator for PrimaryScanIteratorStartWith<'a, T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {

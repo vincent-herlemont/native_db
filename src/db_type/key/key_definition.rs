@@ -1,8 +1,8 @@
 use crate::db_type::Key;
 use std::hash::Hash;
 
-pub trait DatabaseKey<O> {
-    fn database_key(&self) -> KeyDefinition<O>;
+pub trait ToKeyDefinition<O> {
+    fn key_definition(&self) -> KeyDefinition<O>;
 }
 
 #[derive(Default, Clone, Debug)]
@@ -11,8 +11,8 @@ pub struct KeyDefinition<O> {
     pub(crate) options: O,
 }
 
-impl<O: Clone> DatabaseKey<O> for KeyDefinition<O> {
-    fn database_key(&self) -> KeyDefinition<O> {
+impl<O: Clone> ToKeyDefinition<O> for KeyDefinition<O> {
+    fn key_definition(&self) -> KeyDefinition<O> {
         self.clone()
     }
 }

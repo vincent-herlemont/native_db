@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseKey, Key, KeyDefinition, KeyOptions};
+use crate::db_type::{Key, KeyDefinition, KeyOptions, ToKeyDefinition};
 
 #[derive(Eq, PartialEq, Clone)]
 pub(crate) struct TableFilter {
@@ -29,25 +29,25 @@ impl TableFilter {
         }
     }
 
-    pub(crate) fn new_secondary<K: DatabaseKey<KeyOptions>>(
+    pub(crate) fn new_secondary<K: ToKeyDefinition<KeyOptions>>(
         table_name: String,
         key_def: &K,
         key: Option<Key>,
     ) -> Self {
         Self {
             table_name,
-            key_filter: KeyFilter::Secondary(key_def.database_key(), key.map(|k| k.to_owned())),
+            key_filter: KeyFilter::Secondary(key_def.key_definition(), key.map(|k| k.to_owned())),
         }
     }
 
-    pub(crate) fn new_secondary_start_with<K: DatabaseKey<KeyOptions>>(
+    pub(crate) fn new_secondary_start_with<K: ToKeyDefinition<KeyOptions>>(
         table_name: String,
         key: &K,
         key_prefix: Key,
     ) -> Self {
         Self {
             table_name,
-            key_filter: KeyFilter::SecondaryStartWith(key.database_key(), key_prefix.to_owned()),
+            key_filter: KeyFilter::SecondaryStartWith(key.key_definition(), key_prefix.to_owned()),
         }
     }
 }

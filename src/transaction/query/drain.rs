@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseKey, Input, KeyOptions, Result};
+use crate::db_type::{KeyOptions, Result, ToInput, ToKeyDefinition};
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 
 pub struct RwDrain<'db, 'txn> {
@@ -7,7 +7,7 @@ pub struct RwDrain<'db, 'txn> {
 
 impl<'db, 'txn> RwDrain<'db, 'txn> {
     // TODO: Remove nested Result
-    pub fn primary<T: Input>(&self) -> Result<Vec<T>> {
+    pub fn primary<T: ToInput>(&self) -> Result<Vec<T>> {
         let model = T::native_db_model();
         let out = self.internal.concrete_primary_drain(model)?;
         let out = out
@@ -18,7 +18,7 @@ impl<'db, 'txn> RwDrain<'db, 'txn> {
     }
 
     /// **TODO: needs to be implemented**
-    pub fn secondary<T: Input>(&self, _key_def: impl DatabaseKey<KeyOptions>) -> () {
+    pub fn secondary<T: ToInput>(&self, _key_def: impl ToKeyDefinition<KeyOptions>) -> () {
         todo!()
     }
 }

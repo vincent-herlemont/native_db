@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseKey, Input, KeyOptions, Result, ToKey};
+use crate::db_type::{KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
@@ -26,9 +26,9 @@ impl RGet<'_, '_> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -38,7 +38,7 @@ impl RGet<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn primary<T: Input>(&self, key: impl ToKey) -> Result<Option<T>> {
+    pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
@@ -50,7 +50,7 @@ impl RGet<'_, '_> {
 
     /// Get a value from the database by secondary key.
     ///
-    /// /!\ The secondary key **must** be [`unique`](crate::DatabaseBuilder#unique) else this method will return an error [`SecondaryKeyConstraintMismatch`](crate::db_type::Error::SecondaryKeyConstraintMismatch).
+    /// /!\ The secondary key **must** be [`unique`](crate::Builder#unique) else this method will return an error [`SecondaryKeyConstraintMismatch`](crate::db_type::Error::SecondaryKeyConstraintMismatch).
     ///     If the secondary key is not unique, use [`scan()`](crate::transaction::RTransaction::scan) instead.
     ///
     /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
@@ -72,9 +72,9 @@ impl RGet<'_, '_> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -84,9 +84,9 @@ impl RGet<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn secondary<T: Input>(
+    pub fn secondary<T: ToInput>(
         &self,
-        key_def: impl DatabaseKey<KeyOptions>,
+        key_def: impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
@@ -107,7 +107,7 @@ impl RwGet<'_, '_> {
     /// Get a value from the database by primary key.
     ///
     /// Same as [`RGet::primary()`](struct.RGet.html#method.primary).
-    pub fn primary<T: Input>(&self, key: impl ToKey) -> Result<Option<T>> {
+    pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
@@ -120,9 +120,9 @@ impl RwGet<'_, '_> {
     /// Get a value from the database by secondary key.
     ///
     /// Same as [`RGet::secondary()`](struct.RGet.html#method.secondary).
-    pub fn secondary<T: Input>(
+    pub fn secondary<T: ToInput>(
         &self,
-        key_def: impl DatabaseKey<KeyOptions>,
+        key_def: impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<Option<T>> {
         let model = T::native_db_model();

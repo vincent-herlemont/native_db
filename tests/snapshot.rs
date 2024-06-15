@@ -15,9 +15,10 @@ struct Item {
 #[test]
 fn test_snapshot() {
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create_in_memory().unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+
+    let db = Builder::new().create_in_memory(&models).unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(Item {
@@ -28,7 +29,7 @@ fn test_snapshot() {
     rw.commit().unwrap();
 
     let db_snapshot = db
-        .snapshot(&builder, tf.path("snapshot.db").as_std_path())
+        .snapshot(&models, tf.path("snapshot.db").as_std_path())
         .unwrap();
 
     let r = db_snapshot.r_transaction().unwrap();

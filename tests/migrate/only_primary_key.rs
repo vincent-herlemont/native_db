@@ -54,9 +54,11 @@ impl ItemV2 {
 #[test]
 fn test_migrate() {
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item = ItemV1 {
         id: 1,
@@ -80,10 +82,12 @@ fn test_migrate() {
     drop(r_txn);
     drop(db);
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    builder.define::<ItemV2>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    models.define::<ItemV2>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.migrate::<ItemV2>().unwrap();

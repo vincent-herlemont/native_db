@@ -42,7 +42,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         #[derive(native_db::KeyAttributes)]
         #ast
 
-        impl native_db::db_type::Input for #struct_name {
+        impl native_db::db_type::ToInput for #struct_name {
             fn native_db_bincode_encode_to_vec(&self) -> native_db::db_type::Result<Vec<u8>> {
                 native_db::bincode_encode_to_vec(self)
             }
@@ -60,7 +60,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
             #(#keys_enum),*
         }
 
-        impl native_db::db_type::DatabaseKey<native_db::db_type::KeyOptions> for #keys_enum_name {
+        impl native_db::db_type::ToKeyDefinition<native_db::db_type::KeyOptions> for #keys_enum_name {
             #keys_enum_database_key
         }
     };

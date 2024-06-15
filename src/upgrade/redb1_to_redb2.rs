@@ -5,7 +5,7 @@ use crate::table_definition::{
     RedbPrimaryTableDefinition as Redb2PrimaryTableDefinition,
     RedbSecondaryTableDefinition as Redb2SecondaryTableDefinition,
 };
-use crate::{DatabaseConfiguration, ModelBuilder};
+use crate::{Configuration, ModelBuilder};
 use redb as redb2;
 use redb1;
 use std::collections::HashMap;
@@ -82,7 +82,7 @@ fn upgrade_secondary_table(
 }
 
 pub(crate) fn upgrade_redb1_to_redb2(
-    database_configuration: &DatabaseConfiguration,
+    database_configuration: &Configuration,
     path: impl AsRef<Path>,
     model_builder: &HashMap<String, ModelBuilder>,
 ) -> Result<()> {

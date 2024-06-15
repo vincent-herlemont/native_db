@@ -1,6 +1,6 @@
 use native_db::{
     db_type::{Key, ToKey},
-    native_db, DatabaseBuilder,
+    native_db, Builder, Models,
 };
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
@@ -39,9 +39,11 @@ fn insert_item_fields() {
     };
 
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemFields>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemFields>().unwrap();
+    let db = Builder::new()
+        .create(&&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item.clone()).unwrap();
@@ -100,9 +102,11 @@ fn test_item_functions() {
     };
 
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemFunctions>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemFunctions>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item.clone()).unwrap();

@@ -1,6 +1,8 @@
-use crate::db_type::{DatabaseKey, Error, Key, KeyDefinition, KeyOptions, Output, Result, ToKey};
+use crate::db_type::{
+    Error, Key, KeyDefinition, KeyOptions, Output, Result, ToKey, ToKeyDefinition,
+};
 use crate::table_definition::PrimaryTableDefinition;
-use crate::DatabaseModel;
+use crate::Model;
 use redb::ReadableTable;
 use redb::ReadableTableMetadata;
 use std::collections::HashMap;
@@ -15,19 +17,15 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition>;
 
-    fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable>;
+    fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable>;
 
     fn get_secondary_table(
         &'txn self,
-        model: &DatabaseModel,
+        model: &Model,
         secondary_key: &KeyDefinition<KeyOptions>,
     ) -> Result<Self::RedbSecondaryTable>;
 
-    fn get_by_primary_key(
-        &'txn self,
-        model: DatabaseModel,
-        key: impl ToKey,
-    ) -> Result<Option<Output>> {
+    fn get_by_primary_key(&'txn self, model: Model, key: impl ToKey) -> Result<Option<Output>> {
         let table = self.get_primary_table(&model)?;
         let key = key.to_key();
         let item = table.get(key)?;
@@ -36,11 +34,11 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
 
     fn get_by_secondary_key(
         &'txn self,
-        model: DatabaseModel,
-        key_def: impl DatabaseKey<KeyOptions>,
+        model: Model,
+        key_def: impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<Option<Output>> {
-        let secondary_key = key_def.database_key();
+        let secondary_key = key_def.key_definition();
         // Provide a better error for the test of unicity of the secondary key
         model.check_secondary_options(&secondary_key, |options| options.unique == true)?;
 
@@ -59,7 +57,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
         ))
     }
 
-    fn primary_len(&'txn self, model: DatabaseModel) -> Result<u64> {
+    fn primary_len(&'txn self, model: Model) -> Result<u64> {
         let table = self.get_primary_table(&model)?;
         let result = table.len()?;
         Ok(result)

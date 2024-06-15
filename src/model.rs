@@ -2,12 +2,12 @@ use crate::db_type::{Error, KeyDefinition, KeyOptions, Result};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug)]
-pub struct DatabaseModel {
+pub struct Model {
     pub primary_key: KeyDefinition<()>,
     pub secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
 }
 
-impl DatabaseModel {
+impl Model {
     pub fn check_secondary_options<F>(
         &self,
         secondary_key: &KeyDefinition<KeyOptions>,
