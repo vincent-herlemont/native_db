@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseKey, Input, KeyOptions, Result, ToKey};
+use crate::db_type::{KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
 use crate::watch;
 use crate::watch::query::internal;
 use crate::watch::MpscReceiver;
@@ -29,16 +29,19 @@ impl WatchGet<'_, '_> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Watch the primary key
     ///     let (_recv, _id) = db.watch().get().primary::<Data>(1u64)?;
     ///     Ok(())
     /// }
     /// ```
-    pub fn primary<T: Input>(&self, key: impl ToKey) -> Result<(MpscReceiver<watch::Event>, u64)> {
+    pub fn primary<T: ToInput>(
+        &self,
+        key: impl ToKey,
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_primary::<T>(key)
     }
 
@@ -64,18 +67,18 @@ impl WatchGet<'_, '_> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Watch the secondary key name
     ///     let (_recv, _id) = db.watch().get().secondary::<Data>(DataKey::name, "test")?;
     ///     Ok(())
     /// }
     /// ```
-    pub fn secondary<T: Input>(
+    pub fn secondary<T: ToInput>(
         &self,
-        key_def: impl DatabaseKey<KeyOptions>,
+        key_def: impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_secondary::<T>(&key_def, key)

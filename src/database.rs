@@ -23,9 +23,9 @@ use std::u64;
 /// use native_db::*;
 ///
 /// fn main() -> Result<(), db_type::Error> {
-///    let builder = DatabaseBuilder::new();
+///    let models = Models::new();
 ///    // Define models ...
-///    let db = builder.create_in_memory()?;
+///    let db = Builder::new().create_in_memory(&models)?;
 ///    // Open transactions
 ///    // Watch data
 ///    // Create snapshots

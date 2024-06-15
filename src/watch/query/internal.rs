@@ -1,4 +1,4 @@
-use crate::db_type::{DatabaseKey, Error, Input, KeyOptions, Result, ToKey};
+use crate::db_type::{Error, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
 use crate::watch;
 use crate::watch::{MpscReceiver, TableFilter};
 use std::sync::atomic::AtomicU64;
@@ -36,7 +36,7 @@ impl InternalWatch<'_> {
         }
     }
 
-    pub(crate) fn watch_primary<T: Input>(
+    pub(crate) fn watch_primary<T: ToInput>(
         &self,
         key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
@@ -47,13 +47,15 @@ impl InternalWatch<'_> {
         self.watch_generic(table_filter)
     }
 
-    pub(crate) fn watch_primary_all<T: Input>(&self) -> Result<(MpscReceiver<watch::Event>, u64)> {
+    pub(crate) fn watch_primary_all<T: ToInput>(
+        &self,
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
         let table_filter = TableFilter::new_primary(table_name.unique_table_name.clone(), None);
         self.watch_generic(table_filter)
     }
 
-    pub(crate) fn watch_primary_start_with<T: Input>(
+    pub(crate) fn watch_primary_start_with<T: ToInput>(
         &self,
         start_with: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
@@ -64,9 +66,9 @@ impl InternalWatch<'_> {
         self.watch_generic(table_filter)
     }
 
-    pub(crate) fn watch_secondary<T: Input>(
+    pub(crate) fn watch_secondary<T: ToInput>(
         &self,
-        key_def: &impl DatabaseKey<KeyOptions>,
+        key_def: &impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
@@ -76,9 +78,9 @@ impl InternalWatch<'_> {
         self.watch_generic(table_filter)
     }
 
-    pub(crate) fn watch_secondary_all<T: Input>(
+    pub(crate) fn watch_secondary_all<T: ToInput>(
         &self,
-        key_def: &impl DatabaseKey<KeyOptions>,
+        key_def: &impl ToKeyDefinition<KeyOptions>,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;
         let table_filter =
@@ -86,9 +88,9 @@ impl InternalWatch<'_> {
         self.watch_generic(table_filter)
     }
 
-    pub(crate) fn watch_secondary_start_with<T: Input>(
+    pub(crate) fn watch_secondary_start_with<T: ToInput>(
         &self,
-        key_def: &impl DatabaseKey<KeyOptions>,
+        key_def: &impl ToKeyDefinition<KeyOptions>,
         start_with: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
         let table_name = T::native_db_model().primary_key;

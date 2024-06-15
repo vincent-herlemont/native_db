@@ -25,9 +25,9 @@ fn create_local_database_for_tests() {
     let database_path: String = format!("{}/tests/data/db_0_6_0", root_project_path);
 
     println!("database_path: {}", database_path);
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item1>().unwrap();
-    let db = builder.open(&database_path).unwrap();
+    let mut models = Models::new();
+    models.define::<Item1>().unwrap();
+    let db = Builder::new().open(&models, &database_path).unwrap();
     let r = db.r_transaction().unwrap();
     let result: Result<Vec<Item1>> = r.scan().primary().unwrap().all().try_collect();
     assert!(matches!(

@@ -1,4 +1,4 @@
-use crate::db_type::{Input, Result};
+use crate::db_type::{Result, ToInput};
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 use crate::transaction::query::RwDrain;
 use crate::transaction::query::RwGet;
@@ -64,8 +64,8 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// use native_db::*;
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
@@ -107,9 +107,9 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
@@ -123,10 +123,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn insert<T: Input>(&self, item: T) -> Result<()> {
+    pub fn insert<T: ToInput>(&self, item: T) -> Result<()> {
         let (watcher_request, binary_value) = self
             .internal
-            .concrete_insert(T::native_db_model(), item.to_item()?)?;
+            .concrete_insert(T::native_db_model(), item.native_db_input()?)?;
         let event = Event::new_insert(binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
@@ -149,9 +149,9 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
@@ -165,10 +165,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn remove<T: Input>(&self, item: T) -> Result<T> {
+    pub fn remove<T: ToInput>(&self, item: T) -> Result<T> {
         let (watcher_request, binary_value) = self
             .internal
-            .concrete_remove(T::native_db_model(), item.to_item()?)?;
+            .concrete_remove(T::native_db_model(), item.native_db_input()?)?;
         let event = Event::new_delete(binary_value.clone());
         self.batch.borrow_mut().add(watcher_request, event);
         binary_value.inner()
@@ -193,9 +193,9 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
@@ -209,11 +209,11 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn update<T: Input>(&self, old_item: T, updated_item: T) -> Result<()> {
+    pub fn update<T: ToInput>(&self, old_item: T, updated_item: T) -> Result<()> {
         let (watcher_request, old_binary_value, new_binary_value) = self.internal.concrete_update(
             T::native_db_model(),
-            old_item.to_item()?,
-            updated_item.to_item()?,
+            old_item.native_db_input()?,
+            updated_item.native_db_input()?,
         )?;
         let event = Event::new_update(old_binary_value, new_binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
@@ -258,10 +258,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Dog>()?;
-    ///     builder.define::<Animal>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Dog>()?;
+    ///     models.define::<Animal>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
@@ -277,17 +277,17 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// ```
     pub fn convert_all<OldType, NewType>(&self) -> Result<()>
     where
-        OldType: Input + Clone,
-        NewType: Input + From<OldType>,
+        OldType: ToInput + Clone,
+        NewType: ToInput + From<OldType>,
     {
         let find_all_old: Result<Vec<OldType>> = self.scan().primary()?.all().collect();
         let find_all_old = find_all_old?;
         for old in find_all_old {
             let new: NewType = old.clone().into();
             self.internal
-                .concrete_insert(NewType::native_db_model(), new.to_item()?)?;
+                .concrete_insert(NewType::native_db_model(), new.native_db_input()?)?;
             self.internal
-                .concrete_remove(OldType::native_db_model(), old.to_item()?)?;
+                .concrete_remove(OldType::native_db_model(), old.native_db_input()?)?;
         }
         Ok(())
     }
@@ -351,10 +351,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<LegacyData>()?;
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<LegacyData>()?;
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///
     ///     let rw = db.rw_transaction()?;
     ///     rw.migrate::<Data>()?;
@@ -362,7 +362,7 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     rw.commit()
     /// }
     /// ```
-    pub fn migrate<T: Input + Debug>(&self) -> Result<()> {
+    pub fn migrate<T: ToInput + Debug>(&self) -> Result<()> {
         self.internal.migrate::<T>()
     }
 }

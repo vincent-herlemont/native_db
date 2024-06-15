@@ -1,6 +1,6 @@
 #![cfg(feature = "tokio")]
 
-use native_db::watch::Event;
+use native_db::{watch::Event, Models};
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
@@ -18,9 +18,9 @@ struct ItemA {
 async fn watch_one_primary_key() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let mut db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let mut db = Builder::new().create(&models,tf.path("test").as_std_path()).unwrap();
 
     let a = ItemA { id: 1 };
 

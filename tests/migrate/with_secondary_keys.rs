@@ -90,9 +90,11 @@ impl From<ItemV2> for ItemV1 {
 #[test]
 fn test_migrate() {
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let mut item = ItemV1 {
         id: 1,
@@ -119,10 +121,12 @@ fn test_migrate() {
 
     drop(db);
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    builder.define::<ItemV2>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    models.define::<ItemV2>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.migrate::<ItemV2>().unwrap();
@@ -226,9 +230,11 @@ impl TryFrom<ItemV2> for ItemV3 {
 #[test]
 fn test_migrate_v3() {
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let mut item = ItemV1 {
         id: 1,
@@ -247,11 +253,13 @@ fn test_migrate_v3() {
 
     drop(db);
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    builder.define::<ItemV2>().unwrap();
-    builder.define::<ItemV3>().unwrap();
-    let db = builder.open(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    models.define::<ItemV2>().unwrap();
+    models.define::<ItemV3>().unwrap();
+    let db = Builder::new()
+        .open(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     // Return error because the latest version is Item is ItemV3
     let rw = db.rw_transaction().unwrap();

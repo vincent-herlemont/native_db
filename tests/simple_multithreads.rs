@@ -18,9 +18,11 @@ struct Item {
 fn multi_threads() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let db = Arc::new(db);
 

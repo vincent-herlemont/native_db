@@ -1,4 +1,4 @@
-use native_db::db_type::{Input, KeyDefinition, KeyEntry};
+use native_db::db_type::{KeyDefinition, KeyEntry, ToInput};
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};

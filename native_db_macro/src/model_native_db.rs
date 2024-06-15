@@ -100,10 +100,10 @@ impl ModelNativeDB {
             .collect::<Vec<_>>();
 
         quote! {
-            fn native_db_model() -> native_db::DatabaseModel {
+            fn native_db_model() -> native_db::Model {
                 let mut secondary_tables_name = std::collections::HashSet::new();
                 #(#secondary_keys)*
-                native_db::DatabaseModel {
+                native_db::Model {
                     primary_key: #primary_key,
                     secondary_keys: secondary_tables_name,
                 }
@@ -142,7 +142,7 @@ impl ModelNativeDB {
         });
 
         quote! {
-            fn database_key(&self) -> native_db::db_type::KeyDefinition<native_db::db_type::KeyOptions> {
+            fn key_definition(&self) -> native_db::db_type::KeyDefinition<native_db::db_type::KeyOptions> {
                 match self {
                     #(#insert_secondary_key_def)*
                     _ => panic!("Unknown key"),

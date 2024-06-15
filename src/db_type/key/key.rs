@@ -50,9 +50,9 @@ impl Key {
 /// }
 ///
 /// fn main() -> Result<(), db_type::Error> {
-///     let mut builder = DatabaseBuilder::new();
-///     builder.define::<Contry>()?;
-///     let db = builder.create_in_memory()?;
+///     let mut models = Models::new();
+///     models.define::<Contry>()?;
+///     let db = Builder::new().create_in_memory(&models)?;
 ///     
 ///     // Open a read transaction
 ///     let r = db.r_transaction()?;

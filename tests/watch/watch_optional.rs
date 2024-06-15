@@ -18,9 +18,11 @@ struct ItemAOptional {
 fn watch_one_secondary_key_some() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemAOptional>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models: Models = Models::new();
+    models.define::<ItemAOptional>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let a = ItemAOptional {
         id: 1,
@@ -53,9 +55,11 @@ fn watch_one_secondary_key_some() {
 fn watch_one_secondary_key_none() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemAOptional>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemAOptional>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let a = ItemAOptional { id: 1, name: None };
 
@@ -84,9 +88,11 @@ fn watch_one_secondary_key_none() {
 fn watch_start_with_by_key() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemAOptional>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemAOptional>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a_1_k = ItemAOptional {
         id: 1,

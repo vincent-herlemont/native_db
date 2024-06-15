@@ -1,11 +1,11 @@
 use crate::db_type::ToKey;
-use crate::db_type::{unwrap_item, Input, Key, KeyRange, Result};
+use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
 use redb;
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
 /// Scan values from the database by secondary key.
-pub struct SecondaryScan<PrimaryTable, SecondaryTable, T: Input>
+pub struct SecondaryScan<PrimaryTable, SecondaryTable, T: ToInput>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
     SecondaryTable: redb::ReadableTable<Key, Key>,
@@ -15,7 +15,7 @@ where
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<PrimaryTable, SecondaryTable, T: Input> SecondaryScan<PrimaryTable, SecondaryTable, T>
+impl<PrimaryTable, SecondaryTable, T: ToInput> SecondaryScan<PrimaryTable, SecondaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
     SecondaryTable: redb::ReadableTable<Key, Key>,
@@ -30,7 +30,7 @@ where
 
     /// Iterate over all values by secondary key.
     ///
-    /// If the secondary key is [`optional`](struct.DatabaseBuilder.html#optional) you will
+    /// If the secondary key is [`optional`](struct.Models.html#optional) you will
     /// get all values that have the secondary key set.
     ///
     /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
@@ -53,9 +53,9 @@ where
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -96,9 +96,9 @@ where
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -146,9 +146,9 @@ where
     /// }
     ///
     /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut builder = DatabaseBuilder::new();
-    ///     builder.define::<Data>()?;
-    ///     let db = builder.create_in_memory()?;
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
     ///     // Open a read transaction
     ///     let r = db.r_transaction()?;
@@ -176,7 +176,7 @@ where
     }
 }
 
-pub struct SecondaryScanIterator<'a, PrimaryTable, T: Input>
+pub struct SecondaryScanIterator<'a, PrimaryTable, T: ToInput>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
@@ -185,7 +185,7 @@ where
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, PrimaryTable, T: Input> Iterator for SecondaryScanIterator<'a, PrimaryTable, T>
+impl<'a, PrimaryTable, T: ToInput> Iterator for SecondaryScanIterator<'a, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
@@ -205,7 +205,8 @@ where
     }
 }
 
-impl<'a, PrimaryTable, T: Input> DoubleEndedIterator for SecondaryScanIterator<'a, PrimaryTable, T>
+impl<'a, PrimaryTable, T: ToInput> DoubleEndedIterator
+    for SecondaryScanIterator<'a, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
@@ -220,7 +221,7 @@ where
 pub struct SecondaryScanIteratorStartWith<'a, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
-    T: Input,
+    T: ToInput,
 {
     pub(crate) primary_table: &'a PrimaryTable,
     pub(crate) start_with: Key,
@@ -231,7 +232,7 @@ where
 impl<'a, PrimaryTable, T> Iterator for SecondaryScanIteratorStartWith<'a, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
-    T: Input,
+    T: ToInput,
 {
     type Item = Result<T>;
 

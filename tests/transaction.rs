@@ -17,9 +17,11 @@ struct Item {
 fn test_transaction_obj_1() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item = Item {
         id: 1,
@@ -48,10 +50,12 @@ struct Item2 {
 fn test_transaction_obj_1_and_obj_2() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    builder.define::<Item2>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    models.define::<Item2>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_1 = Item {
         id: 1,
@@ -78,10 +82,12 @@ fn test_transaction_obj_1_and_obj_2() {
 fn test_abort_transaction_obj_1_and_obj_2() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    builder.define::<Item2>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    models.define::<Item2>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_1 = Item {
         id: 1,
@@ -104,9 +110,11 @@ fn test_abort_transaction_obj_1_and_obj_2() {
 fn test_transaction_fail() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<Item>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_1 = Item {
         id: 1,

@@ -5,17 +5,19 @@ use shortcut_assert_fs::TmpFs;
 fn test_builder() {
     let tf = TmpFs::new().unwrap();
     // Create without error
-    let mut _db = DatabaseBuilder::new().create(&tf.path("test")).unwrap();
+    let mut _db = Builder::new()
+        .create(&Models::new(), &tf.path("test"))
+        .unwrap();
 }
 
 #[test]
 fn test_builder_with_set_cache_size() {
     let tf = TmpFs::new().unwrap();
     // Create without error
-    let mut builder = DatabaseBuilder::new();
+    let mut builder = Builder::new();
     let _db = builder
         .set_cache_size(100)
-        .create(&tf.path("test"))
+        .create(&Models::new(), &tf.path("test"))
         .unwrap();
 }
 
@@ -23,7 +25,9 @@ fn test_builder_with_set_cache_size() {
 fn test_open_unexisting_database() {
     let tf = TmpFs::new().unwrap();
     // Open an unexisting database
-    assert!(DatabaseBuilder::new().open(&tf.path("test")).is_err());
+    assert!(Builder::new()
+        .open(&Models::new(), &tf.path("test"))
+        .is_err());
 }
 
 #[test]
@@ -31,12 +35,13 @@ fn test_open_existing_database() {
     let tf = TmpFs::new().unwrap();
 
     // Create a database
-    let builder = DatabaseBuilder::new();
-    let db = builder.create(&tf.path("test")).unwrap();
+    let builder = Builder::new();
+    let models = Models::new();
+    let db = builder.create(&models, &tf.path("test")).unwrap();
     drop(db);
 
     // Open an existing database
-    let _db = DatabaseBuilder::new().open(&tf.path("test")).unwrap();
+    let _db = Builder::new().open(&models, &tf.path("test")).unwrap();
 }
 
 use native_model::{native_model, Model};
@@ -77,10 +82,10 @@ fn create_local_database_for_tests() {
         std::fs::remove_file(&database_path).unwrap();
     }
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<Item1>().unwrap();
-    builder.define::<Item2>().unwrap();
-    let db = builder.create(&database_path).unwrap();
+    let mut models = Models::new();
+    models.define::<Item1>().unwrap();
+    models.define::<Item2>().unwrap();
+    let db = Builder::new().create(&models, &database_path).unwrap();
     let rw = db.rw_transaction().unwrap();
     let item = Item1 {
         id: 1,

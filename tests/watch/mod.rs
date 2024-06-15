@@ -33,9 +33,11 @@ struct ItemB {
 fn watch_one_primary_key() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a = ItemA { id: 1 };
 
@@ -60,9 +62,11 @@ fn watch_one_primary_key() {
 fn watch_all_primary_key() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a_1 = ItemA { id: 1 };
     let item_a_2 = ItemA { id: 2 };
@@ -88,9 +92,11 @@ fn watch_all_primary_key() {
 fn watch_multithreading() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder: DatabaseBuilder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models: Models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
     let db = Arc::new(db);
     let dba = Arc::clone(&db);
 
@@ -148,10 +154,12 @@ fn watch_outside() {
     let item_b_1 = ItemB { id: 1 };
     let item_b_2 = ItemB { id: 2 };
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    builder.define::<ItemB>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    models.define::<ItemB>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let (recv, _) = db.watch().get().primary::<ItemB>(item_b_1.id).unwrap();
 
@@ -185,9 +193,11 @@ struct ItemA1K {
 fn watch_one_secondary_key() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA1K>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA1K>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let a = ItemA1K {
         id: 1,
@@ -220,9 +230,11 @@ fn watch_one_secondary_key() {
 fn watch_all_secondary_keys() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA1K>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA1K>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let a1 = ItemA1K {
         id: 1,
@@ -261,9 +273,11 @@ fn watch_all_secondary_keys() {
 fn unwatch() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a = ItemA { id: 1 };
 
@@ -294,9 +308,11 @@ fn unwatch() {
 fn unwatch_by_deleted_receiver() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a = ItemA { id: 1 };
 
@@ -338,9 +354,11 @@ struct ItemC {
 fn watch_start_with() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemC>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemC>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let c1 = ItemC {
         name: "a_1".to_string(),
@@ -380,9 +398,11 @@ fn watch_start_with() {
 fn watch_start_with_by_key() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA1K>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA1K>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a_1_k = ItemA1K {
         id: 1,
@@ -426,9 +446,11 @@ fn watch_start_with_by_key() {
 fn watch_all_delete() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a = ItemA { id: 1 };
 
@@ -460,9 +482,11 @@ fn watch_all_delete() {
 fn watch_all_update() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemA>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemA>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item_a_1 = ItemA { id: 1 };
     let item_a_2 = ItemA { id: 2 };

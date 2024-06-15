@@ -69,9 +69,11 @@ impl From<ItemV3> for ItemV2 {
 #[test]
 fn test_skip_version() {
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item = ItemV1 {
         id: 1,
@@ -95,11 +97,13 @@ fn test_skip_version() {
     drop(r_txn);
     drop(db);
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    builder.define::<ItemV2>().unwrap();
-    builder.define::<ItemV3>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    models.define::<ItemV2>().unwrap();
+    models.define::<ItemV3>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.migrate::<ItemV3>().unwrap();
@@ -130,10 +134,12 @@ fn test_skip_version() {
 #[should_panic]
 fn test_skip_version_with_data_should_fail() {
     let tf = TmpFs::new().unwrap();
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    builder.define::<ItemV2>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    models.define::<ItemV2>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let item = ItemV1 {
         id: 1,
@@ -171,11 +177,13 @@ fn test_skip_version_with_data_should_fail() {
     drop(r_txn);
     drop(db);
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV1>().unwrap();
-    builder.define::<ItemV2>().unwrap();
-    builder.define::<ItemV3>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV1>().unwrap();
+    models.define::<ItemV2>().unwrap();
+    models.define::<ItemV3>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     let _ = rw.migrate::<ItemV3>();

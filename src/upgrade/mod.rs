@@ -2,12 +2,10 @@
 mod redb1_to_redb2;
 use std::{collections::HashMap, path::Path};
 
-use crate::{
-    database_instance::DatabaseInstance, db_type::Result, DatabaseConfiguration, ModelBuilder,
-};
+use crate::{database_instance::DatabaseInstance, db_type::Result, Configuration, ModelBuilder};
 
 pub(crate) fn upgrade(
-    database_configuration: &DatabaseConfiguration,
+    database_configuration: &Configuration,
     path: impl AsRef<Path>,
     model_builder: &HashMap<String, ModelBuilder>,
 ) -> Result<DatabaseInstance> {

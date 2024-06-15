@@ -1,10 +1,8 @@
-use crate::db_type::{
-    DatabaseInput, Error, Key, KeyDefinition, KeyEntry, KeyOptions, Output, Result,
-};
+use crate::db_type::{Error, Input, Key, KeyDefinition, KeyEntry, KeyOptions, Output, Result};
 use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::watch::WatcherRequest;
-use crate::{db_type::Input, DatabaseModel};
+use crate::{db_type::ToInput, Model};
 use redb::ReadableTable;
 use redb::ReadableTableMetadata;
 use redb::TableHandle;
@@ -30,7 +28,7 @@ where
         &self.primary_table_definitions
     }
 
-    fn get_primary_table(&'txn self, model: &DatabaseModel) -> Result<Self::RedbPrimaryTable> {
+    fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable> {
         let table_definition = self
             .table_definitions()
             .get(model.primary_key.unique_table_name.as_str())
@@ -43,7 +41,7 @@ where
 
     fn get_secondary_table(
         &'txn self,
-        model: &DatabaseModel,
+        model: &Model,
         secondary_key: &KeyDefinition<KeyOptions>,
     ) -> Result<Self::RedbSecondaryTable> {
         let main_table_definition = self
@@ -73,8 +71,8 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_insert(
         &self,
-        model: DatabaseModel,
-        item: DatabaseInput,
+        model: Model,
+        item: Input,
     ) -> Result<(WatcherRequest, Output)> {
         let already_exists;
         {
@@ -116,8 +114,8 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_remove(
         &self,
-        model: DatabaseModel,
-        item: DatabaseInput,
+        model: Model,
+        item: Input,
     ) -> Result<(WatcherRequest, Output)> {
         let keys = &item.secondary_keys;
         {
@@ -151,16 +149,16 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub(crate) fn concrete_update(
         &self,
-        model: DatabaseModel,
-        old_item: DatabaseInput,
-        updated_item: DatabaseInput,
+        model: Model,
+        old_item: Input,
+        updated_item: Input,
     ) -> Result<(WatcherRequest, Output, Output)> {
         let (_, old_binary_value) = self.concrete_remove(model.clone(), old_item)?;
         let (watcher_request, new_binary_value) = self.concrete_insert(model, updated_item)?;
         Ok((watcher_request, old_binary_value, new_binary_value))
     }
 
-    pub(crate) fn concrete_primary_drain<'a>(&self, model: DatabaseModel) -> Result<Vec<Output>> {
+    pub(crate) fn concrete_primary_drain<'a>(&self, model: Model) -> Result<Vec<Output>> {
         let mut items = vec![];
         let mut key_items = HashSet::new();
 
@@ -215,7 +213,7 @@ impl<'db> InternalRwTransaction<'db> {
         Ok(items)
     }
 
-    pub fn migrate<T: Input + Debug>(&self) -> Result<()> {
+    pub fn migrate<T: ToInput + Debug>(&self) -> Result<()> {
         let new_table_definition = self
             .primary_table_definitions
             .get(T::native_db_model().primary_key.unique_table_name.as_str())
@@ -284,7 +282,7 @@ impl<'db> InternalRwTransaction<'db> {
         // List all data from the old table
         for old_data in self.concrete_primary_drain(old_table_definition.model.clone())? {
             let (decoded_item, _) = native_model::decode::<T>(old_data.0).unwrap();
-            let decoded_item = decoded_item.to_item()?;
+            let decoded_item = decoded_item.native_db_input()?;
             self.concrete_insert(T::native_db_model(), decoded_item)?;
         }
 

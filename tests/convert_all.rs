@@ -33,10 +33,12 @@ impl From<ItemV0> for ItemV1 {
 fn convert_all() {
     let tf = TmpFs::new().unwrap();
 
-    let mut builder = DatabaseBuilder::new();
-    builder.define::<ItemV0>().unwrap();
-    builder.define::<ItemV1>().unwrap();
-    let db = builder.create(tf.path("test").as_std_path()).unwrap();
+    let mut models = Models::new();
+    models.define::<ItemV0>().unwrap();
+    models.define::<ItemV1>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let a = ItemV0 { id: 42 };
 
