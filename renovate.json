@@ -12,8 +12,11 @@
     {
       "description": "Automerge non-major updates",
       "matchUpdateTypes": ["minor", "patch"],
-      "rangeStrategy": "bump",
       "automerge": true
+    },
+    {
+      "matchPackagePatterns": ["*"],
+      "rangeStrategy": "bump"
     },
     {
       "description": "Automerge actions",
