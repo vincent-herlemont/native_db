@@ -1,7 +1,6 @@
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
-use shortcut_assert_fs::TmpFs;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 #[native_model(id = 1, version = 1)]
@@ -28,8 +27,6 @@ struct Item2 {
 #[test]
 #[cfg(not(feature = "upgrade_0_5_x"))]
 fn try_to_open_legacy_database_without_upgrade_feature() {
-    use assert_fs::assert;
-
     let root_project_path = env!("CARGO_MANIFEST_DIR");
     let database_path = format!("{}/tests/data/db_0_5_x", root_project_path);
 
@@ -59,6 +56,7 @@ fn try_to_open_legacy_database_with_upgrade_feature() {
         PathBuf::from(format!("{}/tests/data/db_0_5_x", root_project_path))
     };
 
+    use shortcut_assert_fs::TmpFs;
     let tmp = TmpFs::new().unwrap();
 
     // Copy the legacy database to the temporary directory.

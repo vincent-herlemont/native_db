@@ -58,10 +58,10 @@ impl Key {
 ///     let r = db.r_transaction()?;
 ///     
 ///     // Get contry by the capital city (primary key)
-///     let _US: Option<Contry> = r.get().primary(&City("Washington, D.C.".to_string()))?;
+///     let _us: Option<Contry> = r.get().primary(&City("Washington, D.C.".to_string()))?;
 ///
 ///     // Get contry by the bigest city (secondary key)
-///     let _US: Option<Contry> = r.get().secondary(ContryKey::bigest_city,&City("New York".to_string()))?;
+///     let _us: Option<Contry> = r.get().secondary(ContryKey::bigest_city,&City("New York".to_string()))?;
 ///     Ok(())
 /// }
 /// ```

@@ -7,10 +7,10 @@ use crate::{database_instance::DatabaseInstance, db_type::Result, Configuration,
 pub(crate) fn upgrade(
     database_configuration: &Configuration,
     path: impl AsRef<Path>,
-    model_builder: &HashMap<String, ModelBuilder>,
+    _model_builder: &HashMap<String, ModelBuilder>,
 ) -> Result<DatabaseInstance> {
     #[cfg(feature = "redb1")]
-    redb1_to_redb2::upgrade_redb1_to_redb2(&database_configuration, &path, model_builder)?;
+    redb1_to_redb2::upgrade_redb1_to_redb2(&database_configuration, &path, _model_builder)?;
 
     let redb_builder = database_configuration.new_rdb_builder();
     let database_instance = DatabaseInstance::open_on_disk(redb_builder, &path)?;
