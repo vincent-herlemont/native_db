@@ -41,6 +41,19 @@ pub struct Database<'a> {
 
 impl Database<'_> {
     /// Creates a new read-write transaction.
+    /// This transaction allows you to read and write data.
+    /// 
+    /// - Write operations:
+    ///     - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item.
+    ///     - [`update`](crate::transaction::RwTransaction::update) - Update a item.
+    ///     - [`remove`](crate::transaction::RwTransaction::remove) - Remove a item.
+    ///     - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affect all items.
+    ///     - [`commit`](crate::transaction::RwTransaction::commit) - Commit the transaction.
+    ///     - [`abort`](crate::transaction::RwTransaction::abort) - Abort the transaction.
+    /// - Read operations:
+    ///    - [`get`](crate::transaction::RwTransaction::get) - Get a item.
+    ///    - [`scan`](crate::transaction::RwTransaction::scan) - Scan items.
+    ///    - [`len`](crate::transaction::RwTransaction::len) - Get the number of items.
     pub fn rw_transaction(&self) -> Result<RwTransaction> {
         let rw = self.instance.redb_database()?.begin_write()?;
         let write_txn = RwTransaction {
@@ -55,6 +68,12 @@ impl Database<'_> {
     }
 
     /// Creates a new read-only transaction.
+    /// This transaction allows you to read data.
+    /// 
+    /// - Read operations:
+    ///   - [`get`](crate::transaction::RTransaction::get) - Get a item.
+    ///   - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
+    ///   - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
     pub fn r_transaction(&self) -> Result<RTransaction> {
         let txn = self.instance.redb_database()?.begin_read()?;
         let read_txn = RTransaction {
@@ -69,6 +88,9 @@ impl Database<'_> {
 
 impl Database<'_> {
     /// Watch queries.
+    /// 
+    /// - [`get`](crate::watch::query::Watch::get) - Watch a item.
+    /// - [`scan`](crate::watch::query::Watch::scan) - Watch items.
     pub fn watch(&self) -> Watch {
         Watch {
             internal: InternalWatch {

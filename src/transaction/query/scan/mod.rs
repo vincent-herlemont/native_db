@@ -16,6 +16,10 @@ pub struct RScan<'db, 'txn> {
 
 impl<'txn> RScan<'_, 'txn> {
     /// Get a values from the database by primary key.
+    /// 
+    /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
+    /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
+    /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
     pub fn primary<T: ToInput>(
         &self,
     ) -> Result<PrimaryScan<redb::ReadOnlyTable<Key, &'static [u8]>, T>> {
@@ -26,6 +30,10 @@ impl<'txn> RScan<'_, 'txn> {
     }
 
     /// Get a values from the database by secondary key.
+    /// 
+    /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
+    /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
+    /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
     pub fn secondary<T: ToInput>(
         &self,
         key_def: impl ToKeyDefinition<KeyOptions>,
@@ -49,6 +57,12 @@ impl<'db, 'txn> RwScan<'db, 'txn>
 where
     'txn: 'db,
 {
+
+    /// Get a values from the database by primary key.
+    /// 
+    /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
+    /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
+    /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
     pub fn primary<T: ToInput>(
         &self,
     ) -> Result<PrimaryScan<redb::Table<'db, Key, &'static [u8]>, T>> {
@@ -58,6 +72,11 @@ where
         Ok(out)
     }
 
+    /// Get a values from the database by secondary key.
+    /// 
+    /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
+    /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
+    /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
     pub fn secondary<T: ToInput>(
         &self,
         key_def: impl ToKeyDefinition<KeyOptions>,

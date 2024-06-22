@@ -106,7 +106,7 @@ pub struct RwGet<'db, 'txn> {
 impl RwGet<'_, '_> {
     /// Get a value from the database by primary key.
     ///
-    /// Same as [`RGet::primary()`](struct.RGet.html#method.primary).
+    /// See [`primary`](crate::transaction::query::RGet::primary).
     pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         let result = self.internal.get_by_primary_key(model, key)?;
@@ -119,7 +119,7 @@ impl RwGet<'_, '_> {
 
     /// Get a value from the database by secondary key.
     ///
-    /// Same as [`RGet::secondary()`](struct.RGet.html#method.secondary).
+    /// See [`secondary`](crate::transaction::query::RGet::secondary).
     pub fn secondary<T: ToInput>(
         &self,
         key_def: impl ToKeyDefinition<KeyOptions>,

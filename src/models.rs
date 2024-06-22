@@ -2,14 +2,66 @@ use std::collections::HashMap;
 
 use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder, ToInput};
 
-/// A collection of [`Model`](crate::Model) used by the [`Models`](crate::Models) to create
-///  [define](Self::define) models.
+/// A collection of [`Model`](crate::Model) used by the [`Models`](crate::Models) to
+/// [define](Self::define) models.
+/// 
+/// This collection allows you to manage multiple models efficiently, facilitating the process
+/// of defining and manipulating them within your application.
+/// 
+/// # Note
+/// Usually, there is little point in creating models at runtime. Therefore, it is a good idea
+/// to define them with a static lifetime to improve performance and ensure consistency.
+/// There are multiple ways to achieve this, including the [`once_cell::sync::Lazy`](https://docs.rs/once_cell/1.19.0/once_cell/sync/struct.Lazy.html) crate,
+/// or the [`LazyLock`](https://doc.rust-lang.org/std/sync/struct.LazyLock.html) from the standard library, which is available when the relevant Rust feature is enabled.
+/// 
+/// ## Example using `once_cell::sync::Lazy`
+/// 
+/// ```rust
+/// # pub mod data {
+/// #     use native_db::{native_db, ToKey};
+/// #     use native_model::{native_model, Model};
+/// #     use serde::{Deserialize, Serialize};
+/// #
+/// #     pub type Person = v1::Person;
+/// #
+/// #     pub mod v1 {
+/// #         use super::*;
+/// #         
+/// #         #[derive(Serialize, Deserialize, Debug)]
+/// #         #[native_model(id = 1, version = 1)]
+/// #         #[native_db]
+/// #         pub struct Person {
+/// #            #[primary_key]
+/// #            pub name: String,
+/// #         }
+/// #     }
+/// # }
+/// use native_db::*;
+/// use once_cell::sync::Lazy;
+/// 
+/// // The lifetime of the models needs to be longer or equal to the lifetime of the database.
+/// // In many cases, it is simpler to use a static variable but it is not mandatory.
+/// static MODELS: Lazy<Models> = Lazy::new(|| {
+///     let mut models = Models::new();
+///     // It's a good practice to define the models by specifying the version
+///     models.define::<data::v1::Person>().unwrap();
+///     models
+/// });
+/// 
+/// fn main() -> Result<(), db_type::Error> {
+///     // Initialize the database with the models
+///     let db = Builder::new().create_in_memory(&MODELS)?;
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, Default)]
 pub struct Models {
     pub(crate) models_builder: HashMap<String, ModelBuilder>,
 }
 
 impl Models {
+
+    /// Create a new collection of Models.
     pub fn new() -> Self {
         Self {
             models_builder: HashMap::new(),
@@ -246,15 +298,6 @@ impl Models {
                 .clone(),
             new_model_builder,
         );
-
-        // for secondary_key in model.secondary_keys {
-        //     model_builder.secondary_tables.insert(
-        //         secondary_key.clone(),
-        //         redb::TableDefinition::new(&secondary_key.table_name).into(),
-        //     );
-        // }
-        // self.primary_table_definitions
-        //     .insert(model.primary_key.table_name, primary_table_definition);
 
         Ok(())
     }

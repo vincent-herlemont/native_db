@@ -61,13 +61,12 @@ impl Builder {
 }
 
 impl Builder {
-    /// Similar to [redb::Builder::new()](https://docs.rs/redb/latest/redb/struct.Builder.html#method.new).
+    /// Construct a new [Builder] with sensible defaults.
     pub fn new() -> Self {
         Self {
             database_configuration: Configuration {
                 cache_size_bytes: None,
             },
-            // models_builder: HashMap::new(),
         }
     }
 
@@ -77,9 +76,9 @@ impl Builder {
         self
     }
 
-    // /// Creates a new `Db` instance using the given path.
-    // ///
-    // /// Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
+    /// Creates a new `Db` instance using the given path.
+    ///
+    /// Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
     pub fn create<'a>(&self, models: &'a Models, path: impl AsRef<Path>) -> Result<Database<'a>> {
         let builder = self.database_configuration.new_rdb_builder();
         let database_instance = DatabaseInstance::create_on_disk(builder, path)?;

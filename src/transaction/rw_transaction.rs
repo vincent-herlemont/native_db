@@ -19,7 +19,8 @@ pub struct RwTransaction<'db> {
 impl<'db> RwTransaction<'db> {
     /// Get a value from the database.
     ///
-    /// Same as [`RTransaction::get()`](struct.RTransaction.html#method.get).
+    /// - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
+    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
     pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
         RwGet {
             internal: &self.internal,
@@ -28,7 +29,8 @@ impl<'db> RwTransaction<'db> {
 
     /// Get values from the database.
     ///
-    /// Same as [`RTransaction::scan()`](struct.RTransaction.html#method.scan).
+    /// - [`primary`](crate::transaction::query::RScan::primary) - Scan items by primary key.
+    /// - [`secondary`](crate::transaction::query::RScan::secondary) - Scan items by secondary key.
     pub fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
         RwScan {
             internal: &self.internal,
@@ -37,16 +39,17 @@ impl<'db> RwTransaction<'db> {
 
     /// Get the number of values in the database.
     ///
-    /// Same as [`RTransaction::len()`](struct.RTransaction.html#method.len).
+    /// - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
+    /// - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.
     pub fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
         RwLen {
             internal: &self.internal,
         }
     }
 
-    /// Get all values from the database.
-    ///
-    /// Same as [`RTransaction::drain()`](struct.RTransaction.html#method.drain).
+    /// Drain values from the database.
+    /// 
+    /// **TODO: needs to be improved, so don't use it yet.**
     pub fn drain<'txn>(&'txn self) -> RwDrain<'db, 'txn> {
         RwDrain {
             internal: &self.internal,
@@ -301,14 +304,14 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// In the example below we define one model with the identifier `id=1` with tow versions `version=1` and `version=2`.
     /// - You **must** link the previous version from the new one with `from` option like `#[native_model(id=1, version=2, from=LegacyData)]`.
     /// - You **must** define the interoperability between the two versions with implement `From<LegacyData> for Data` and `From<Data> for LegacyData` or implement `TryFrom<LegacyData> for Data` and `TryFrom<Data> for LegacyData`.
-    /// - You **must** define all models (by calling [`define`](#method.define)) before to call [`migration`](#method.migrate).
-    /// - You **must** call use the most recent/bigger version as the target version when you call [`migration`](#method.migrate): `migration::<Data>()`.
+    /// - You **must** define all models (by calling [`define`](crate::Models::define)) before to call [`migrate`](crate::transaction::RwTransaction::migrate).
+    /// - You **must** call use the most recent/bigger version as the target version when you call [`migrate`](crate::transaction::RwTransaction::migrate): `migration::<Data>()`.
     ///   That means you can't call `migration::<LegacyData>()` because `LegacyData` has version `1` and `Data` has version `2`.
     ///
     /// After call `migration::<Data>()` all data of the model `LegacyData` will be migrated to the model `Data`.
     ///
-    /// Under the hood, when you call [`migration`](#method.migrate) `native_model` is used to convert the data from the old model to the new model
-    /// using the `From` or `TryFrom` implementation for each to target the version defined when you call [`migration::<LastVersion>()`](#method.migrate).
+    /// Under the hood, when you call [`migrate`](crate::transaction::RwTransaction::migrate) `native_model` is used to convert the data from the old model to the new model
+    /// using the `From` or `TryFrom` implementation for each to target the version defined when you call [`migrate::<LastVersion>()`](crate::transaction::RwTransaction::migrate).
     ///
     /// It's advisable to perform all migrations within a **single transaction** to ensure that all migrations are successfully completed.
     ///

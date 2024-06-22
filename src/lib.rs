@@ -2,21 +2,72 @@
 //! focusing on maintaining coherence between Rust types and stored data with minimal boilerplate.
 //! It supports multiple indexes, real-time watch with filters, model migration, hot snapshot, and more.
 //!
-//! See [README.md](https://github.com/vincent-herlemont/native_db) for more information.
-//!
+//! # Summary
+//! - [Api](#api)
+//! - [Quick Start](#quick-start)
+//!    - [Create a model](#create-a-model)
+//!    - [Create a database](#create-a-database)
+//!    - [Insert a model in the database](#insert-a-model-in-the-database)
+//!    - [Update a model](#update-a-model)
+//!    - [Migration](#migration)
+//! 
+//! # Api
+//! 
+//! - [`Models`] - Collection of models. *Equivalent to a schema in a traditional database*.
+//!    - [`new`](crate::Models::new) - Create a new collection of models.
+//!    - [`define`](crate::Models::define) - Define a model.
+//! - [`Builder`] - Builder to create a database.
+//!    - [`create_in_memory`](crate::Builder::create_in_memory) - Create a database in memory.
+//!    - [`create`](crate::Builder::create) - Create a database in a file.
+//!    - [`open`](crate::Builder::open) - Open a database.
+//! - [`Database`] - Database instance.
+//!    - [`rw_transaction`](crate::Database::rw_transaction) - Create a read-write transaction.
+//!       - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item.
+//!       - [`update`](crate::transaction::RwTransaction::update) - Update a item.
+//!       - [`remove`](crate::transaction::RwTransaction::remove) - Remove a item.
+//!       - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affect all items.
+//!       - [`commit`](crate::transaction::RwTransaction::commit) - Commit the transaction.
+//!       - [`abort`](crate::transaction::RwTransaction::abort) - Abort the transaction.
+//!   - [`r_transaction`](crate::Database::r_transaction) - Create a read-only transaction.
+//!       - [`get`](crate::transaction::RTransaction::get) - Get a item.
+//!          - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
+//!          - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
+//!       - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
+//!          - [`primary`](crate::transaction::query::RScan::primary) - Scan items by primary key.
+//!             - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
+//!             - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
+//!             - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
+//!          - [`secondary`](crate::transaction::query::RScan::secondary) - Scan items by secondary key.
+//!             - [`all`](crate::transaction::query::SecondaryScan::all) - Scan items with a given secondary key.
+//!             - [`start_with`](crate::transaction::query::SecondaryScan::start_with) - Scan items with a secondary key starting with a key.
+//!             - [`range`](crate::transaction::query::SecondaryScan::range) - Scan items with a secondary key in a given range.
+//!       - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
+//!          - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
+//!          - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.    
+//!   - [`watch`](crate::Database::watch) - Watch items in real-time.  Works via [std channel](https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html) based or [tokio channel](https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.unbounded_channel.html) based depending on the feature `tokio`.
+//!       - [`get`](crate::watch::query::Watch::get) - Watch a item.
+//!          - [`primary`](crate::watch::query::WatchGet::primary) - Watch a item by primary key.
+//!          - [`secondary`](crate::watch::query::WatchGet::secondary) - Watch a item by secondary key.
+//!       - [`scan`](crate::watch::query::Watch::scan) - Watch items.
+//!          - [`primary`](crate::watch::query::WatchScan::primary) - Watch items by primary key.
+//!             - [`all`](crate::watch::query::WatchScanPrimary::all) - Watch all items.
+//!             - [`start_with`](crate::watch::query::WatchScanPrimary::start_with) - Watch items with a primary key starting with a key.
+//!             - [`range`](crate::watch::query::WatchScanPrimary::range) - Watch items with a primary key in a given range.
+//!          - [`secondary`](crate::watch::query::WatchScan::secondary) - Watch items by secondary key.
+//!             - [`all`](crate::watch::query::WatchScanSecondary::all) - Watch items with a given secondary key.
+//!             - [`start_with`](crate::watch::query::WatchScanSecondary::start_with) - Watch items with a secondary key starting with a key.
+//!             - [`range`](crate::watch::query::WatchScanSecondary::range) - Watch items with a secondary key in a given range.
+//! 
+//! 
 //! # Quick Start
 //!
-//! 1. [Create a model](#create-a-model)
-//! 2. [Create the database with the model](#create-the-database-with-the-model)
-//! 3. [Use a model in the database](#use-a-model-in-the-database)
-//! 4. [Update the model](#update-the-model)
-//! 5. [Use the updated model in the database (migration)](#use-the-updated-model-in-the-database-migration)
-//!
+//! We will create a simple example to show how to use the library.
+//! 
 //! ## Create a model
 //!
-//! > 👉 Unlike the usual database where there is a differentiation between *schema* and *model*, here, as we can directly use Rust types that are serialized in the database, we do not have the concept of *schema*, only that of the *model*.
+//! > 👉 Unlike the usual database where there is a difference between *schema* and *model*, here, as we can directly use Rust types that are serialized in the database, we do not have the concept of *schema*, only that of the *model*.
 //!
-//! Note that the organization of the models it's a best practice but not mandatory, you can organize your models as you want if you prefer.
+//! Note that the organization of the models is only a best practice, not mandatory. You can organize your models as you want.
 //!
 //! In this example:
 //! - We create a module `data` which contains **all versions of all models**.
@@ -45,7 +96,7 @@
 //! }
 //! ```
 //!
-//! ## Create the database with the model
+//! ## Create a database
 //!
 //! After creating the model in the previous step, we can now create the database with the model.
 //!
@@ -72,19 +123,26 @@
 //! #     }
 //! # }
 //! use native_db::*;
-//!
+//! use once_cell::sync::Lazy;
+//! 
+//! // Define the models
+//! // The lifetime of the models needs to be longer or equal to the lifetime of the database.
+//! // In many cases, it is simpler to use a static variable but it is not mandatory.
+//! static MODELS: Lazy<Models> = Lazy::new(|| {
+//!    let mut models = Models::new();
+//!    // It's a good practice to define the models by specifying the version
+//!    models.define::<data::v1::Person>().unwrap();
+//!    models
+//! });
+//! 
 //! fn main() -> Result<(), db_type::Error> {
-//!     // Create the models collection
-//!     let mut models = Models::new();
-//!     // It's a good practice to define the models by specifying the version
-//!     models.define::<data::v1::Person>()?;
 //!     // Create the database
-//!     let db = Builder::new().create_in_memory(&models)?;
+//!     let db = Builder::new().create_in_memory(&MODELS)?;
 //!     Ok(())
 //! }
 //! ```
 //!
-//! ## Use a model in the database
+//! ## Insert a model in the database
 //!
 //! Note a good practice: use the **latest version** of the model in your application.
 //! In our case, we use `data::Person`.
@@ -110,14 +168,16 @@
 //! #     }
 //! # }
 //! use native_db::*;
+//! use once_cell::sync::Lazy;
+//! # 
+//! # static MODELS: Lazy<Models> = Lazy::new(|| {
+//! #    let mut models = Models::new();
+//! #    models.define::<data::v1::Person>().unwrap();
+//! #    models
+//! # });
 //!
 //! fn main() -> Result<(), db_type::Error> {
-//!     # // Create the models collection
-//!     # let mut models = Models::new();
-//!     # // It's a good practice to define the models by specifying the version
-//!     # models.define::<data::v1::Person>()?;
-//!     # // Create the database
-//!     # let db = Builder::new().create_in_memory(&models)?;
+//!     # let db = Builder::new().create_in_memory(&MODELS)?;
 //!     // ... database creation see previous example
 //!
 //!     // Insert a person
@@ -134,7 +194,7 @@
 //! }
 //! ```
 //!
-//! ## Update the model
+//! ## Update a model
 //!
 //! We need to add the field `age` to the `Person` model, but data is already stored in the database so we need to migrate it.
 //!
@@ -197,7 +257,7 @@
 //! }
 //! ```
 //!
-//! ## Use the updated model in the database (migration)
+//! ## Migration
 //!
 //! After updating the model, we need to define the new version `v2` of the model `Person` and migrate the data.
 //!
@@ -254,21 +314,27 @@
 //! #     }
 //! # }
 //! use native_db::*;
+//! use once_cell::sync::Lazy;
+//! 
+//! static MODELS: Lazy<Models> = Lazy::new(|| {
+//!    let mut models = Models::new();
+//!    // Define the models by specifying the version
+//!    models.define::<data::v1::Person>().unwrap();
+//!    models.define::<data::v2::Person>().unwrap();
+//!    models
+//! });
 //!
 //! fn main() -> Result<(), db_type::Error> {
-//!     // Create the models collection
-//!     let mut models = Models::new();
-//!     // Define the models by specifying the version
-//!     models.define::<data::v1::Person>()?;
-//!     models.define::<data::v2::Person>()?;
-//!
 //!     // Create the database
-//!     let db = Builder::new().create_in_memory(&models)?;
+//!     let db = Builder::new().create_in_memory(&MODELS)?;
 //!
 //!     // Migrate the data in a transaction
 //!     let rw = db.rw_transaction()?;
 //!     rw.migrate::<data::Person>()?;
 //!     rw.commit()?;
+//! 
+//!     // Now we can insert a person with the new field age ...
+//! 
 //!     Ok(())
 //! }
 //! ```
@@ -290,7 +356,7 @@ pub mod upgrade;
 
 mod models;
 
-/// All database interactions here,[`r_transaction`](transaction/struct.RTransaction.html), [`rw_transaction`](transaction/struct.RwTransaction.html) and [`query`](transaction/query/index.html).
+/// Database interactions here.
 pub mod transaction;
 /// Watch data in real-time.
 pub mod watch;
