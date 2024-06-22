@@ -22,7 +22,7 @@ struct Item1 {
 #[test]
 fn create_local_database_for_tests() {
     let root_project_path = env!("CARGO_MANIFEST_DIR");
-    let database_path: String = format!("{}/tests/data/db_0_6_0", root_project_path);
+    let database_path: String = format!("{}/tests/data/db_x_x_x", root_project_path);
 
     println!("database_path: {}", database_path);
     let mut models = Models::new();
