@@ -62,4 +62,14 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
         let result = table.len()?;
         Ok(result)
     }
+
+    fn secondary_len(
+        &'txn self,
+        model: Model,
+        key_def: impl ToKeyDefinition<KeyOptions>,
+    ) -> Result<u64> {
+        let table = self.get_secondary_table(&model, &key_def.key_definition())?;
+        let result = table.len()?;
+        Ok(result)
+    }
 }
