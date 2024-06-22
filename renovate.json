@@ -15,6 +15,10 @@
       "automerge": true
     },
     {
+      "matchPackagePatterns": ["thiserror", "chrono", "tokio", "serde", "syn", "quote", "proc-macro2"],
+      "rangeStrategy": "auto"
+    },
+    {
       "matchPackagePatterns": ["*"],
       "rangeStrategy": "bump"
     },
