@@ -5,7 +5,7 @@ use native_db::*;
 use itertools::Itertools;
 use native_model::{native_model, Error as ModelError, Model};
 use serde::{Deserialize, Serialize};
-
+use shortcut_assert_fs::TmpFs;
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 #[native_model(id = 1, version = 1)]
 #[native_db]
@@ -18,13 +18,17 @@ struct Item1 {
     name: String,
 }
 
+use include_dir::{include_dir, Dir};
+static PROJECT_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/tests/data");
+
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 #[test]
 fn create_local_database_for_tests() {
-    let root_project_path = env!("CARGO_MANIFEST_DIR");
-    let database_path: String = format!("{}/tests/data/db_x_x_x", root_project_path);
+    let tmp = TmpFs::new().unwrap();
+    tmp.copy_assets(&PROJECT_DIR).unwrap();
+    tmp.display_dir_entries();
+    let database_path =  tmp.path("db_0_6_0").to_path_buf();
 
-    println!("database_path: {}", database_path);
     let mut models = Models::new();
     models.define::<Item1>().unwrap();
     let db = Builder::new().open(&models, &database_path).unwrap();
