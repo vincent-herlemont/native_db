@@ -16,7 +16,8 @@
     },
     {
       "matchPackagePatterns": ["thiserror", "chrono", "tokio", "serde", "syn", "quote", "proc-macro2"],
-      "rangeStrategy": "auto"
+      "matchUpdateTypes": ["patch"],
+      "enabled": false
     },
     {
       "matchPackagePatterns": ["*"],
