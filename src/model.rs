@@ -1,6 +1,7 @@
 use crate::db_type::{Error, KeyDefinition, KeyOptions, Result};
 use std::collections::HashSet;
 
+/// See the documentation [crate::Models::define] to see how to define a model.
 #[derive(Clone, Debug)]
 pub struct Model {
     pub primary_key: KeyDefinition<()>,
