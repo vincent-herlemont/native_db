@@ -1,6 +1,6 @@
 [package]
 name = "native_db"
-version = "0.6.1"
+version = "0.7.0"
 authors = ["Vincent Herlemont <vincent@herlemont.fr>"]
 edition = "2021"
 description = "Drop-in embedded database"
@@ -17,7 +17,7 @@ members = ["native_db_macro"]
 [dependencies]
 redb = "2.1.1"
 redb1 = { version = "=1.5.1", package = "redb", optional = true }
-native_db_macro = { version = "0.6.1", path = "native_db_macro" }
+native_db_macro = { version = "0.7.0", path = "native_db_macro" }
 thiserror = "1.0"
 serde = { version = "1.0" }
 native_model = { version = "0.4.19" }
