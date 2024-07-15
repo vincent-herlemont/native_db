@@ -9,8 +9,7 @@ use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder,
 /// of defining and manipulating them within your application.
 /// 
 /// # Note
-/// Usually, there is little point in creating models at runtime. Therefore, it is a good idea
-/// to define them with a static lifetime to improve performance and ensure consistency.
+/// Usually, there is little point in creating models at runtime. In some cases, it is necessary to define them with a `'static` lifetime, for example, to address compatibility issues with certain asynchronous libraries such as [Axum](https://github.com/tokio-rs/axum).
 /// There are multiple ways to achieve this, including the [`once_cell::sync::Lazy`](https://docs.rs/once_cell/1.19.0/once_cell/sync/struct.Lazy.html) crate,
 /// or the [`LazyLock`](https://doc.rust-lang.org/std/sync/struct.LazyLock.html) from the standard library, which is available when the relevant Rust feature is enabled.
 /// 
