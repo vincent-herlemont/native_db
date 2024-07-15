@@ -1,7 +1,7 @@
 #![cfg(feature = "tokio")]
 
-use native_db::{watch::Event, Models};
 use native_db::*;
+use native_db::{watch::Event, Models};
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
@@ -20,7 +20,9 @@ async fn watch_one_primary_key() {
 
     let mut models = Models::new();
     models.define::<ItemA>().unwrap();
-    let db = Builder::new().create(&models,tf.path("test").as_std_path()).unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let a = ItemA { id: 1 };
 

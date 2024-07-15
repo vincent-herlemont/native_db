@@ -42,7 +42,7 @@ pub struct Database<'a> {
 impl Database<'_> {
     /// Creates a new read-write transaction.
     /// This transaction allows you to read and write data.
-    /// 
+    ///
     /// - Write operations:
     ///     - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item.
     ///     - [`update`](crate::transaction::RwTransaction::update) - Update a item.
@@ -69,7 +69,7 @@ impl Database<'_> {
 
     /// Creates a new read-only transaction.
     /// This transaction allows you to read data.
-    /// 
+    ///
     /// - Read operations:
     ///   - [`get`](crate::transaction::RTransaction::get) - Get a item.
     ///   - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
@@ -88,7 +88,7 @@ impl Database<'_> {
 
 impl Database<'_> {
     /// Watch queries.
-    /// 
+    ///
     /// - [`get`](crate::watch::query::Watch::get) - Watch a item.
     /// - [`scan`](crate::watch::query::Watch::scan) - Watch items.
     pub fn watch(&self) -> Watch {

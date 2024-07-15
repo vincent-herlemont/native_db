@@ -23,7 +23,9 @@ fn insert_get() {
     let tf = TmpFs::new().unwrap();
     let mut models = Models::new();
     models.define::<Item>().unwrap();
-    let db = Builder::new().create(&models, tf.path("test").as_std_path()).unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
 
     let rw = db.rw_transaction().unwrap();
     rw.insert(item.clone()).unwrap();

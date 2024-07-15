@@ -9,7 +9,7 @@ pub struct RTransaction<'db> {
 
 impl<'db> RTransaction<'db> {
     /// Get a value from the database.
-    /// 
+    ///
     /// - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
     /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
     pub fn get<'txn>(&'txn self) -> RGet<'db, 'txn> {
@@ -19,7 +19,7 @@ impl<'db> RTransaction<'db> {
     }
 
     /// Get values from the database.
-    /// 
+    ///
     /// - [`primary`](crate::transaction::query::RScan::primary) - Scan items by primary key.
     /// - [`secondary`](crate::transaction::query::RScan::secondary) - Scan items by secondary key.
     pub fn scan<'txn>(&'txn self) -> RScan<'db, 'txn> {
@@ -29,7 +29,7 @@ impl<'db> RTransaction<'db> {
     }
 
     /// Get the number of values in the database.
-    /// 
+    ///
     /// - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
     /// - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.
     pub fn len<'txn>(&'txn self) -> RLen<'db, 'txn> {

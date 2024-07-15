@@ -17,10 +17,7 @@ struct Item {
 fn insert_len_read_transaction() {
     let tf = TmpFs::new().unwrap();
 
-    let item = Item {
-        id: 1,
-        name: None,
-    };
+    let item = Item { id: 1, name: None };
 
     let mut models = Models::new();
     models.define::<Item>().unwrap();

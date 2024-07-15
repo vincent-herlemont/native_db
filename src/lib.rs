@@ -10,9 +10,9 @@
 //!    - [Insert a model in the database](#insert-a-model-in-the-database)
 //!    - [Update a model](#update-a-model)
 //!    - [Migration](#migration)
-//! 
+//!
 //! # Api
-//! 
+//!
 //! - [`Models`] - Collection of models. *Equivalent to a schema in a traditional database*.
 //!    - [`new`](crate::Models::new) - Create a new collection of models.
 //!    - [`define`](crate::Models::define) - Define a model.
@@ -57,12 +57,12 @@
 //!             - [`all`](crate::watch::query::WatchScanSecondary::all) - Watch items with a given secondary key.
 //!             - [`start_with`](crate::watch::query::WatchScanSecondary::start_with) - Watch items with a secondary key starting with a key.
 //!             - [`range`](crate::watch::query::WatchScanSecondary::range) - Watch items with a secondary key in a given range.
-//! 
-//! 
+//!
+//!
 //! # Quick Start
 //!
 //! We will create a simple example to show how to use the library.
-//! 
+//!
 //! ## Create a model
 //!
 //! > 👉 Unlike the usual database where there is a difference between *schema* and *model*, here, as we can directly use Rust types that are serialized in the database, we do not have the concept of *schema*, only that of the *model*.
@@ -124,7 +124,7 @@
 //! # }
 //! use native_db::*;
 //! use once_cell::sync::Lazy;
-//! 
+//!
 //! // Define the models
 //! // The lifetime of the models needs to be longer or equal to the lifetime of the database.
 //! // In many cases, it is simpler to use a static variable but it is not mandatory.
@@ -134,7 +134,7 @@
 //!    models.define::<data::v1::Person>().unwrap();
 //!    models
 //! });
-//! 
+//!
 //! fn main() -> Result<(), db_type::Error> {
 //!     // Create the database
 //!     let db = Builder::new().create_in_memory(&MODELS)?;
@@ -169,7 +169,7 @@
 //! # }
 //! use native_db::*;
 //! use once_cell::sync::Lazy;
-//! # 
+//! #
 //! # static MODELS: Lazy<Models> = Lazy::new(|| {
 //! #    let mut models = Models::new();
 //! #    models.define::<data::v1::Person>().unwrap();
@@ -315,7 +315,7 @@
 //! # }
 //! use native_db::*;
 //! use once_cell::sync::Lazy;
-//! 
+//!
 //! static MODELS: Lazy<Models> = Lazy::new(|| {
 //!    let mut models = Models::new();
 //!    // Define the models by specifying the version
@@ -332,9 +332,9 @@
 //!     let rw = db.rw_transaction()?;
 //!     rw.migrate::<data::Person>()?;
 //!     rw.commit()?;
-//! 
+//!
 //!     // Now we can insert a person with the new field age ...
-//! 
+//!
 //!     Ok(())
 //! }
 //! ```
