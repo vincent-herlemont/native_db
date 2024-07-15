@@ -10,6 +10,8 @@
 //!    - [Insert a model in the database](#insert-a-model-in-the-database)
 //!    - [Update a model](#update-a-model)
 //!    - [Migration](#migration)
+//! - Advanced
+//!    - [`Define a type as a key`](crate::db_type::ToKey)
 //!
 //! # Api
 //!
