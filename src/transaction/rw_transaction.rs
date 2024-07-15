@@ -48,7 +48,7 @@ impl<'db> RwTransaction<'db> {
     }
 
     /// Drain values from the database.
-    /// 
+    ///
     /// **TODO: needs to be improved, so don't use it yet.**
     pub fn drain<'txn>(&'txn self) -> RwDrain<'db, 'txn> {
         RwDrain {

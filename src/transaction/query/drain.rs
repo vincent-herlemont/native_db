@@ -7,7 +7,7 @@ pub struct RwDrain<'db, 'txn> {
 
 impl<'db, 'txn> RwDrain<'db, 'txn> {
     /// Drain all items.
-    /// 
+    ///
     /// **TODO: needs to be improved, so don't use it yet.**
     pub fn primary<T: ToInput>(&self) -> Result<Vec<T>> {
         let model = T::native_db_model();
@@ -20,7 +20,7 @@ impl<'db, 'txn> RwDrain<'db, 'txn> {
     }
 
     /// Drain all items with a given secondary key.
-    /// 
+    ///
     /// **TODO: needs to be implemented**
     pub fn secondary<T: ToInput>(&self, _key_def: impl ToKeyDefinition<KeyOptions>) -> () {
         todo!()

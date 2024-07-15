@@ -4,17 +4,17 @@ use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder,
 
 /// A collection of [`Model`](crate::Model) used by the [`Models`](crate::Models) to
 /// [define](Self::define) models.
-/// 
+///
 /// This collection allows you to manage multiple models efficiently, facilitating the process
 /// of defining and manipulating them within your application.
-/// 
+///
 /// # Note
 /// Usually, there is little point in creating models at runtime. In some cases, it is necessary to define them with a `'static` lifetime, for example, to address compatibility issues with certain asynchronous libraries such as [Axum](https://github.com/tokio-rs/axum).
 /// There are multiple ways to achieve this, including the [`once_cell::sync::Lazy`](https://docs.rs/once_cell/1.19.0/once_cell/sync/struct.Lazy.html) crate,
 /// or the [`LazyLock`](https://doc.rust-lang.org/std/sync/struct.LazyLock.html) from the standard library, which is available when the relevant Rust feature is enabled.
-/// 
+///
 /// ## Example using `once_cell::sync::Lazy`
-/// 
+///
 /// ```rust
 /// # pub mod data {
 /// #     use native_db::{native_db, ToKey};
@@ -37,7 +37,7 @@ use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder,
 /// # }
 /// use native_db::*;
 /// use once_cell::sync::Lazy;
-/// 
+///
 /// // The lifetime of the models needs to be longer or equal to the lifetime of the database.
 /// // In many cases, it is simpler to use a static variable but it is not mandatory.
 /// static MODELS: Lazy<Models> = Lazy::new(|| {
@@ -46,7 +46,7 @@ use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder,
 ///     models.define::<data::v1::Person>().unwrap();
 ///     models
 /// });
-/// 
+///
 /// fn main() -> Result<(), db_type::Error> {
 ///     // Initialize the database with the models
 ///     let db = Builder::new().create_in_memory(&MODELS)?;
@@ -59,7 +59,6 @@ pub struct Models {
 }
 
 impl Models {
-
     /// Create a new collection of Models.
     pub fn new() -> Self {
         Self {

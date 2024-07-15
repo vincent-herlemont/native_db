@@ -27,7 +27,7 @@ fn create_local_database_for_tests() {
     let tmp = TmpFs::new().unwrap();
     tmp.copy_assets(&PROJECT_DIR).unwrap();
     tmp.display_dir_entries();
-    let database_path =  tmp.path("db_0_6_0").to_path_buf();
+    let database_path = tmp.path("db_0_6_0").to_path_buf();
 
     let mut models = Models::new();
     models.define::<Item1>().unwrap();

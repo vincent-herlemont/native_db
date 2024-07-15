@@ -50,13 +50,13 @@ impl RLen<'_, '_> {
     ///
     /// If the secondary key is [`optional`](struct.Builder.html#optional) you will
     /// get all values that have the secondary key set.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
-    /// 
+    ///
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
     /// #[native_db]
@@ -66,8 +66,8 @@ impl RLen<'_, '_> {
     ///    #[secondary_key(optional)]
     ///    name: Option<String>,
     /// }
-    /// 
-    /// 
+    ///
+    ///
     /// fn main() -> Result<(), db_type::Error> {
     ///    let mut models = Models::new();
     ///     models.define::<Data>()?;
@@ -81,10 +81,7 @@ impl RLen<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn secondary<T: ToInput>(
-        &self,
-        key_def: impl ToKeyDefinition<KeyOptions>,
-    ) -> Result<u64> {
+    pub fn secondary<T: ToInput>(&self, key_def: impl ToKeyDefinition<KeyOptions>) -> Result<u64> {
         let model = T::native_db_model();
         let result = self.internal.secondary_len(model, key_def)?;
         Ok(result)

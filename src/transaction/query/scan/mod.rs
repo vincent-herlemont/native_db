@@ -16,7 +16,7 @@ pub struct RScan<'db, 'txn> {
 
 impl<'txn> RScan<'_, 'txn> {
     /// Get a values from the database by primary key.
-    /// 
+    ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
     /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
@@ -30,7 +30,7 @@ impl<'txn> RScan<'_, 'txn> {
     }
 
     /// Get a values from the database by secondary key.
-    /// 
+    ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
     /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
@@ -57,9 +57,8 @@ impl<'db, 'txn> RwScan<'db, 'txn>
 where
     'txn: 'db,
 {
-
     /// Get a values from the database by primary key.
-    /// 
+    ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
     /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.
@@ -73,7 +72,7 @@ where
     }
 
     /// Get a values from the database by secondary key.
-    /// 
+    ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
     /// - [`range`](crate::transaction::query::PrimaryScan::range) - Scan items with a primary key in a given range.

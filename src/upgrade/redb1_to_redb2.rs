@@ -20,7 +20,7 @@ fn upgrade_primary_table(
     table_name: &str,
     db1: &redb1::Database,
     db2: &redb2::Database,
-) -> Result<()> {
+) -> Result<bool> {
     let redb1_primary_table_definition: Redb1PrimaryTableDefinition =
         redb1::TableDefinition::new(table_name);
     let redb2_primary_table_definition: Redb2PrimaryTableDefinition =
@@ -30,9 +30,12 @@ fn upgrade_primary_table(
     let redb2_write_txn = db2.begin_write()?;
 
     {
-        let redb1_table = redb1_read_txn
-            .open_table(redb1_primary_table_definition)
-            .unwrap();
+        let redb1_table =
+            if let Ok(redb1_table) = redb1_read_txn.open_table(redb1_primary_table_definition) {
+                redb1_table
+            } else {
+                return Ok(false);
+            };
         let mut redb2_table = redb2_write_txn.open_table(redb2_primary_table_definition)?;
 
         use redb1::ReadableTable;
@@ -45,7 +48,7 @@ fn upgrade_primary_table(
 
     redb2_write_txn.commit()?;
 
-    Ok(())
+    Ok(true)
 }
 
 fn upgrade_secondary_table(
@@ -99,11 +102,14 @@ pub(crate) fn upgrade_redb1_to_redb2(
     let mut db2 = redb2_builder.create(&redb2_path)?;
 
     for (_, model_builder) in model_builder {
-        upgrade_primary_table(
+        let exist = upgrade_primary_table(
             model_builder.model.primary_key.unique_table_name.as_str(),
             &db1,
             &db2,
         )?;
+        if !exist {
+            continue;
+        }
 
         for secondary_key in model_builder.model.secondary_keys.iter() {
             let secondary_table_name = secondary_key.unique_table_name.as_str();
