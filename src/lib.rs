@@ -67,7 +67,7 @@
 //!
 //! > 👉 Unlike the usual database where there is a difference between *schema* and *model*, here, as we can directly use Rust types that are serialized in the database, we do not have the concept of *schema*, only that of the *model*.
 //!
-//! Note that the organization of the models is only a best practice, not mandatory. You can organize your models as you want.
+//! In this section, we will create a simple model. I have chosen a particular organization using Rust modules, which I find to be a best practice. However, it is not mandatory; you can do it as you prefer.
 //!
 //! In this example:
 //! - We create a module `data` which contains **all versions of all models**.
@@ -100,7 +100,7 @@
 //!
 //! After creating the model in the previous step, we can now create the database with the model.
 //!
-//! Note good practices: define the models by **specifying each version**, in our case `data::v1::Person`.
+//! Note good practices: [`define`](crate::Models::define) the [`models`](crate::Models) by **specifying each version**, in our case `data::v1::Person`.
 //!
 //! ```rust
 //! # pub mod data {
