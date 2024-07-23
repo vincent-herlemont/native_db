@@ -26,7 +26,7 @@ uuid = { version = "1.10.0" , optional = true }
 chrono = { version = "0.4" , optional = true }
 
 # Optional tokio support
-tokio = { version = "1.38", features = ["sync"], optional = true }
+tokio = { version = "1.39.1", features = ["sync"], optional = true }
 # TODO: channels with futures
 # TODO: channels crossbeam
 
@@ -35,7 +35,7 @@ assert_fs = "1.1.1"
 serial_test = { version = "3.1.1", features = ["file_locks"] }
 shortcut_assert_fs = { version = "0.1.0" }
 skeptic = "0.13.7"
-tokio = { version = "1.38.0", features = ["test-util","macros"] }
+tokio = { version = "1.39.1", features = ["test-util","macros"] }
 bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 criterion = { version = "0.5.1" }
 doc-comment = "0.3.3"
