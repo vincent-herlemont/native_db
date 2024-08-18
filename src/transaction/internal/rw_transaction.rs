@@ -288,4 +288,13 @@ impl<'db> InternalRwTransaction<'db> {
 
         Ok(())
     }
+
+    pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
+        for data in self.concrete_primary_drain(T::native_db_model())? {
+            let (decoded_item, _) = native_model::decode::<T>(data.0).unwrap();
+            let decoded_item = decoded_item.native_db_input()?;
+            self.concrete_insert(T::native_db_model(), decoded_item)?;
+        }
+        Ok(())
+    }
 }
