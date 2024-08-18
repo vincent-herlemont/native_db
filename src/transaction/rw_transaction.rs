@@ -368,4 +368,11 @@ impl<'db, 'txn> RwTransaction<'db> {
     pub fn migrate<T: ToInput + Debug>(&self) -> Result<()> {
         self.internal.migrate::<T>()
     }
+
+    /// Refresh the data for the given model. Is used generally when during an database upgrade,
+    /// using the method [crate::Database::upgrading_from_version] (more details/example). Check release notes to know
+    /// when to use this method.
+    pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
+        self.internal.refresh::<T>()
+    }
 }
