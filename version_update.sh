@@ -35,6 +35,16 @@ do
       # Use sed to find and replace the version string in the README.md
       sed -i -E "s/native_db = \"[0-9]+\.[0-9]+\.[0-9]+\"/native_db = \"$NEW_VERSION\"/g" "$directory/README.md"
       sed -i -E "s/native_model = \"[0-9]+\.[0-9]+\.[0-9]+\"/native_model = \"$NATIVE_MODEL_VERSION\"/g" "$directory/README.md"
+
+      # Replace on src/metadata/current_version.rs: const CURRENT_VERSION: &str = "x.x.x";
+      sed -i -E "s/pub const CURRENT_VERSION: &str = \"[0-9]+\.[0-9]+\.[0-9]+\";/pub const CURRENT_VERSION: &str = \"$NEW_VERSION\";/g" "$directory/src/metadata/current_version.rs"
+      # Replace on src/metadata/current_native_model_version.rs: const CURRENT_NATIVE_MODEL_VERSION: &str = "x.x.x";
+      sed -i -E "s/pub const CURRENT_NATIVE_MODEL_VERSION: &str = \"[0-9]+\.[0-9]+\.[0-9]+\";/pub const CURRENT_NATIVE_MODEL_VERSION: &str = \"$NATIVE_MODEL_VERSION\";/g" "$directory/src/metadata/current_native_model_version.rs"
+
+      # Replace on tests/metadata/current_version.rs: assert_eq!(metadata.current_native_model_version(), "x.x.x");
+      sed -i -E "s/assert_eq!\(metadata.current_native_model_version(), \"[0-9]+\.[0-9]+\.[0-9]+\";/assert_eq!\(metadata.current_native_model_version(), \"$NATIVE_MODEL_VERSION\";/g" "$directory/tests/metadata/current_version.rs"
+      # Replace on tests/metadata/current_version.rs: assert_eq!(metadata.current_native_model_version(), Some("x.x.x"));
+      sed -i -E "s/assert_eq!\(metadata.current_native_model_version(), Some\(\"[0-9]+\.[0-9]+\.[0-9]+\";/assert_eq!\(metadata.current_native_model_version(), Some\(\"$NATIVE_MODEL_VERSION\";/g" "$directory/tests/metadata/current_version.rs"
     fi
   fi
 done

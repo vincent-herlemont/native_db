@@ -349,6 +349,7 @@ mod database_instance;
 
 /// A collection of type used by native_db internally (macro included).
 pub mod db_type;
+mod metadata;
 mod model;
 mod serialization;
 mod snapshot;
@@ -372,6 +373,7 @@ pub use db_type::ToKey;
 // Export
 pub use database::*;
 pub use database_builder::*;
+pub use metadata::*;
 pub use model::*;
 pub use models::*;
 

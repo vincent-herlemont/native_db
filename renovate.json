@@ -15,7 +15,7 @@
       "automerge": true
     },
     {
-      "matchPackagePatterns": ["thiserror", "chrono", "tokio", "serde", "syn", "quote", "proc-macro2", "include_dir"],
+      "matchPackagePatterns": ["thiserror", "chrono", "tokio", "serde", "syn", "quote", "proc-macro2", "include_dir", "semver"],
       "matchUpdateTypes": ["patch"],
       "enabled": false
     },

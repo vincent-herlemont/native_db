@@ -7,8 +7,8 @@ use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 use crate::transaction::RTransaction;
 use crate::transaction::RwTransaction;
-use crate::watch;
 use crate::watch::query::{InternalWatch, Watch};
+use crate::{watch, Metadata};
 use redb::{ReadableTableMetadata, TableHandle};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -34,6 +34,7 @@ use std::u64;
 /// }
 pub struct Database<'a> {
     pub(crate) instance: DatabaseInstance,
+    pub(crate) metadata: Metadata,
     pub(crate) primary_table_definitions: HashMap<String, PrimaryTableDefinition<'a>>,
     pub(crate) watchers: Arc<RwLock<watch::Watchers>>,
     pub(crate) watchers_counter_id: AtomicU64,
@@ -140,6 +141,51 @@ impl<'a> Database<'a> {
         );
 
         Ok(())
+    }
+
+    /// Returns the [`Metadata`](crate::Metadata) of the database.
+    pub fn metadata(&self) -> &Metadata {
+        &self.metadata
+    }
+
+    /// Returns true if the database is upgrading from the given version selector.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// if db.upgrading_from_version("<0.8.0") {
+    ///     // Do something that runs only when the database is upgrading from version <0.8.0.
+    ///     // If the database is already at version 0.8.0, the function will return false and
+    ///     // the code will not be executed.
+    /// }
+    /// ```
+    pub fn upgrading_from_version(&self, selector: &str) -> Result<bool> {
+        use semver::Version;
+        use semver::VersionReq;
+        let metadata = self.metadata();
+        let comparator = VersionReq::parse(selector)
+            .expect(format!("Invalid version selector: {}", selector).as_str());
+
+        // If there is no previous version, the database is coming from <=0.7.1
+        if metadata.previous_version().is_none() {
+            return Ok(true);
+        }
+
+        let previous_version = Version::parse(metadata.previous_version().unwrap()).expect(
+            format!(
+                "Invalid previous version: {}",
+                metadata.previous_version().unwrap()
+            )
+            .as_str(),
+        );
+        let current_version = Version::parse(metadata.current_version())
+            .expect(format!("Invalid current version: {}", metadata.current_version()).as_str());
+
+        // If the previous version is the same as the current version, the database is not upgrading
+        if previous_version == current_version {
+            return Ok(false);
+        }
+
+        Ok(comparator.matches(&previous_version))
     }
 
     pub fn redb_stats(&self) -> Result<Stats> {
