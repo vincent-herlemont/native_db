@@ -1,7 +1,7 @@
 use crate::database_instance::DatabaseInstance;
 use crate::db_type::{Error, Result};
 use crate::table_definition::NativeModelOptions;
-use crate::Models;
+use crate::{metadata, Models};
 use crate::{upgrade, watch, Database, Model};
 use std::collections::HashMap;
 use std::path::Path;
@@ -45,8 +45,11 @@ impl Builder {
         database_instance: DatabaseInstance,
         models: &'a Models,
     ) -> Result<Database<'a>> {
+        let database_metadata = metadata::load_or_create_metadata(&database_instance)?;
+
         let mut database = Database {
             instance: database_instance,
+            metadata: database_metadata,
             primary_table_definitions: HashMap::new(),
             watchers: Arc::new(RwLock::new(watch::Watchers::new())),
             watchers_counter_id: AtomicU64::new(0),
@@ -55,6 +58,8 @@ impl Builder {
         for (_, model_builder) in models.models_builder.iter() {
             database.seed_model(&model_builder)?;
         }
+
+        // TODO: Maybe we can do some migration with models here.
 
         Ok(database)
     }
