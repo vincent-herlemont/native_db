@@ -84,9 +84,15 @@ impl<O: ToTokenStream> KeyDefinition<O> {
 
     pub(crate) fn ident(&self) -> Ident {
         if self.is_field() {
-            self.field_name.as_ref().unwrap().clone()
+            self.field_name
+                .as_ref()
+                .expect("Trying to get an undefined field name")
+                .clone()
         } else {
-            self.function_name.as_ref().unwrap().clone()
+            self.function_name
+                .as_ref()
+                .expect("Trying to get an undefined function name")
+                .clone()
         }
     }
 

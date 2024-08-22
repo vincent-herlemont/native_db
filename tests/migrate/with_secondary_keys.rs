@@ -165,7 +165,8 @@ fn test_migrate() {
         .secondary(ItemV2Key::first_name_key)
         .unwrap()
         .start_with("Alexandre")
-        .unwrap().try_collect()
+        .unwrap()
+        .try_collect()
         .unwrap();
     assert_eq!(
         item,
@@ -182,7 +183,8 @@ fn test_migrate() {
         .secondary(ItemV2Key::last_name_key)
         .unwrap()
         .start_with("Verne")
-        .unwrap().try_collect()
+        .unwrap()
+        .try_collect()
         .unwrap();
     assert_eq!(
         item,

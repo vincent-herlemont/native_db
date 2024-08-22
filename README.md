@@ -83,7 +83,7 @@ fn main() -> Result<(), db_type::Error> {
     let mut db = Builder::new().create_in_memory(&MODELS)?;
     
     // Insert data (open a read-write transaction)
-    let rw = db.rw_transaction().unwrap();
+    let rw = db.rw_transaction()?;
     rw.insert(Item { id: 1, name: "red".to_string() })?;
     rw.insert(Item { id: 2, name: "green".to_string() })?;
     rw.insert(Item { id: 3, name: "blue".to_string() })?;

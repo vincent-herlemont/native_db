@@ -61,7 +61,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key set (name is not None)
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().unwrap().try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all()?.try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -112,7 +112,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key name from C to the end
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).unwrap().try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..)?.try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -126,9 +126,9 @@ where
             .secondary_table
             .range::<Key>(database_inner_key_value_range)?
         {
-            let (_, l_primary_keys) = keys.unwrap();
+            let (_, l_primary_keys) = keys?;
             for primary_key in l_primary_keys {
-                let primary_key = primary_key.unwrap();
+                let primary_key = primary_key?;
                 primary_keys.push(primary_key);
             }
         }
@@ -170,7 +170,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key name starting with "hello"
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").unwrap().try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello")?.try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -180,11 +180,8 @@ where
     ) -> Result<SecondaryScanIterator<'a, PrimaryTable, T>> {
         let start_with = start_with.to_key();
         let mut primary_keys = vec![];
-        for keys in self
-            .secondary_table
-            .range::<Key>(start_with.clone()..)?
-        {
-            let (l_secondary_key, l_primary_keys) = keys.unwrap();
+        for keys in self.secondary_table.range::<Key>(start_with.clone()..)? {
+            let (l_secondary_key, l_primary_keys) = keys?;
             if !l_secondary_key
                 .value()
                 .as_slice()
@@ -193,7 +190,7 @@ where
                 break;
             }
             for primary_key in l_primary_keys {
-                let primary_key = primary_key.unwrap();
+                let primary_key = primary_key?;
                 primary_keys.push(primary_key);
             }
         }
@@ -284,19 +281,5 @@ where
             }
             _ => None,
         }
-        // match self.range.next() {
-        //     Some(Ok((secondary_key, primary_key))) => {
-        //         if secondary_key
-        //             .value()
-        //             .as_slice()
-        //             .starts_with(self.start_with.as_slice())
-        //         {
-        //             unwrap_item(self.primary_table.get(primary_key.value()).unwrap())
-        //         } else {
-        //             None
-        //         }
-        //     }
-        //     _ => None,
-        // }
     }
 }

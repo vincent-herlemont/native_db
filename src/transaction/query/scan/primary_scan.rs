@@ -49,7 +49,7 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get all values
-    ///     let _values: Vec<Data> = r.scan().primary()?.all().unwrap().try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().primary()?.all()?.try_collect()?;
     ///     Ok(())
     /// }
     /// ```
@@ -137,9 +137,7 @@ where
         start_with: impl ToKey + 'a,
     ) -> Result<PrimaryScanIteratorStartWith<'a, T>> {
         let start_with = start_with.to_key();
-        let range = self
-            .primary_table
-            .range::<Key>(start_with.clone()..)?;
+        let range = self.primary_table.range::<Key>(start_with.clone()..)?;
 
         Ok(PrimaryScanIteratorStartWith {
             range,

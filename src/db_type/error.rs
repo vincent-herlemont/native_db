@@ -23,8 +23,16 @@ pub enum Error {
     #[error("Redb storage error")]
     RedbStorageError(#[from] redb::StorageError),
 
+    #[cfg(feature = "redb1")]
+    #[error("Redb redb1 storage error")]
+    Redb1StorageError(#[from] redb1::StorageError),
+
     #[error("Redb table error")]
     RedbTableError(#[from] redb::TableError),
+
+    #[cfg(feature = "redb1")]
+    #[error("Redb redb1 table error")]
+    Redb1TableError(#[from] redb1::TableError),
 
     #[error("Redb commit error")]
     RedbCommitError(#[from] redb::CommitError),

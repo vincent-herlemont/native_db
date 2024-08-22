@@ -121,7 +121,8 @@ fn upgrade_from_0_7_x_to_0_8_x() {
         .secondary(Item2Key::name)
         .unwrap()
         .range("item2_5".."item2_599")
-        .unwrap().try_collect()
+        .unwrap()
+        .try_collect()
         .unwrap();
     assert_eq!(items.len(), 110);
 
@@ -130,7 +131,8 @@ fn upgrade_from_0_7_x_to_0_8_x() {
         .secondary(Item2Key::name)
         .unwrap()
         .range("item2_5"..="item2_599")
-        .unwrap().try_collect()
+        .unwrap()
+        .try_collect()
         .unwrap();
     assert_eq!(items.len(), 111);
 }

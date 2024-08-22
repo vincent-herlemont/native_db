@@ -134,7 +134,14 @@ fn use_native_db_insert(db: &Database, data: Data) {
 
 fn use_native_db_scan(db: &Database) -> Vec<Data> {
     let r = db.r_transaction().unwrap();
-    let out = r.scan().primary().unwrap().all().unwrap().try_collect().unwrap();
+    let out = r
+        .scan()
+        .primary()
+        .unwrap()
+        .all()
+        .unwrap()
+        .try_collect()
+        .unwrap();
     out
 }
 

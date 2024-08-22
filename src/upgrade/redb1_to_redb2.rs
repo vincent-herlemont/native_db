@@ -39,10 +39,10 @@ fn upgrade_primary_table(
         let mut redb2_table = redb2_write_txn.open_table(redb2_primary_table_definition)?;
 
         use redb1::ReadableTable;
-        for r in redb1_table.iter().unwrap() {
-            let (key, value) = r.unwrap();
+        for r in redb1_table.iter()? {
+            let (key, value) = r?;
             let key = Redb2DatabaseInnerKeyValue::from(key.value());
-            redb2_table.insert(key, value.value()).unwrap();
+            redb2_table.insert(key, value.value())?;
         }
     }
 
@@ -65,18 +65,16 @@ fn upgrade_secondary_table(
     let redb2_write_txn = db2.begin_write()?;
 
     {
-        let redb1_table = redb1_read_txn
-            .open_table(redb1_primary_table_definition)
-            .unwrap();
+        let redb1_table = redb1_read_txn.open_table(redb1_primary_table_definition)?;
         let mut redb2_table =
             redb2_write_txn.open_multimap_table(redb2_primary_table_definition)?;
 
         use redb1::ReadableTable;
-        for r in redb1_table.iter().unwrap() {
-            let (key, value) = r.unwrap();
+        for r in redb1_table.iter()? {
+            let (key, value) = r?;
             let key = Redb2DatabaseInnerKeyValue::from(key.value());
             let value = Redb2DatabaseInnerKeyValue::from(value.value());
-            redb2_table.insert(key, value).unwrap();
+            redb2_table.insert(key, value)?;
         }
     }
 

@@ -229,7 +229,7 @@ impl<'db> InternalRwTransaction<'db> {
         let new_table_definition = self
             .primary_table_definitions
             .get(T::native_db_model().primary_key.unique_table_name.as_str())
-            .unwrap();
+            .expect("Fatal error: table definition not found during migration");
         if new_table_definition
             .native_model_options
             .native_model_legacy
@@ -269,7 +269,7 @@ impl<'db> InternalRwTransaction<'db> {
                     "Impossible to migrate the table {} because multiple old tables with data exist: {}, {}",
                     T::native_db_model().primary_key.unique_table_name,
                     new_primary_table_definition.redb.name(),
-                    old_table_definition.unwrap().redb.name()
+                    old_table_definition.expect("Unreachable").redb.name()
                 );
             } else if table.len()? > 0 {
                 old_table_definition = Some(new_primary_table_definition);
@@ -293,7 +293,7 @@ impl<'db> InternalRwTransaction<'db> {
 
         // List all data from the old table
         for old_data in self.concrete_primary_drain(old_table_definition.model.clone())? {
-            let (decoded_item, _) = native_model::decode::<T>(old_data.0).unwrap();
+            let (decoded_item, _) = native_model::decode::<T>(old_data.0)?;
             let decoded_item = decoded_item.native_db_input()?;
             self.concrete_insert(T::native_db_model(), decoded_item)?;
         }
@@ -303,7 +303,7 @@ impl<'db> InternalRwTransaction<'db> {
 
     pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
         for data in self.concrete_primary_drain(T::native_db_model())? {
-            let (decoded_item, _) = native_model::decode::<T>(data.0).unwrap();
+            let (decoded_item, _) = native_model::decode::<T>(data.0)?;
             let decoded_item = decoded_item.native_db_input()?;
             self.concrete_insert(T::native_db_model(), decoded_item)?;
         }
