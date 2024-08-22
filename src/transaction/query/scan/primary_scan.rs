@@ -49,16 +49,16 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get all values
-    ///     let _values: Vec<Data> = r.scan().primary()?.all().try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().primary()?.all().unwrap().try_collect()?;
     ///     Ok(())
     /// }
     /// ```
-    pub fn all(&self) -> PrimaryScanIterator<T> {
-        let range = self.primary_table.range::<Key>(..).unwrap();
-        PrimaryScanIterator {
+    pub fn all(&self) -> Result<PrimaryScanIterator<T>> {
+        let range = self.primary_table.range::<Key>(..)?;
+        Ok(PrimaryScanIterator {
             range,
             _marker: PhantomData::default(),
-        }
+        })
     }
 
     /// Iterate over all values in a range.
@@ -87,20 +87,19 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get the values from 5 to the end
-    ///     let _values: Vec<Data> = r.scan().primary()?.range(5u64..).try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().primary()?.range(5u64..)?.try_collect()?;
     ///     Ok(())
     /// }
     /// ```
-    pub fn range<TR: ToKey, R: RangeBounds<TR>>(&self, range: R) -> PrimaryScanIterator<T> {
+    pub fn range<TR: ToKey, R: RangeBounds<TR>>(&self, range: R) -> Result<PrimaryScanIterator<T>> {
         let database_inner_key_value_range = KeyRange::new(range);
         let range = self
             .primary_table
-            .range::<Key>(database_inner_key_value_range)
-            .unwrap();
-        PrimaryScanIterator {
+            .range::<Key>(database_inner_key_value_range)?;
+        Ok(PrimaryScanIterator {
             range,
             _marker: PhantomData::default(),
-        }
+        })
     }
 
     /// Iterate over all values starting with a prefix.
@@ -129,24 +128,24 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get the values starting with "victor"
-    ///     let _values: Vec<Data> = r.scan().primary()?.start_with("victor").try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().primary()?.start_with("victor")?.try_collect()?;
     ///     Ok(())
     /// }
     /// ```
     pub fn start_with<'a>(
         &'a self,
         start_with: impl ToKey + 'a,
-    ) -> PrimaryScanIteratorStartWith<'a, T> {
+    ) -> Result<PrimaryScanIteratorStartWith<'a, T>> {
         let start_with = start_with.to_key();
         let range = self
             .primary_table
-            .range::<Key>(start_with.clone()..)
-            .unwrap();
-        PrimaryScanIteratorStartWith {
-            start_with,
+            .range::<Key>(start_with.clone()..)?;
+
+        Ok(PrimaryScanIteratorStartWith {
             range,
+            start_with,
             _marker: PhantomData::default(),
-        }
+        })
     }
 }
 

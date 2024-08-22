@@ -283,7 +283,7 @@ impl<'db, 'txn> RwTransaction<'db> {
         OldType: ToInput + Clone,
         NewType: ToInput + From<OldType>,
     {
-        let find_all_old: Result<Vec<OldType>> = self.scan().primary()?.all().collect();
+        let find_all_old: Result<Vec<OldType>> = self.scan().primary()?.all()?.collect();
         let find_all_old = find_all_old?;
         for old in find_all_old {
             let new: NewType = old.clone().into();

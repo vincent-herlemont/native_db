@@ -61,31 +61,25 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key set (name is not None)
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all().unwrap().try_collect()?;
     ///     Ok(())
     /// }
     /// ```
-    /// TODO: remove unwrap and return Result
-    pub fn all(&self) -> SecondaryScanIterator<PrimaryTable, T> {
+    pub fn all(&self) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
         let mut primary_keys = vec![];
-        for keys in self.secondary_table.iter().unwrap() {
-            let (l_secondary_key, l_primary_keys) = keys.unwrap();
-            dbg!(&l_secondary_key.value());
+        for keys in self.secondary_table.iter()? {
+            let (_, l_primary_keys) = keys?;
             for primary_key in l_primary_keys {
-                let primary_key = primary_key.unwrap();
+                let primary_key = primary_key?;
                 primary_keys.push(primary_key);
             }
         }
 
-        for primary_key in primary_keys.iter() {
-            dbg!(&primary_key.value());
-        }
-
-        SecondaryScanIterator {
+        Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
             _marker: PhantomData::default(),
-        }
+        })
     }
 
     /// Iterate over all values by secondary key.
@@ -118,20 +112,19 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key name from C to the end
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..).unwrap().try_collect()?;
     ///     Ok(())
     /// }
     /// ```
     pub fn range<TR: ToKey, R: RangeBounds<TR>>(
         &self,
         range: R,
-    ) -> SecondaryScanIterator<PrimaryTable, T> {
+    ) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
         let mut primary_keys = vec![];
         let database_inner_key_value_range = KeyRange::new(range);
         for keys in self
             .secondary_table
-            .range::<Key>(database_inner_key_value_range)
-            .unwrap()
+            .range::<Key>(database_inner_key_value_range)?
         {
             let (_, l_primary_keys) = keys.unwrap();
             for primary_key in l_primary_keys {
@@ -140,11 +133,11 @@ where
             }
         }
 
-        SecondaryScanIterator {
+        Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
             _marker: PhantomData::default(),
-        }
+        })
     }
 
     /// Iterate over all values by secondary key.
@@ -177,20 +170,19 @@ where
     ///     let r = db.r_transaction()?;
     ///     
     ///     // Get only values that have the secondary key name starting with "hello"
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").try_collect()?;
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello").unwrap().try_collect()?;
     ///     Ok(())
     /// }
     /// ```
     pub fn start_with<'a>(
         &'a self,
         start_with: impl ToKey + 'a,
-    ) -> SecondaryScanIterator<'a, PrimaryTable, T> {
+    ) -> Result<SecondaryScanIterator<'a, PrimaryTable, T>> {
         let start_with = start_with.to_key();
         let mut primary_keys = vec![];
         for keys in self
             .secondary_table
-            .range::<Key>(start_with.clone()..)
-            .unwrap()
+            .range::<Key>(start_with.clone()..)?
         {
             let (l_secondary_key, l_primary_keys) = keys.unwrap();
             if !l_secondary_key
@@ -206,11 +198,11 @@ where
             }
         }
 
-        SecondaryScanIterator {
+        Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
             _marker: PhantomData::default(),
-        }
+        })
     }
 }
 

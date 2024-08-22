@@ -95,7 +95,7 @@ fn main() -> Result<(), db_type::Error> {
     let retrieve_data: Item = r.get().primary(3_u32)?.unwrap();
     println!("data id='3': {:?}", retrieve_data);
     // Iterate items with name starting with "red"
-    for item in r.scan().secondary::<Item>(ItemKey::name)?.start_with("red") {
+    for item in r.scan().secondary::<Item>(ItemKey::name)?.start_with("red")? {
         println!("data name=\"red\": {:?}", item);
     }
     

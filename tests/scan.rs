@@ -52,7 +52,7 @@ fn test_iter() {
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
-    let result: Vec<Item> = r.scan().primary().unwrap().all().try_collect().unwrap();
+    let result: Vec<Item> = r.scan().primary().unwrap().all().unwrap().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -85,7 +85,7 @@ fn test_iter_many_items_to_be_bytes() {
 
     let r = db.r_transaction().unwrap();
     {
-        let iter: Vec<Item> = r.scan().primary().unwrap().all().try_collect().unwrap();
+        let iter: Vec<Item> = r.scan().primary().unwrap().all().unwrap().try_collect().unwrap();
         assert_eq!(iter.len(), 257);
 
         let obj1 = iter.get(0).unwrap();
@@ -119,7 +119,7 @@ fn test_double_ended_iter() {
 
     let r = db.r_transaction().unwrap();
     let scan = r.scan().primary().unwrap();
-    let iter = scan.all();
+    let iter = scan.all().unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 2);
@@ -156,7 +156,7 @@ fn test_iter_range() {
         .primary()
         .unwrap()
         .range(..2_i32)
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 1);
 
@@ -169,7 +169,7 @@ fn test_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32..)
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 2);
 
@@ -186,7 +186,7 @@ fn test_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32..3_i32)
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 1);
 
@@ -216,7 +216,7 @@ fn test_iter_by_key() {
         .secondary(ItemKey::secondary_key_1)
         .unwrap()
         .all()
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
 
     assert_eq!(result.len(), 2);
@@ -247,7 +247,7 @@ fn test_double_ended_iter_by_key() {
 
     let r = db.r_transaction().unwrap();
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.all();
+    let iter = scan.all().unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 2);
@@ -279,7 +279,7 @@ fn test_double_ended_iter_by_key_range() {
 
     let r = db.r_transaction().unwrap();
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.range(..b"2".as_slice());
+    let iter = scan.range(..b"2".as_slice()).unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 1);
@@ -289,7 +289,7 @@ fn test_double_ended_iter_by_key_range() {
     assert_eq!(obj1.name, "test");
 
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.range(b"2".as_slice()..);
+    let iter = scan.range(b"2".as_slice()..).unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
@@ -302,7 +302,7 @@ fn test_double_ended_iter_by_key_range() {
     assert_eq!(obj2.name, "test2");
 
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.range(b"2".as_slice()..b"3".as_slice());
+    let iter = scan.range(b"2".as_slice()..b"3".as_slice()).unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 1);
@@ -364,7 +364,7 @@ fn test_start_with_scenario() {
             .primary()
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect()
+            .unwrap().try_collect()
             .unwrap();
         assert_eq!(result.len(), 3);
 
@@ -438,7 +438,7 @@ fn test_start_with_by_key_scenario_write_txn() {
             .secondary(ItemIdFlagKey::flag)
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect()
+            .unwrap().try_collect()
             .unwrap();
         assert_eq!(result.len(), 3);
 
@@ -485,7 +485,7 @@ fn test_start_with_by_key_scenario_readonly_txn() {
             .secondary(ItemIdFlagKey::flag)
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect()
+            .unwrap().try_collect()
             .unwrap();
         assert_eq!(result.len(), 3);
 
@@ -516,7 +516,7 @@ fn test_txn_write_iter() {
     rw.commit().unwrap();
 
     let rw = db.rw_transaction().unwrap();
-    let result: Vec<Item> = rw.scan().primary().unwrap().all().try_collect().unwrap();
+    let result: Vec<Item> = rw.scan().primary().unwrap().all().unwrap().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
     let obj1 = result.get(0).unwrap();
@@ -550,7 +550,7 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(..2_i32.to_be_bytes().as_slice())
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 1);
 
@@ -563,7 +563,7 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32.to_be_bytes().as_slice()..)
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 2);
 
@@ -580,7 +580,7 @@ fn test_txn_write_iter_range() {
         .primary()
         .unwrap()
         .range(2_i32.to_be_bytes().as_slice()..3_i32.to_be_bytes().as_slice())
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 1);
 
@@ -622,7 +622,7 @@ fn test_txn_write_start_with_scenario() {
             .primary()
             .unwrap()
             .start_with(p.to_string().as_str())
-            .try_collect()
+            .unwrap().try_collect()
             .unwrap();
         assert_eq!(result.len(), 3);
 
@@ -691,6 +691,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
         .range(0..10)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -703,6 +704,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
         .range(2..3)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -715,6 +717,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::unique_nr)
         .unwrap()
         .range(1..3)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -727,6 +730,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::unique_nr)
         .unwrap()
         .range(1..=3)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -739,6 +743,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::unique_nr)
         .unwrap()
         .range(3..=3)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -751,6 +756,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
         .range(2..=3)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -763,6 +769,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
         .range(2..=2)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -775,6 +782,7 @@ fn test_scan_range() {
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
         .range(0..=2)
+        .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
         .iter()
@@ -838,7 +846,7 @@ fn test_low_level_scan_range() {
         .secondary(ItemLowLevelScanRangeKey::secondary_key)
         .unwrap()
         .all()
-        .try_collect()
+        .unwrap().try_collect()
         .unwrap();
     assert_eq!(result.len(), 2);
     assert_eq!(result[0].secondary_key, vec![2]);

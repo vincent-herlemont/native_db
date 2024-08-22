@@ -33,7 +33,7 @@ fn create_local_database_for_tests() {
     models.define::<Item1>().unwrap();
     let db = Builder::new().open(&models, &database_path).unwrap();
     let r = db.r_transaction().unwrap();
-    let result: Result<Vec<Item1>> = r.scan().primary().unwrap().all().try_collect();
+    let result: Result<Vec<Item1>> = r.scan().primary().unwrap().all().unwrap().try_collect();
     assert!(matches!(
         result,
         Err(Error::ModelError(ModelError::DecodeBodyError(_)))
