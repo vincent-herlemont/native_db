@@ -636,3 +636,217 @@ fn test_txn_write_start_with_scenario() {
         assert_eq!(obj3.name, format!("{}3", p));
     }
 }
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+#[native_model(id = 4, version = 1)]
+#[native_db]
+struct ItemScanRange {
+    #[primary_key]
+    id: u32,
+
+    #[secondary_key]
+    nr: u32,
+
+    #[secondary_key(unique)]
+    unique_nr: u32,
+}
+
+#[test]
+fn test_scan_range() {
+    let item_1 = ItemScanRange {
+        id: 1,
+        nr: 1,
+        unique_nr: 1,
+    };
+    let item_2 = ItemScanRange {
+        id: 2,
+        nr: 2,
+        unique_nr: 2,
+    };
+    let item_3 = ItemScanRange {
+        id: 3,
+        nr: 2,
+        unique_nr: 3,
+    };
+    let item_4 = ItemScanRange {
+        id: 4,
+        nr: 3,
+        unique_nr: 4,
+    };
+
+    let mut models = Models::new();
+    models.define::<ItemScanRange>().unwrap();
+    let db = Builder::new().create_in_memory(&models).unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(item_1.clone()).unwrap();
+    rw.insert(item_2.clone()).unwrap();
+    rw.insert(item_3.clone()).unwrap();
+    rw.insert(item_4.clone()).unwrap();
+    rw.commit().unwrap();
+
+    let r = db.r_transaction().unwrap();
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::nr)
+        .unwrap()
+        .range(0..10)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![1, 2, 2, 3], "range 0..10 for nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::nr)
+        .unwrap()
+        .range(2..3)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![2, 2], "range 2..3 for nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::unique_nr)
+        .unwrap()
+        .range(1..3)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.unique_nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![1, 2], "range 1..3 for unique_nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::unique_nr)
+        .unwrap()
+        .range(1..=3)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.unique_nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![1, 2, 3], "range 1..=3 for unique_nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::unique_nr)
+        .unwrap()
+        .range(3..=3)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.unique_nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![3], "range 3..=3 for unique_nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::nr)
+        .unwrap()
+        .range(2..=3)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![2, 2, 3], "range 2..=3 for nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::nr)
+        .unwrap()
+        .range(2..=2)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![2, 2], "range 2..=2 for nr");
+
+    let result = r
+        .scan()
+        .secondary(ItemScanRangeKey::nr)
+        .unwrap()
+        .range(0..=2)
+        .collect::<Result<Vec<ItemScanRange>, _>>()
+        .unwrap()
+        .iter()
+        .map(|x| x.nr)
+        .collect::<Vec<_>>();
+    assert_eq!(result, vec![1, 2, 2], "range 0..=2 for nr");
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+#[native_model(id = 4, version = 1)]
+#[native_db]
+struct ItemLowLevelScanRange {
+    #[primary_key]
+    primary_key: Vec<u8>,
+
+    #[secondary_key]
+    secondary_key: Vec<u8>,
+
+    #[secondary_key(unique)]
+    secondary_key_unique: Vec<u8>,
+
+    #[secondary_key(optional)]
+    secondary_key_optional: Option<Vec<u8>>,
+
+    #[secondary_key(unique, optional)]
+    secondary_key_unique_optional: Option<Vec<u8>>,
+}
+
+#[test]
+fn test_low_level_scan_range() {
+    let tf = TmpFs::new().unwrap();
+
+    let mut models = Models::new();
+    models.define::<ItemLowLevelScanRange>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(ItemLowLevelScanRange {
+        primary_key: vec![255],
+        secondary_key: vec![2],
+        secondary_key_unique: vec![2],
+        secondary_key_optional: None,
+        secondary_key_unique_optional: None,
+    })
+    .unwrap();
+    rw.insert(ItemLowLevelScanRange {
+        primary_key: vec![2],
+        secondary_key: vec![2, 0, 254],
+        secondary_key_unique: vec![255],
+        secondary_key_optional: None,
+        secondary_key_unique_optional: None,
+    })
+    .unwrap();
+    rw.commit().unwrap();
+
+    let r = db.r_transaction().unwrap();
+    let result: Vec<ItemLowLevelScanRange> = r
+        .scan()
+        .secondary(ItemLowLevelScanRangeKey::secondary_key)
+        .unwrap()
+        .all()
+        .try_collect()
+        .unwrap();
+    assert_eq!(result.len(), 2);
+    assert_eq!(result[0].secondary_key, vec![2]);
+    assert_eq!(result[1].secondary_key, vec![2, 0, 254]);
+
+    // Maybe this idea does not work because it's lexicographical order, and the fact to have th same size of the primary key part
+    // change nothing.
+    // Use XXhash for the primary_key part https://docs.rs/xxhash-rust/latest/xxhash_rust/xxh64/index.html of the secondary_key.
+    // And detect colision, use the return value of https://docs.rs/redb/latest/redb/struct.Table.html#method.insert
+    // and re-insert the item if the return value is not null, recompute the primary key hash with a timestamp.
+}

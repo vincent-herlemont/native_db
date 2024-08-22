@@ -15,7 +15,7 @@ where
     Self: 'db,
 {
     type RedbPrimaryTable = redb::ReadOnlyTable<Key, &'static [u8]>;
-    type RedbSecondaryTable = redb::ReadOnlyTable<Key, Key>;
+    type RedbSecondaryTable = redb::ReadOnlyMultimapTable<Key, Key>;
 
     type RedbTransaction<'db_bis> = redb::ReadTransaction where Self: 'db_bis;
 
@@ -53,7 +53,7 @@ where
             })?;
         let table = self
             .redb_transaction
-            .open_table(secondary_table_definition.redb)?;
+            .open_multimap_table(secondary_table_definition.redb)?;
         Ok(table)
     }
 }

@@ -38,7 +38,11 @@ impl<'txn> RScan<'_, 'txn> {
         &self,
         key_def: impl ToKeyDefinition<KeyOptions>,
     ) -> Result<
-        SecondaryScan<redb::ReadOnlyTable<Key, &'static [u8]>, redb::ReadOnlyTable<Key, Key>, T>,
+        SecondaryScan<
+            redb::ReadOnlyTable<Key, &'static [u8]>,
+            redb::ReadOnlyMultimapTable<Key, Key>,
+            T,
+        >,
     > {
         let model = T::native_db_model();
         let primary_table = self.internal.get_primary_table(&model)?;
@@ -79,8 +83,9 @@ where
     pub fn secondary<T: ToInput>(
         &self,
         key_def: impl ToKeyDefinition<KeyOptions>,
-    ) -> Result<SecondaryScan<redb::Table<'db, Key, &'static [u8]>, redb::Table<'db, Key, Key>, T>>
-    {
+    ) -> Result<
+        SecondaryScan<redb::Table<'db, Key, &'static [u8]>, redb::MultimapTable<'db, Key, Key>, T>,
+    > {
         let model = T::native_db_model();
         let primary_table = self.internal.get_primary_table(&model)?;
         let secondary_key = key_def.key_definition();

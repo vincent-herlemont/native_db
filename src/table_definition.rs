@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 pub(crate) type RedbPrimaryTableDefinition<'a> = redb::TableDefinition<'a, Key, &'static [u8]>;
-pub(crate) type RedbSecondaryTableDefinition<'a> = redb::TableDefinition<'a, Key, Key>;
+pub(crate) type RedbSecondaryTableDefinition<'a> = redb::MultimapTableDefinition<'a, Key, Key>;
 
 pub struct PrimaryTableDefinition<'a> {
     pub(crate) model: crate::Model,

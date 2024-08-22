@@ -1,5 +1,6 @@
 use crate::db_type::Result;
 use crate::{Builder, Database, Models};
+use redb::ReadableMultimapTable;
 use redb::ReadableTable;
 use std::path::Path;
 
@@ -20,11 +21,14 @@ impl Database<'_> {
 
                 // Copy secondary tables
                 for (_, secondary_table_definition) in &primary_table_definition.secondary_tables {
-                    let table = r.open_table(secondary_table_definition.redb)?;
-                    let mut new_table = w.open_table(secondary_table_definition.redb)?;
+                    let table = r.open_multimap_table(secondary_table_definition.redb)?;
+                    let mut new_table = w.open_multimap_table(secondary_table_definition.redb)?;
                     for result in table.iter()? {
-                        let (key, value) = result?;
-                        new_table.insert(key.value(), value.value())?;
+                        let (secondary_key, primary_keys) = result?;
+                        for primary_key in primary_keys {
+                            let primary_key = primary_key?;
+                            new_table.insert(secondary_key.value(), primary_key.value())?;
+                        }
                     }
                 }
             }

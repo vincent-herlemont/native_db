@@ -65,6 +65,10 @@ pub struct KeyOptions {
 
 pub fn composite_key(secondary_key: &Key, primary_key: &Key) -> Key {
     let mut secondary_key = secondary_key.clone();
-    secondary_key.extend(primary_key);
+    // The addition of a delimiter (a byte set to `0`) used between the concatenation
+    // of secondary keys and primary keys ensures that there is always a byte smaller
+    // than the value of the `end` of an inclusive range, which always ends with a byte
+    // set to `255`. See `KeyRange` the inclusive range defined with `start..=end`.
+    secondary_key.extend_with_delimiter(0, primary_key);
     secondary_key
 }

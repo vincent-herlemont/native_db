@@ -3,7 +3,7 @@ use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::watch::WatcherRequest;
 use crate::{db_type::ToInput, Model};
-use redb::ReadableTable;
+use redb::ReadableMultimapTable;
 use redb::ReadableTableMetadata;
 use redb::TableHandle;
 use std::collections::{HashMap, HashSet};
@@ -20,7 +20,7 @@ where
     Self: 'db,
 {
     type RedbPrimaryTable = redb::Table<'txn, Key, &'static [u8]>;
-    type RedbSecondaryTable = redb::Table<'txn, Key, Key>;
+    type RedbSecondaryTable = redb::MultimapTable<'txn, Key, Key>;
 
     type RedbTransaction<'db_bis> = redb::WriteTransaction where Self: 'db_bis;
 
@@ -58,7 +58,7 @@ where
             })?;
         let table = self
             .redb_transaction
-            .open_table(secondary_table_definition.redb)?;
+            .open_multimap_table(secondary_table_definition.redb)?;
         Ok(table)
     }
 }
@@ -74,32 +74,38 @@ impl<'db> InternalRwTransaction<'db> {
         model: Model,
         item: Input,
     ) -> Result<(WatcherRequest, Output)> {
-        let already_exists;
         {
             let mut table = self.get_primary_table(&model)?;
-            already_exists = table
-                .insert(&item.primary_key, item.value.as_slice())?
-                .is_some();
-        }
+            table.insert(&item.primary_key, item.value.as_slice())?;
+        };
 
         for (secondary_key_def, _value) in &item.secondary_keys {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
-            let result = match item.secondary_key_value(secondary_key_def)? {
-                KeyEntry::Default(value) => secondary_table.insert(value, &item.primary_key)?,
-                KeyEntry::Optional(value) => {
-                    if let Some(value) = value {
-                        secondary_table.insert(value, &item.primary_key)?
+            let secondary_key = match item.secondary_key_value(secondary_key_def)? {
+                KeyEntry::Default(secondary_key) => secondary_key,
+                KeyEntry::Optional(secondary_key) => {
+                    if let Some(secondary_key) = secondary_key {
+                        secondary_key
                     } else {
-                        None
+                        continue;
                     }
                 }
             };
-            if result.is_some() && !already_exists {
-                return Err(Error::DuplicateKey {
-                    key_name: secondary_key_def.unique_table_name.to_string(),
+
+            if secondary_key_def.options.unique {
+                let check = {
+                    let primary_keys = secondary_table.get(&secondary_key)?;
+                    primary_keys.len() > 0
+                };
+                if check {
+                    return Err(Error::DuplicateKey {
+                        key_name: secondary_key_def.unique_table_name.to_string(),
+                    }
+                    .into());
                 }
-                .into());
             }
+
+            secondary_table.insert(secondary_key, &item.primary_key)?;
         }
 
         Ok((
@@ -126,12 +132,12 @@ impl<'db> InternalRwTransaction<'db> {
         for (secondary_key_def, _value) in keys {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             match &item.secondary_key_value(secondary_key_def)? {
-                KeyEntry::Default(value) => {
-                    secondary_table.remove(value)?;
+                KeyEntry::Default(secondary_key) => {
+                    secondary_table.remove(secondary_key, &item.primary_key)?;
                 }
-                KeyEntry::Optional(value) => {
-                    if let Some(value) = value {
-                        secondary_table.remove(value)?;
+                KeyEntry::Optional(secondary_key) => {
+                    if let Some(value) = secondary_key {
+                        secondary_table.remove(value, &item.primary_key)?;
                     }
                 }
             }
@@ -192,21 +198,27 @@ impl<'db> InternalRwTransaction<'db> {
             let mut secondary_keys_to_delete = vec![];
             let mut number_detected_key_to_delete = key_items.len();
             for secondary_items in secondary_table.iter()? {
-                // Ta avoid to iter on all secondary keys if we have already detected all keys to delete
-                if number_detected_key_to_delete == 0 {
-                    break;
-                }
-                let (secondary_key, primary_key) = secondary_items?;
-                if key_items.contains(&primary_key.value().to_owned()) {
-                    // TODO remove owned
-                    secondary_keys_to_delete.push(secondary_key.value().to_owned());
-                    number_detected_key_to_delete -= 1;
+                let (secondary_key, primary_keys) = secondary_items?;
+                for primary_key in primary_keys {
+                    let primary_key = primary_key?;
+                    // Ta avoid to iter on all secondary keys if we have already detected all keys to delete
+                    if number_detected_key_to_delete == 0 {
+                        break;
+                    }
+                    if key_items.contains(&primary_key.value().to_owned()) {
+                        // TODO remove owned
+                        secondary_keys_to_delete.push((
+                            secondary_key.value().to_owned(),
+                            primary_key.value().to_owned(),
+                        ));
+                        number_detected_key_to_delete -= 1;
+                    }
                 }
             }
 
             // Delete secondary keys
-            for secondary_key in secondary_keys_to_delete {
-                secondary_table.remove(secondary_key)?;
+            for (secondary_key, primary_key) in secondary_keys_to_delete {
+                secondary_table.remove(secondary_key, primary_key)?;
             }
         }
 

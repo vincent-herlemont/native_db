@@ -3,13 +3,13 @@ use crate::db_type::{
 };
 use crate::table_definition::PrimaryTableDefinition;
 use crate::Model;
-use redb::ReadableTable;
 use redb::ReadableTableMetadata;
+use redb::{ReadableMultimapTable, ReadableTable};
 use std::collections::HashMap;
 
 pub trait PrivateReadableTransaction<'db, 'txn> {
     type RedbPrimaryTable: ReadableTable<Key, &'static [u8]>;
-    type RedbSecondaryTable: ReadableTable<Key, Key>;
+    type RedbSecondaryTable: ReadableMultimapTable<Key, Key>;
 
     type RedbTransaction<'db_bis>
     where
@@ -44,9 +44,10 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
 
         let table = self.get_secondary_table(&model, &secondary_key)?;
 
-        let value = table.get(key.to_key())?;
-        let primary_key = if let Some(value) = value {
-            value.value().to_owned()
+        let mut primary_keys = table.get(key.to_key())?;
+        let primary_key = if let Some(primary_key) = primary_keys.next() {
+            let primary_key = primary_key?;
+            primary_key.value().to_owned()
         } else {
             return Ok(None);
         };

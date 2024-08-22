@@ -96,11 +96,12 @@ impl Builder {
         let builder = self.database_configuration.new_rdb_builder();
         let database_instance = match DatabaseInstance::open_on_disk(builder, &path) {
             Err(Error::RedbDatabaseError(redb::DatabaseError::UpgradeRequired(_))) => {
-                upgrade::upgrade(&self.database_configuration, &path, &models.models_builder)
+                upgrade::upgrade_redb(&self.database_configuration, &path, &models.models_builder)
             }
             Err(error) => return Err(error),
             Ok(database_instance) => Ok(database_instance),
         }?;
+        upgrade::upgrade_underlying_database(&database_instance, &models.models_builder)?;
         self.init(database_instance, models)
     }
 

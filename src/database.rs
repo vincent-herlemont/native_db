@@ -9,7 +9,7 @@ use crate::transaction::RTransaction;
 use crate::transaction::RwTransaction;
 use crate::watch::query::{InternalWatch, Watch};
 use crate::{watch, Metadata};
-use redb::{ReadableTableMetadata, TableHandle};
+use redb::{MultimapTableHandle, ReadableTableMetadata, TableHandle};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
@@ -125,9 +125,9 @@ impl<'a> Database<'a> {
         for secondary_key in model_builder.model.secondary_keys.iter() {
             primary_table_definition.secondary_tables.insert(
                 secondary_key.clone(),
-                redb::TableDefinition::new(secondary_key.unique_table_name.as_str()).into(),
+                redb::MultimapTableDefinition::new(secondary_key.unique_table_name.as_str()).into(),
             );
-            rw.open_table(
+            rw.open_multimap_table(
                 primary_table_definition.secondary_tables[&secondary_key]
                     .redb
                     .clone(),
@@ -226,7 +226,7 @@ impl<'a> Database<'a> {
         let mut stats_secondary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {
             for secondary_table in primary_table.secondary_tables.values() {
-                let result_table_open = rx.open_table(secondary_table.redb.clone());
+                let result_table_open = rx.open_multimap_table(secondary_table.redb.clone());
                 let stats_table = match result_table_open {
                     Err(redb::TableError::TableDoesNotExist(_)) => StatsTable {
                         name: secondary_table.redb.name().to_string(),

@@ -30,7 +30,6 @@ pub fn load_or_create_metadata(database_instance: &DatabaseInstance) -> Result<M
     let read_thx = database.begin_read()?;
 
     if let Ok(table) = read_thx.open_table(TABLE) {
-        println!("Metadata table found");
         let current_version = table
             .get(VERSION_NATIVE_DB_NAME)?
             .expect("Fatal error: current_version not found");
@@ -42,7 +41,6 @@ pub fn load_or_create_metadata(database_instance: &DatabaseInstance) -> Result<M
             current_native_model_version.value().to_string(),
         ));
     } else {
-        println!("Metadata table not found");
         // Create the metadata table if it does not exist
         let metadata = Metadata::default();
         save_metadata(database_instance, &metadata)?;
