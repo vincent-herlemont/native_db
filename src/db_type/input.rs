@@ -1,4 +1,4 @@
-use crate::db_type::{composite_key, Error, Key, KeyDefinition, KeyEntry, KeyOptions, Result};
+use crate::db_type::{Error, Key, KeyDefinition, KeyEntry, KeyOptions, Result};
 
 #[derive(Debug)]
 pub struct Input {
@@ -21,13 +21,15 @@ impl Input {
         let out = if !secondary_key_def.options.unique {
             match secondary_key {
                 KeyEntry::Default(value) => {
-                    KeyEntry::Default(composite_key(value, &self.primary_key))
+                    // KeyEntry::Default(composite_key(value, &self.primary_key))
+                    KeyEntry::Default(value.to_owned())
                 }
                 KeyEntry::Optional(value) => {
-                    let value = value
-                        .as_ref()
-                        .map(|value| composite_key(value, &self.primary_key));
-                    KeyEntry::Optional(value)
+                    // let value = value
+                    //     .as_ref()
+                    //     .map(|value| composite_key(value, &self.primary_key));
+                    // KeyEntry::Optional(value)
+                    KeyEntry::Optional(value.as_ref().map(|value| value.to_owned()))
                 }
             }
         } else {

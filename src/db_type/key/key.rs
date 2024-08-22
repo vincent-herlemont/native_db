@@ -1,6 +1,7 @@
 use redb::{Key as RedbKey, TypeName, Value as RedbValue};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
+use std::u8;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key(Vec<u8>);
@@ -11,6 +12,11 @@ impl Key {
     }
 
     pub(crate) fn extend(&mut self, data: &Key) {
+        self.0.extend(data.0.iter());
+    }
+
+    pub fn extend_with_delimiter(&mut self, delimiter: u8, data: &Key) {
+        self.0.push(delimiter);
         self.0.extend(data.0.iter());
     }
 
@@ -334,7 +340,11 @@ impl KeyRange {
     {
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Included(end)) => {
-                KeyRange::RangeInclusive(start.to_key()..=end.to_key())
+                let start = start.to_key();
+                let mut end = end.to_key();
+                // Add 255 to the end key to include the last key
+                end.extend(&Key::new(vec![255]));
+                KeyRange::RangeInclusive(start..=end)
             }
             (Bound::Included(start), Bound::Excluded(end)) => {
                 KeyRange::Range(start.to_key()..end.to_key())
@@ -343,7 +353,11 @@ impl KeyRange {
                 start: start.to_key(),
             }),
             (Bound::Excluded(start), Bound::Included(end)) => {
-                KeyRange::RangeInclusive(start.to_key()..=end.to_key())
+                let start = start.to_key();
+                let mut end = end.to_key();
+                // Add 255 to the end key to include the last key
+                end.extend(&Key::new(vec![255]));
+                KeyRange::RangeInclusive(start..=end)
             }
             (Bound::Excluded(start), Bound::Excluded(end)) => {
                 KeyRange::Range(start.to_key()..end.to_key())

@@ -49,8 +49,9 @@ itertools = "0.13"
 include_dir = "0.7"
 
 [features]
-default = [ "upgrade_0_5_x" ]
+default = [ "upgrade_0_5_x", "upgrade_0_7_x" ]
 upgrade_0_5_x = [ "redb1" ]
+upgrade_0_7_x = [ ]
 
 [[bench]]
 name = "overhead_data_size"

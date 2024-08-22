@@ -25,6 +25,7 @@ struct Item2 {
 }
 
 #[test]
+#[cfg(feature = "upgrade_0_7_x")]
 fn test_current_version() {
     use std::path::PathBuf;
     #[cfg(any(target_os = "android", target_os = "ios"))]

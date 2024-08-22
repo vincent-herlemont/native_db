@@ -24,7 +24,9 @@ struct Item2 {
     name: String,
 }
 
+// TODO: when we remove the feature upgrade_0_7_x, we must rewrite the test
 #[test]
+#[cfg(feature = "upgrade_0_7_x")]
 fn test_refresh() {
     use std::path::PathBuf;
     println!("test_refresh");

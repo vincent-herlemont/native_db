@@ -1,6 +1,6 @@
 use crate::db_type::ToKey;
 use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
-use redb;
+use redb::{self};
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
@@ -8,7 +8,7 @@ use std::ops::RangeBounds;
 pub struct SecondaryScan<PrimaryTable, SecondaryTable, T: ToInput>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
-    SecondaryTable: redb::ReadableTable<Key, Key>,
+    SecondaryTable: redb::ReadableMultimapTable<Key, Key>,
 {
     pub(crate) primary_table: PrimaryTable,
     pub(crate) secondary_table: SecondaryTable,
@@ -18,7 +18,7 @@ where
 impl<PrimaryTable, SecondaryTable, T: ToInput> SecondaryScan<PrimaryTable, SecondaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
-    SecondaryTable: redb::ReadableTable<Key, Key>,
+    SecondaryTable: redb::ReadableMultimapTable<Key, Key>,
 {
     pub(crate) fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable) -> Self {
         Self {
@@ -65,11 +65,25 @@ where
     ///     Ok(())
     /// }
     /// ```
+    /// TODO: remove unwrap and return Result
     pub fn all(&self) -> SecondaryScanIterator<PrimaryTable, T> {
-        let range = self.secondary_table.range::<Key>(..).unwrap();
+        let mut primary_keys = vec![];
+        for keys in self.secondary_table.iter().unwrap() {
+            let (l_secondary_key, l_primary_keys) = keys.unwrap();
+            dbg!(&l_secondary_key.value());
+            for primary_key in l_primary_keys {
+                let primary_key = primary_key.unwrap();
+                primary_keys.push(primary_key);
+            }
+        }
+
+        for primary_key in primary_keys.iter() {
+            dbg!(&primary_key.value());
+        }
+
         SecondaryScanIterator {
             primary_table: &self.primary_table,
-            range,
+            primary_keys: primary_keys.into_iter(),
             _marker: PhantomData::default(),
         }
     }
@@ -112,14 +126,23 @@ where
         &self,
         range: R,
     ) -> SecondaryScanIterator<PrimaryTable, T> {
+        let mut primary_keys = vec![];
         let database_inner_key_value_range = KeyRange::new(range);
-        let range = self
+        for keys in self
             .secondary_table
             .range::<Key>(database_inner_key_value_range)
-            .unwrap();
+            .unwrap()
+        {
+            let (_, l_primary_keys) = keys.unwrap();
+            for primary_key in l_primary_keys {
+                let primary_key = primary_key.unwrap();
+                primary_keys.push(primary_key);
+            }
+        }
+
         SecondaryScanIterator {
             primary_table: &self.primary_table,
-            range,
+            primary_keys: primary_keys.into_iter(),
             _marker: PhantomData::default(),
         }
     }
@@ -161,27 +184,44 @@ where
     pub fn start_with<'a>(
         &'a self,
         start_with: impl ToKey + 'a,
-    ) -> SecondaryScanIteratorStartWith<'a, PrimaryTable, T> {
+    ) -> SecondaryScanIterator<'a, PrimaryTable, T> {
         let start_with = start_with.to_key();
-        let range = self
+        let mut primary_keys = vec![];
+        for keys in self
             .secondary_table
             .range::<Key>(start_with.clone()..)
-            .unwrap();
-        SecondaryScanIteratorStartWith {
+            .unwrap()
+        {
+            let (l_secondary_key, l_primary_keys) = keys.unwrap();
+            if !l_secondary_key
+                .value()
+                .as_slice()
+                .starts_with(start_with.as_slice())
+            {
+                break;
+            }
+            for primary_key in l_primary_keys {
+                let primary_key = primary_key.unwrap();
+                primary_keys.push(primary_key);
+            }
+        }
+
+        SecondaryScanIterator {
             primary_table: &self.primary_table,
-            start_with,
-            range,
+            primary_keys: primary_keys.into_iter(),
             _marker: PhantomData::default(),
         }
     }
 }
+
+use std::vec::IntoIter;
 
 pub struct SecondaryScanIterator<'a, PrimaryTable, T: ToInput>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
     pub(crate) primary_table: &'a PrimaryTable,
-    pub(crate) range: redb::Range<'a, Key, Key>,
+    pub(crate) primary_keys: IntoIter<redb::AccessGuard<'a, Key>>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -192,9 +232,9 @@ where
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.range.next() {
-            Some(Ok((_, key))) => {
-                if let Ok(value) = self.primary_table.get(key.value()) {
+        match self.primary_keys.next() {
+            Some(primary_key) => {
+                if let Ok(value) = self.primary_table.get(primary_key.value()) {
                     unwrap_item(value)
                 } else {
                     None
@@ -211,8 +251,14 @@ where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        match self.range.next_back() {
-            Some(Ok((_, key))) => unwrap_item(self.primary_table.get(key.value()).unwrap()),
+        match self.primary_keys.next_back() {
+            Some(primary_key) => {
+                if let Ok(value) = self.primary_table.get(primary_key.value()) {
+                    unwrap_item(value)
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -224,8 +270,7 @@ where
     T: ToInput,
 {
     pub(crate) primary_table: &'a PrimaryTable,
-    pub(crate) start_with: Key,
-    pub(crate) range: redb::Range<'a, Key, Key>,
+    pub(crate) primary_keys: IntoIter<redb::AccessGuard<'a, Key>>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -237,19 +282,29 @@ where
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.range.next() {
-            Some(Ok((secondary_key, primary_key))) => {
-                if secondary_key
-                    .value()
-                    .as_slice()
-                    .starts_with(self.start_with.as_slice())
-                {
-                    unwrap_item(self.primary_table.get(primary_key.value()).unwrap())
+        match self.primary_keys.next() {
+            Some(primary_key) => {
+                if let Ok(value) = self.primary_table.get(primary_key.value()) {
+                    unwrap_item(value)
                 } else {
                     None
                 }
             }
             _ => None,
         }
+        // match self.range.next() {
+        //     Some(Ok((secondary_key, primary_key))) => {
+        //         if secondary_key
+        //             .value()
+        //             .as_slice()
+        //             .starts_with(self.start_with.as_slice())
+        //         {
+        //             unwrap_item(self.primary_table.get(primary_key.value()).unwrap())
+        //         } else {
+        //             None
+        //         }
+        //     }
+        //     _ => None,
+        // }
     }
 }

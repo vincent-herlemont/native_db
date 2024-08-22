@@ -59,7 +59,7 @@ fn upgrade_secondary_table(
     let redb1_primary_table_definition: Redb1SecondaryTableDefinition =
         redb1::TableDefinition::new(table_name);
     let redb2_primary_table_definition: Redb2SecondaryTableDefinition =
-        redb2::TableDefinition::new(table_name);
+        redb2::MultimapTableDefinition::new(table_name);
 
     let redb1_read_txn: redb1::ReadTransaction = db1.begin_read()?;
     let redb2_write_txn = db2.begin_write()?;
@@ -68,7 +68,8 @@ fn upgrade_secondary_table(
         let redb1_table = redb1_read_txn
             .open_table(redb1_primary_table_definition)
             .unwrap();
-        let mut redb2_table = redb2_write_txn.open_table(redb2_primary_table_definition)?;
+        let mut redb2_table =
+            redb2_write_txn.open_multimap_table(redb2_primary_table_definition)?;
 
         use redb1::ReadableTable;
         for r in redb1_table.iter().unwrap() {
