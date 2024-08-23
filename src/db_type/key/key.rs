@@ -263,24 +263,115 @@ impl_inner_key_value_for_primitive!(i128);
 impl_inner_key_value_for_primitive!(f32);
 impl_inner_key_value_for_primitive!(f64);
 
-// Implement Uuid::uuid
-
+// Implement uuid::Uuid
 #[cfg(feature = "uuid")]
-impl ToKey for &uuid::Uuid {
-    fn to_key(&self) -> Key {
-        Key::new(self.as_bytes().to_vec())
+mod uuid_to_key {
+    use super::*;
+    impl ToKey for &uuid::Uuid {
+        fn to_key(&self) -> Key {
+            Key::new(self.as_bytes().to_vec())
+        }
+    }
+
+    impl ToKey for uuid::Uuid {
+        fn to_key(&self) -> Key {
+            Key::new(self.as_bytes().to_vec())
+        }
+    }
+}
+
+// Implement ulid::Ulid
+#[cfg(feature = "ulid")]
+mod ulid_to_key {
+    use super::*;
+    use ulid::Ulid;
+
+    impl ToKey for Ulid {
+        fn to_key(&self) -> Key {
+            Key::new(self.to_bytes().to_vec())
+        }
+    }
+
+    impl ToKey for &Ulid {
+        fn to_key(&self) -> Key {
+            Key::new(self.to_bytes().to_vec())
+        }
     }
 }
 
 // Implement chrono::DateTime<TZ>
-
 #[cfg(feature = "chrono")]
-impl<TZ> ToKey for &chrono::DateTime<TZ>
-where
-    TZ: chrono::TimeZone,
-{
-    fn to_key(&self) -> Key {
-        Key::new(self.timestamp().to_be_bytes().to_vec())
+mod chrono_to_key {
+    use super::*;
+    use chrono::{DateTime, NaiveDateTime, NaiveTime, TimeZone, Timelike};
+
+    // DateTime<TZ> implementations
+    impl<TZ: TimeZone> ToKey for DateTime<TZ> {
+        fn to_key(&self) -> Key {
+            Key::new(
+                self.timestamp_nanos_opt()
+                    .unwrap_or(0)
+                    .to_be_bytes()
+                    .to_vec(),
+            )
+        }
+    }
+
+    impl<TZ: TimeZone> ToKey for &DateTime<TZ> {
+        fn to_key(&self) -> Key {
+            Key::new(
+                self.timestamp_nanos_opt()
+                    .unwrap_or(0)
+                    .to_be_bytes()
+                    .to_vec(),
+            )
+        }
+    }
+
+    // NaiveDateTime implementations
+    impl ToKey for NaiveDateTime {
+        fn to_key(&self) -> Key {
+            Key::new(
+                self.and_utc()
+                    .timestamp_nanos_opt()
+                    .unwrap_or(0)
+                    .to_be_bytes()
+                    .to_vec(),
+            )
+        }
+    }
+
+    impl ToKey for &NaiveDateTime {
+        fn to_key(&self) -> Key {
+            Key::new(
+                self.and_utc()
+                    .timestamp_nanos_opt()
+                    .unwrap_or(0)
+                    .to_be_bytes()
+                    .to_vec(),
+            )
+        }
+    }
+
+    // NaiveTime implementations
+    impl ToKey for NaiveTime {
+        fn to_key(&self) -> Key {
+            Key::new(
+                (self.hour() * 3600 + self.minute() * 60 + self.second())
+                    .to_be_bytes()
+                    .to_vec(),
+            )
+        }
+    }
+
+    impl ToKey for &NaiveTime {
+        fn to_key(&self) -> Key {
+            Key::new(
+                (self.hour() * 3600 + self.minute() * 60 + self.second())
+                    .to_be_bytes()
+                    .to_vec(),
+            )
+        }
     }
 }
 
@@ -314,7 +405,7 @@ impl RedbValue for Key {
 
 impl RedbKey for Key {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
-        data1.cmp(&data2)
+        data1.cmp(data2)
     }
 }
 
@@ -392,8 +483,7 @@ mod tests {
     use std::ops::RangeBounds;
 
     fn range<T: ToKey, R: RangeBounds<T>>(range: R) -> KeyRange {
-        let range = KeyRange::new(range);
-        range
+        KeyRange::new(range)
     }
 
     #[test]
