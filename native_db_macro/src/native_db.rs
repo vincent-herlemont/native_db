@@ -13,6 +13,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         struct_name: struct_name.clone(),
         primary_key: None,
         secondary_keys: Default::default(),
+        do_export_keys: None,
     };
     let model_attributes_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(args with model_attributes_parser);
@@ -33,6 +34,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
     let native_db_gks = model_native_db.native_db_secondary_key();
     let native_db_model = model_native_db.native_db_model();
 
+    let keys_enum_visibility = model_native_db.keys_enum_visibility();
     let keys_enum_name = model_native_db.keys_enum_name();
     let keys_enum = model_native_db.secondary_keys_enum();
     let keys_enum_database_key = model_native_db.keys_enum_database_key();
@@ -57,7 +59,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         #[allow(non_camel_case_types)]
-        pub(crate) enum #keys_enum_name {
+        #keys_enum_visibility enum #keys_enum_name {
             #(#keys_enum),*
         }
 
