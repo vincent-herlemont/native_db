@@ -39,6 +39,10 @@ impl DatabaseInstance {
     pub(crate) fn redb_database(&self) -> Result<&redb::Database> {
         self.kind.redb_database()
     }
+
+    pub(crate) fn redb_database_mut(&mut self) -> Result<&mut redb::Database> {
+        self.kind.redb_database_mut()
+    }
 }
 
 enum DatabaseInstanceKind {
@@ -54,6 +58,13 @@ enum DatabaseInstanceKind {
 
 impl DatabaseInstanceKind {
     pub(crate) fn redb_database(&self) -> Result<&redb::Database> {
+        match self {
+            DatabaseInstanceKind::InMemory { redb_database } => Ok(redb_database),
+            DatabaseInstanceKind::OnDisk { redb_database, .. } => Ok(redb_database),
+        }
+    }
+
+    pub(crate) fn redb_database_mut(&mut self) -> Result<&mut redb::Database> {
         match self {
             DatabaseInstanceKind::InMemory { redb_database } => Ok(redb_database),
             DatabaseInstanceKind::OnDisk { redb_database, .. } => Ok(redb_database),

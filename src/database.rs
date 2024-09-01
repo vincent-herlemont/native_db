@@ -148,6 +148,14 @@ impl<'a> Database<'a> {
         &self.metadata
     }
 
+    /// Compact the database.
+    ///
+    /// Similar to [redb::Database::compact()](https://docs.rs/redb/latest/redb/struct.Database.html#method.compact).
+    pub fn compact(&mut self) -> Result<bool> {
+        self.instance.redb_database_mut()?.compact()?;
+        Ok(true)
+    }
+
     /// Returns true if the database is upgrading from the given version selector.
     ///
     /// - If the database is the old version, not matching the selector the function will return `false.
