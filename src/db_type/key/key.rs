@@ -26,7 +26,7 @@ impl Key {
 /// In the below example, we define a struct `City` and implement the `ToKey` trait for it.
 /// It can be use for primary or/and secondary key, and any other type that require `City` as a key.
 ///
-/// # Example
+/// ## Example
 /// ```rust
 /// use native_db::*;
 /// use native_model::{native_model, Model};
@@ -66,6 +66,102 @@ impl Key {
 ///     let _us: Option<Contry> = r.get().secondary(ContryKey::bigest_city,&City("New York".to_string()))?;
 ///     Ok(())
 /// }
+/// ```
+///
+/// ## Example with `Uuid`
+///
+/// You can use [uuid](https://crates.io/crates/uuid) crate to generate a `Uuid` key.
+///
+/// ```rust
+/// use native_db::*;
+/// use native_model::{native_model, Model};
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
+/// struct Uuid(uuid::Uuid);
+///
+/// impl ToKey for &Uuid {
+///     fn to_key(&self) -> Key {
+///         Key::new(self.0.as_bytes().to_vec())
+///     }
+/// }
+///
+/// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
+/// #[native_model(id = 1, version = 1)]
+/// #[native_db]
+/// struct Item {
+///     #[primary_key]
+///     uuid: Uuid,
+/// }
+///
+/// fn main() -> Result<(), db_type::Error> {
+///     let mut models = Models::new();
+///     models.define::<Item>()?;
+///     let db = Builder::new().create_in_memory(&models)?;
+///     
+///     let rw = db.rw_transaction()?;
+///     let item = Item { uuid: Uuid(uuid::Uuid::new_v4()) };
+///     rw.insert(item.clone())?;
+///     rw.commit()?;
+///
+///     let r = db.r_transaction()?;
+///     let result_item: Item = r.get().primary(&item.uuid)?.unwrap();
+///     assert_eq!(result_item.uuid, item.uuid);
+///     Ok(())
+/// }
+/// ```
+///
+/// ## Example with `chrono`
+///
+/// You can use [chrono](https://crates.io/crates/chrono) crate to generate a `chrono::DateTime` key.
+///
+/// ```rust
+/// use native_db::*;
+/// use native_model::{native_model, Model};
+/// use serde::{Deserialize, Serialize};
+/// use itertools::Itertools;
+///
+/// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
+/// struct DateTime(chrono::DateTime<chrono::Utc>);
+///
+/// impl ToKey for &DateTime {
+///     fn to_key(&self) -> Key {
+///         Key::new(self.0.timestamp_nanos().to_be_bytes().to_vec())
+///     }
+/// }
+///
+/// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
+/// #[native_model(id = 1, version = 1)]
+/// #[native_db]
+/// struct Item {
+///     #[primary_key]
+///     id: u32,
+///     #[secondary_key]
+///     created_at: DateTime,
+/// }
+///
+/// fn main() -> Result<(), db_type::Error> {
+///     let mut models = Models::new();
+///     models.define::<Item>()?;
+///     let db = Builder::new().create_in_memory(&models)?;
+///     
+///     let rw = db.rw_transaction()?;
+///     let item1 = Item { id: 2, created_at: DateTime(chrono::Utc::now()) };
+///     rw.insert(item1.clone())?;
+///     std::thread::sleep(std::time::Duration::from_millis(1));
+///
+///     let item2 = Item { id: 1, created_at: DateTime(chrono::Utc::now()) };
+///     rw.insert(item2.clone())?;
+///     rw.commit()?;    
+///     
+///     let r = db.r_transaction()?;
+///     let result_items: Vec<Item> = r.scan().secondary(ItemKey::created_at)?.all()?.try_collect()?;
+///     assert_eq!(result_items.len(), 2);
+///     assert_eq!(result_items[0].id, 1);
+///     assert_eq!(result_items[1].id, 2);
+///     Ok(())
+/// }
+///
 /// ```
 pub trait ToKey: Debug {
     fn to_key(&self) -> Key;
@@ -264,27 +360,6 @@ impl_inner_key_value_for_primitive!(i64);
 impl_inner_key_value_for_primitive!(i128);
 impl_inner_key_value_for_primitive!(f32);
 impl_inner_key_value_for_primitive!(f64);
-
-// Implement Uuid::uuid
-
-#[cfg(feature = "uuid")]
-impl ToKey for &uuid::Uuid {
-    fn to_key(&self) -> Key {
-        Key::new(self.as_bytes().to_vec())
-    }
-}
-
-// Implement chrono::DateTime<TZ>
-
-#[cfg(feature = "chrono")]
-impl<TZ> ToKey for &chrono::DateTime<TZ>
-where
-    TZ: chrono::TimeZone,
-{
-    fn to_key(&self) -> Key {
-        Key::new(self.timestamp().to_be_bytes().to_vec())
-    }
-}
 
 impl RedbValue for Key {
     type SelfType<'a> = Key;

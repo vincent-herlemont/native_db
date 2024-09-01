@@ -23,9 +23,6 @@ serde = { version = "1.0" }
 native_model = { version = "0.4.19" }
 semver = "1"
 
-uuid = { version = "1.10.0" , optional = true }
-chrono = { version = "0.4" , optional = true }
-
 # Optional tokio support
 tokio = { version = "1.40.0", features = ["sync"], optional = true }
 # TODO: channels with futures

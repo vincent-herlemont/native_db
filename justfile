@@ -11,7 +11,7 @@ build_default *args:
     cargo build {{args}}
 
 build_with_optional *args:
-    cargo build -F chrono -F uuid -F tokio {{args}}
+    cargo build -F tokio {{args}}
 
 build_all *args:
     just build_no_default {{args}};
@@ -25,7 +25,7 @@ test_default *args:
     cargo test {{args}} -- --nocapture
 
 test_with_optional *args:
-    cargo test -F chrono -F uuid -F tokio {{args}} -- --nocapture
+    cargo test -F tokio {{args}} -- --nocapture
 
 test_all *args:
     just test_no_default {{args}};

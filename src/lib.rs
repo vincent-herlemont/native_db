@@ -12,6 +12,8 @@
 //!    - [Migration](#migration)
 //! - Advanced
 //!    - [`Define a type as a key`](crate::db_type::ToKey)
+//!       - [Example with `uuid`](crate::db_type::ToKey#example-with-uuid)
+//!       - [Example with `chrono`](crate::db_type::ToKey#example-with-chrono)
 //!
 //! # Api
 //!
