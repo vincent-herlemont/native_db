@@ -24,9 +24,10 @@
 //!    - [`open`](crate::Builder::open) - Open a database.
 //! - [`Database`] - Database instance.
 //!    - [`rw_transaction`](crate::Database::rw_transaction) - Create a read-write transaction.
-//!       - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item.
-//!       - [`update`](crate::transaction::RwTransaction::update) - Update a item.
-//!       - [`remove`](crate::transaction::RwTransaction::remove) - Remove a item.
+//!       - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item, fail if the item already exists.
+//!       - [`upsert`](crate::transaction::RwTransaction::upsert) - Upsert a item, update if the item already exists.
+//!       - [`update`](crate::transaction::RwTransaction::update) - Update a item, replace an existing item.
+//!       - [`remove`](crate::transaction::RwTransaction::remove) - Remove a item, remove an existing item.
 //!       - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affect all items.
 //!       - [`commit`](crate::transaction::RwTransaction::commit) - Commit the transaction.
 //!       - [`abort`](crate::transaction::RwTransaction::abort) - Abort the transaction.

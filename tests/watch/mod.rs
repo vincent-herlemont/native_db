@@ -110,7 +110,7 @@ fn watch_multithreading() {
             let rw = dba.rw_transaction().unwrap();
             {
                 let item_a = ItemA { id: 1 };
-                rw.insert(item_a.clone()).unwrap();
+                rw.upsert(item_a.clone()).unwrap();
             }
             rw.commit().unwrap();
             for _ in 0..1 {
@@ -128,15 +128,22 @@ fn watch_multithreading() {
         let rw = dbb.rw_transaction().unwrap();
         {
             let item_a = ItemA { id: 1 };
-            rw.insert(item_a.clone()).unwrap();
+            rw.upsert(item_a.clone()).unwrap();
         }
         rw.commit().unwrap();
 
         handle.join().unwrap();
-        for _ in 0..2 {
+        {
             let inner_event: ItemA =
                 if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
                     event.inner().unwrap()
+                } else {
+                    panic!("wrong event")
+                };
+            assert_eq!(inner_event, item_a);
+            let inner_event: ItemA =
+                if let Event::Update(event) = recv.recv_timeout(TIMEOUT).unwrap() {
+                    event.inner_old().unwrap()
                 } else {
                     panic!("wrong event")
                 };
@@ -299,7 +306,7 @@ fn unwatch() {
     assert!(db.unwatch(recv_id).unwrap());
 
     let rw = db.rw_transaction().unwrap();
-    rw.insert(item_a.clone()).unwrap();
+    rw.upsert(item_a.clone()).unwrap();
     rw.commit().unwrap();
     assert!(recv.try_recv().is_err());
 }
@@ -334,7 +341,7 @@ fn unwatch_by_deleted_receiver() {
     drop(recv);
 
     let rw = db.rw_transaction().unwrap();
-    rw.insert(item_a.clone()).unwrap();
+    rw.upsert(item_a.clone()).unwrap();
     // The watcher is removed during the commit because the receiver is dropped
     rw.commit().unwrap();
 

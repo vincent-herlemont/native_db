@@ -177,20 +177,14 @@ impl<'a> Database<'a> {
         let comparator = VersionReq::parse(selector)
             .expect(format!("Invalid version selector: {}", selector).as_str());
 
-
         let previous_version = if let Some(previous_version) = metadata.previous_version() {
             previous_version
         } else {
             return Ok(true);
         };
-        
-        let previous_version = Version::parse(previous_version).expect(
-            format!(
-                "Invalid previous version: {}",
-                previous_version
-            )
-            .as_str(),
-        );
+
+        let previous_version = Version::parse(previous_version)
+            .expect(format!("Invalid previous version: {}", previous_version).as_str());
         let current_version = Version::parse(metadata.current_version())
             .expect(format!("Invalid current version: {}", metadata.current_version()).as_str());
 

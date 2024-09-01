@@ -13,7 +13,7 @@ struct Item {
 }
 
 #[test]
-fn insert_get() {
+fn upsert_get() {
     let item = Item {
         id: 1,
         name: "test".to_string(),
@@ -27,7 +27,7 @@ fn insert_get() {
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();
-    rw.insert(item.clone()).unwrap();
+    rw.upsert(item.clone()).unwrap();
     rw.commit().unwrap();
 
     let r = db.r_transaction().unwrap();
@@ -36,16 +36,12 @@ fn insert_get() {
 }
 
 #[test]
-fn test_insert_duplicate_key() {
+fn test_upsert_duplicate_key() {
     let tf = TmpFs::new().unwrap();
 
     let item_1 = Item {
         id: 1,
-        name: "test1".to_string(),
-    };
-    let item_2 = Item {
-        id: 1,
-        name: "test2".to_string(),
+        name: "test".to_string(),
     };
 
     let mut models = Models::new();
@@ -55,11 +51,7 @@ fn test_insert_duplicate_key() {
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();
-    rw.insert(item_1.clone()).unwrap();
-    let result = rw.insert(item_2.clone());
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        db_type::Error::DuplicateKey { .. }
-    ));
+    rw.upsert(item_1.clone()).unwrap();
+    let result = rw.upsert(item_1.clone());
+    assert!(result.is_ok());
 }

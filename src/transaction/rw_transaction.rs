@@ -95,6 +95,8 @@ impl<'db, 'txn> RwTransaction<'db> {
 impl<'db, 'txn> RwTransaction<'db> {
     /// Insert a value into the database.
     ///
+    /// If the primary key already exists, an error is returned.
+    ///
     /// # Example
     /// ```rust
     /// use native_db::*;
@@ -133,6 +135,64 @@ impl<'db, 'txn> RwTransaction<'db> {
         let event = Event::new_insert(binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
+    }
+
+    /// Upsert a value into the database.
+    ///
+    /// If the primary key already exists, the value is updated.
+    ///
+    /// Returns the old value if the primary key already exists.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///     
+    ///     // Open a read transaction
+    ///     let rw = db.rw_transaction()?;
+    ///
+    ///     // Upsert a value
+    ///     let old_value: Option<Data> = rw.upsert(Data { id: 1 })?;
+    ///     assert!(old_value.is_none()); // Return None because the value does not exist
+    ///
+    ///     // Upsert the value again
+    ///     let old_value: Option<Data> = rw.upsert(Data { id: 1 })?;
+    ///     assert!(old_value.is_some()); // Return Some because the value already exist
+    ///
+    ///     // /!\ Don't forget to commit the transaction
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn upsert<T: ToInput>(&self, item: T) -> Result<Option<T>> {
+        let (watcher_request, new_binary_value, old_binary_value) = self
+            .internal
+            .concrete_upsert(T::native_db_model(), item.native_db_input()?)?;
+        if let Some(old_binary_value) = old_binary_value {
+            let event = Event::new_update(old_binary_value.clone(), new_binary_value);
+            self.batch.borrow_mut().add(watcher_request, event);
+            let old_binary_value = old_binary_value.inner()?;
+            Ok(Some(old_binary_value))
+        } else {
+            let event = Event::new_insert(new_binary_value);
+            self.batch.borrow_mut().add(watcher_request, event);
+            Ok(None)
+        }
     }
 
     /// Remove a value from the database.

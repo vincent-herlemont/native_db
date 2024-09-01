@@ -4,8 +4,10 @@ use crate::transaction::internal::private_readable_transaction::PrivateReadableT
 use crate::watch::WatcherRequest;
 use crate::{db_type::ToInput, Model};
 use redb::ReadableMultimapTable;
+use redb::ReadableTable;
 use redb::ReadableTableMetadata;
 use redb::TableHandle;
+use semver::Op;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 
@@ -74,11 +76,56 @@ impl<'db> InternalRwTransaction<'db> {
         model: Model,
         item: Input,
     ) -> Result<(WatcherRequest, Output)> {
-        {
+        let mut table = self.get_primary_table(&model)?;
+        if let Some(_) = table.get(&item.primary_key)? {
+            return Err(Error::DuplicateKey {
+                key_name: model.primary_key.unique_table_name.to_string(),
+            }
+            .into());
+        }
+        table.insert(&item.primary_key, item.value.as_slice())?;
+
+        self.util_insert_secondary_keys(&item, &model)?;
+
+        Ok((
+            WatcherRequest::new(
+                model.primary_key.unique_table_name.clone(),
+                item.primary_key,
+                item.secondary_keys,
+            ),
+            Output(item.value),
+        ))
+    }
+
+    pub(crate) fn concrete_upsert(
+        &self,
+        model: Model,
+        item: Input,
+    ) -> Result<(WatcherRequest, Output, Option<Output>)> {
+        let old_item = {
             let mut table = self.get_primary_table(&model)?;
-            table.insert(&item.primary_key, item.value.as_slice())?;
+            let old_item = table
+                .insert(&item.primary_key, item.value.as_slice())?
+                .map(|value| Output(value.value().to_vec()));
+            old_item
         };
 
+        self.util_insert_secondary_keys(&item, &model)?;
+
+        Ok((
+            WatcherRequest::new(
+                model.primary_key.unique_table_name.clone(),
+                item.primary_key,
+                item.secondary_keys,
+            ),
+            Output(item.value),
+            old_item,
+        ))
+    }
+
+    /// This method insert secondary keys and check conflicts.
+    /// It is used by [`concrete_insert`](Self::concrete_insert) and [`concrete_upsert`](Self::concrete_upsert).
+    pub(crate) fn util_insert_secondary_keys(&self, item: &Input, model: &Model) -> Result<()> {
         for (secondary_key_def, _value) in &item.secondary_keys {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             let secondary_key = match item.secondary_key_value(secondary_key_def)? {
@@ -108,14 +155,7 @@ impl<'db> InternalRwTransaction<'db> {
             secondary_table.insert(secondary_key, &item.primary_key)?;
         }
 
-        Ok((
-            WatcherRequest::new(
-                model.primary_key.unique_table_name.clone(),
-                item.primary_key,
-                item.secondary_keys,
-            ),
-            Output(item.value),
-        ))
+        Ok(())
     }
 
     pub(crate) fn concrete_remove(
