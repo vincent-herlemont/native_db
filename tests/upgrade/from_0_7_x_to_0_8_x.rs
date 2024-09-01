@@ -1,9 +1,9 @@
+use itertools::Itertools;
 use native_db::*;
 use native_model::{native_model, Model};
-use serde::{Deserialize, Serialize};
-use itertools::Itertools;
-use std::path::PathBuf;
 use redb::ReadableTable;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 const OLD_TABLE: redb::TableDefinition<Key, Key> = redb::TableDefinition::new("2_1_name");
 const NEW_TABLE: redb::MultimapTableDefinition<Key, Key> =

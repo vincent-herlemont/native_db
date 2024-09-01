@@ -105,10 +105,9 @@ impl RwLen<'_, '_> {
     /// Get the number of values by secondary key.
     ///
     /// Same as [`RLen::secondary()`](struct.RLen.html#method.secondary).
-    pub fn secondary<T: ToInput>(
-        &self,
-        _key_def: impl ToKeyDefinition<KeyOptions>,
-    ) -> Result<Option<T>> {
-        todo!()
+    pub fn secondary<T: ToInput>(&self, key_def: impl ToKeyDefinition<KeyOptions>) -> Result<u64> {
+        let model = T::native_db_model();
+        let result = self.internal.secondary_len(model, key_def)?;
+        Ok(result)
     }
 }
