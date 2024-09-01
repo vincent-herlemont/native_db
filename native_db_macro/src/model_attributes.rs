@@ -5,13 +5,14 @@ use quote::ToTokens;
 use std::collections::HashSet;
 use syn::meta::ParseNestedMeta;
 use syn::parse::Result;
-use syn::Field;
+use syn::{Field, LitBool};
 
 #[derive(Clone)]
 pub(crate) struct ModelAttributes {
     pub(crate) struct_name: StructName,
     pub(crate) primary_key: Option<KeyDefinition<()>>,
     pub(crate) secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
+    pub(crate) do_export_keys: Option<LitBool>,
 }
 
 impl ModelAttributes {
@@ -73,6 +74,8 @@ impl ModelAttributes {
             }
 
             self.secondary_keys.insert(key);
+        } else if meta.path.is_ident("export_keys") {
+            self.do_export_keys = Some(meta.value()?.parse()?);
         } else {
             panic!(
                 "Unknown attribute: {}",
