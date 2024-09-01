@@ -1,19 +1,10 @@
-use native_db::{
-    db_type::{Key, ToKey},
-    native_db, Builder, Models,
-};
+use native_db::{db_type::ToKey, native_db, Builder, Models};
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
 
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone)]
 struct City(String);
-
-impl ToKey for &City {
-    fn to_key(&self) -> Key {
-        Key::new(self.0.as_bytes().to_vec())
-    }
-}
 
 // Test genrate fields:
 // - primary_key

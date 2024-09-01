@@ -11,7 +11,7 @@ use serde::{
 use super::Key;
 
 #[derive(thiserror::Error, Debug)]
-enum KeySerializerError {
+pub(crate) enum KeySerializerError {
     #[error("unknown error")]
     Unknown(String),
 }
@@ -25,7 +25,19 @@ impl Error for KeySerializerError {
     }
 }
 
-struct KeySerializer(Key);
+pub(crate) struct KeySerializer(Key);
+
+impl KeySerializer {
+    pub(crate) fn new() -> KeySerializer {
+        KeySerializer(Key::new(vec![]))
+    }
+}
+
+impl Into<Key> for KeySerializer {
+    fn into(self) -> Key {
+        self.0
+    }
+}
 
 impl<'a> Serializer for &'a mut KeySerializer {
     type Ok = ();

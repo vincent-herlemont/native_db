@@ -1,7 +1,10 @@
 use redb::{Key as RedbKey, TypeName, Value as RedbValue};
+use serde::Serialize;
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
 use std::u8;
+
+use super::key_serializer::KeySerializer;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key(Vec<u8>);
@@ -39,11 +42,6 @@ impl Key {
 /// #[derive(Debug, Deserialize, Serialize)]
 /// struct City(String);
 ///
-/// impl ToKey for &City {
-///    fn to_key(&self) -> Key {
-///       Key::new(self.0.as_bytes().to_vec())
-///   }
-/// }
 ///
 /// #[derive(Serialize, Deserialize)]
 /// #[native_model(id=1, version=1)]
@@ -75,27 +73,6 @@ pub trait ToKey: Debug {
     fn to_key(&self) -> Key;
 }
 
-// Implement for char
-impl ToKey for char {
-    fn to_key(&self) -> Key {
-        Key::new(u32::from(*self).to_be_bytes().to_vec())
-    }
-}
-
-// Implement for String
-impl ToKey for &String {
-    fn to_key(&self) -> Key {
-        self.as_str().to_key()
-    }
-}
-
-// Implement for &str
-impl ToKey for &str {
-    fn to_key(&self) -> Key {
-        Key::new(self.as_bytes().to_vec())
-    }
-}
-
 impl ToKey for Key {
     // TODO: Bad because that cause a copy of the data when we pass a DatabaseInnerKeyValue to a function
     //       which has a impl InnerKeyValue parameter
@@ -104,189 +81,11 @@ impl ToKey for Key {
     }
 }
 
-// Implement for Slice
-impl<T> ToKey for &[T]
-where
-    T: ToKey,
-{
+impl<T: Serialize + Debug> ToKey for T {
     fn to_key(&self) -> Key {
-        let mut data = Vec::new();
-        for item in self.iter().as_slice() {
-            data.extend(item.to_key().0);
-        }
-        Key::new(data)
-    }
-}
-
-// Implement for tuples
-impl ToKey for () {
-    fn to_key(&self) -> Key {
-        Key::new(Vec::new())
-    }
-}
-
-// Macro for tuples
-macro_rules! impl_inner_key_value_for_tuple {
-    ( $($t:ident, $i:tt),+ | $t_last:ident, $i_last:tt ) => {
-        impl<$($t: ToKey,)+ $t_last: ToKey> ToKey for ($($t,)+ $t_last) {
-            fn to_key(&self) -> Key {
-                let mut data = Vec::new();
-                $(
-                    data.extend(self.$i.to_key().0);
-                )+
-                data.extend(self.$i_last.to_key().0);
-                Key::new(data)
-            }
-        }
-    }
-}
-
-// Implementations for tuples of different sizes
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0 | 
-    T1, 1
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1 | 
-    T2, 2
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
-    T2, 2 | T3, 3
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
-    T2, 2, T3, 3 | 
-    T4, 4
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1,
-    T2, 2, T3, 3, 
-    T4, 4 | T5, 5
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1,
-    T2, 2, T3, 3,
-    T4, 4, T5, 5 
-    | T6, 6
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1,
-    T2, 2, T3, 3, 
-    T4, 4, T5, 5,
-    T6, 6 | T7, 7
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1,
-    T2, 2, T3, 3,
-    T4, 4, T5, 5,
-    T6, 6, T7, 7 | 
-    T8, 8
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
-    T2, 2, T3, 3,
-    T4, 4, T5, 5,
-    T6, 6, T7, 7,
-    T8, 8 | T9, 9
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
-    T2, 2, T3, 3,
-    T4, 4, T5, 5,
-    T6, 6, T7, 7,
-    T8, 8, T9, 9 | 
-    T10, 10
-);
-#[rustfmt::skip]
-impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1,
-    T2, 2, T3, 3,
-    T4, 4, T5, 5,
-    T6, 6, T7, 7,
-    T8, 8, T9, 9,
-    T10, 10 | T11, 11
-);
-
-// Implement InnerKeyValue for Vec<T> where T: InnerKeyValue
-impl<T> ToKey for Vec<T>
-where
-    T: ToKey,
-{
-    fn to_key(&self) -> Key {
-        let mut data = Vec::new();
-        for item in self {
-            data.extend(item.to_key().0);
-        }
-        Key::new(data)
-    }
-}
-
-// Implement InnerKeyValue for Option<T> where T: InnerKeyValue
-impl<T> ToKey for Option<T>
-where
-    T: ToKey,
-{
-    fn to_key(&self) -> Key {
-        match self {
-            Some(value) => value.to_key(),
-            None => Key::new(Vec::new()),
-        }
-    }
-}
-
-// Macro for implementing InnerKeyValue for u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64
-macro_rules! impl_inner_key_value_for_primitive {
-    ($type:ty) => {
-        impl ToKey for $type {
-            fn to_key(&self) -> Key {
-                Key::new(self.to_be_bytes().to_vec())
-            }
-        }
-    };
-}
-
-impl_inner_key_value_for_primitive!(u8);
-impl_inner_key_value_for_primitive!(u16);
-impl_inner_key_value_for_primitive!(u32);
-impl_inner_key_value_for_primitive!(u64);
-impl_inner_key_value_for_primitive!(u128);
-impl_inner_key_value_for_primitive!(i8);
-impl_inner_key_value_for_primitive!(i16);
-impl_inner_key_value_for_primitive!(i32);
-impl_inner_key_value_for_primitive!(i64);
-impl_inner_key_value_for_primitive!(i128);
-impl_inner_key_value_for_primitive!(f32);
-impl_inner_key_value_for_primitive!(f64);
-
-// Implement Uuid::uuid
-
-#[cfg(feature = "uuid")]
-impl ToKey for &uuid::Uuid {
-    fn to_key(&self) -> Key {
-        Key::new(self.as_bytes().to_vec())
-    }
-}
-
-// Implement chrono::DateTime<TZ>
-
-#[cfg(feature = "chrono")]
-impl<TZ> ToKey for &chrono::DateTime<TZ>
-where
-    TZ: chrono::TimeZone,
-{
-    fn to_key(&self) -> Key {
-        Key::new(self.timestamp().to_be_bytes().to_vec())
+        let mut serializer = KeySerializer::new();
+        self.serialize(&mut serializer).unwrap();
+        serializer.into()
     }
 }
 
