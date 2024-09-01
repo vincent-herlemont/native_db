@@ -11,10 +11,6 @@ impl Key {
         Self(data)
     }
 
-    pub(crate) fn extend(&mut self, data: &Key) {
-        self.0.extend(data.0.iter());
-    }
-
     pub fn extend_with_delimiter(&mut self, delimiter: u8, data: &Key) {
         self.0.push(delimiter);
         self.0.extend(data.0.iter());
@@ -340,11 +336,7 @@ impl KeyRange {
     {
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Included(end)) => {
-                let start = start.to_key();
-                let mut end = end.to_key();
-                // Add 255 to the end key to include the last key
-                end.extend(&Key::new(vec![255]));
-                KeyRange::RangeInclusive(start..=end)
+                KeyRange::RangeInclusive(start.to_key()..=end.to_key())
             }
             (Bound::Included(start), Bound::Excluded(end)) => {
                 KeyRange::Range(start.to_key()..end.to_key())
@@ -352,19 +344,15 @@ impl KeyRange {
             (Bound::Included(start), Bound::Unbounded) => KeyRange::RangeFrom(RangeFrom {
                 start: start.to_key(),
             }),
-            (Bound::Excluded(start), Bound::Included(end)) => {
-                let start = start.to_key();
-                let mut end = end.to_key();
-                // Add 255 to the end key to include the last key
-                end.extend(&Key::new(vec![255]));
-                KeyRange::RangeInclusive(start..=end)
+            (Bound::Excluded(_), Bound::Included(_)) => {
+                unreachable!("Excluded => Included bound is not supported")
             }
-            (Bound::Excluded(start), Bound::Excluded(end)) => {
-                KeyRange::Range(start.to_key()..end.to_key())
+            (Bound::Excluded(_), Bound::Excluded(_)) => {
+                unreachable!("Excluded => Excluded bound is not supported")
             }
-            (Bound::Excluded(start), Bound::Unbounded) => KeyRange::RangeFrom(RangeFrom {
-                start: start.to_key(),
-            }),
+            (Bound::Excluded(_), Bound::Unbounded) => {
+                unreachable!("Excluded => Unbounded bound is not supported")
+            }
             (Bound::Unbounded, Bound::Included(end)) => KeyRange::RangeTo(RangeTo {
                 end: { end.to_key() },
             }),
