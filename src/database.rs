@@ -148,6 +148,14 @@ impl<'a> Database<'a> {
         &self.metadata
     }
 
+    /// Check the integrity of the database.
+    ///
+    /// Similar to [redb::Database::check_integrity()](https://docs.rs/redb/latest/redb/struct.Database.html#method.check_integrity).
+    pub fn check_integrity(&mut self) -> Result<bool> {
+        self.instance.redb_database_mut()?.check_integrity()?;
+        Ok(true)
+    }
+
     /// Compact the database.
     ///
     /// Similar to [redb::Database::compact()](https://docs.rs/redb/latest/redb/struct.Database.html#method.compact).
