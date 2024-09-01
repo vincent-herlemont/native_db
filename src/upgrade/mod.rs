@@ -1,5 +1,6 @@
 #[cfg(feature = "redb1")]
 mod redb1_to_redb2;
+#[cfg(feature = "upgrade_0_7_x")]
 mod secondary_index_table_multimap;
 
 use std::{collections::HashMap, path::Path};
@@ -21,12 +22,12 @@ pub(crate) fn upgrade_redb(
 }
 
 pub(crate) fn upgrade_underlying_database(
-    database_instance: &DatabaseInstance,
+    _database_instance: &DatabaseInstance,
     _model_builder: &HashMap<String, ModelBuilder>,
 ) -> Result<()> {
     #[cfg(feature = "upgrade_0_7_x")]
     secondary_index_table_multimap::upgrade_secondary_index_table_multimap(
-        database_instance,
+        _database_instance,
         _model_builder,
     )?;
 

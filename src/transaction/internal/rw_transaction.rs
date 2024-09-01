@@ -7,7 +7,6 @@ use redb::ReadableMultimapTable;
 use redb::ReadableTable;
 use redb::ReadableTableMetadata;
 use redb::TableHandle;
-use semver::Op;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 

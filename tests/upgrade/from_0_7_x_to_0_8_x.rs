@@ -1,8 +1,9 @@
-use itertools::Itertools;
 use native_db::*;
 use native_model::{native_model, Model};
-use redb::ReadableTable;
 use serde::{Deserialize, Serialize};
+use itertools::Itertools;
+use std::path::PathBuf;
+use redb::ReadableTable;
 
 const OLD_TABLE: redb::TableDefinition<Key, Key> = redb::TableDefinition::new("2_1_name");
 const NEW_TABLE: redb::MultimapTableDefinition<Key, Key> =
@@ -31,9 +32,7 @@ struct Item2 {
 }
 
 #[test]
-#[cfg(feature = "upgrade_0_7_x")]
 fn upgrade_from_0_7_x_to_0_8_x() {
-    use std::path::PathBuf;
     #[cfg(any(target_os = "android", target_os = "ios"))]
     let database_path = { dinghy_test::test_project_path().join("tests/data/db_0_7_1") };
 

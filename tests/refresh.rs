@@ -29,7 +29,6 @@ struct Item2 {
 #[cfg(feature = "upgrade_0_7_x")]
 fn test_refresh() {
     use std::path::PathBuf;
-    println!("test_refresh");
     #[cfg(any(target_os = "android", target_os = "ios"))]
     let database_path = { dinghy_test::test_project_path().join("tests/data/db_0_7_1") };
 
@@ -55,7 +54,6 @@ fn test_refresh() {
 
     tmp.display_dir_entries();
     let stats = db.redb_stats().unwrap();
-    dbg!(&stats);
     assert_eq!(stats.primary_tables.len(), 2);
     assert_eq!(stats.primary_tables[0].name, "1_1_id");
     assert_eq!(stats.primary_tables[0].n_entries, Some(1));

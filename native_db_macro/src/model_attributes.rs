@@ -1,6 +1,5 @@
 use crate::keys::{KeyDefinition, KeyOptions};
 use crate::struct_name::StructName;
-use proc_macro::Ident;
 use std::collections::HashSet;
 use syn::meta::ParseNestedMeta;
 use syn::parse::Result;
