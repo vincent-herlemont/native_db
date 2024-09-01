@@ -11,11 +11,6 @@
 [![Documentation](https://docs.rs/native_db/badge.svg)](https://docs.rs/native_db)
 [![License](https://img.shields.io/crates/l/native_db)](LICENSE)
 
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
-
-
 Here's a drop-in, fast, embedded database for multi-platform apps (server, desktop, mobile). Sync Rust types effortlessly. Enjoy! 😌🍃.
 
 # Features
@@ -106,28 +101,3 @@ fn main() -> Result<(), db_type::Error> {
     Ok(())
 }
 ```
-
-## Contributors
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/elliot14A"><img src="https://avatars.githubusercontent.com/u/84667163?v=4?s=100" width="100px;" alt="Akshith Madhur"/><br /><sub><b>Akshith Madhur</b></sub></a><br /><a href="https://github.com/vincent-herlemont/native_db/commits?author=elliot14A" title="Code">💻</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
