@@ -126,7 +126,7 @@ impl Key {
 ///
 /// impl ToKey for &DateTime {
 ///     fn to_key(&self) -> Key {
-///         Key::new(self.0.timestamp_nanos().to_be_bytes().to_vec())
+///         Key::new(self.0.timestamp_millis().to_be_bytes().to_vec())
 ///     }
 /// }
 ///
@@ -148,7 +148,7 @@ impl Key {
 ///     let rw = db.rw_transaction()?;
 ///     let item1 = Item { id: 2, created_at: DateTime(chrono::Utc::now()) };
 ///     rw.insert(item1.clone())?;
-///     std::thread::sleep(std::time::Duration::from_millis(1));
+///     std::thread::sleep(std::time::Duration::from_millis(2));
 ///
 ///     let item2 = Item { id: 1, created_at: DateTime(chrono::Utc::now()) };
 ///     rw.insert(item2.clone())?;
@@ -157,8 +157,8 @@ impl Key {
 ///     let r = db.r_transaction()?;
 ///     let result_items: Vec<Item> = r.scan().secondary(ItemKey::created_at)?.all()?.try_collect()?;
 ///     assert_eq!(result_items.len(), 2);
-///     assert_eq!(result_items[0].id, 1);
-///     assert_eq!(result_items[1].id, 2);
+///     assert_eq!(result_items[0].id, 2);
+///     assert_eq!(result_items[1].id, 1);
 ///     Ok(())
 /// }
 ///
