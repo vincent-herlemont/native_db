@@ -1,5 +1,7 @@
 use crate::keys::{KeyDefinition, KeyOptions};
 use crate::struct_name::StructName;
+use proc_macro2::TokenStream;
+use quote::ToTokens;
 use std::collections::HashSet;
 use syn::meta::ParseNestedMeta;
 use syn::parse::Result;
@@ -71,15 +73,22 @@ impl ModelAttributes {
     pub(crate) fn parse_field(&mut self, field: &Field) -> Result<()> {
         for attr in &field.attrs {
             if attr.path().is_ident("primary_key") {
+                let mut field_type_token_stream = TokenStream::new();
+                field.ty.to_tokens(&mut field_type_token_stream);
+                let field_type = field_type_token_stream.to_string();
                 self.primary_key = Some(KeyDefinition::new_field(
                     self.struct_name.clone(),
                     field
                         .ident
                         .clone()
                         .expect("Parsed field expected to have an ident for primary_key"),
+                    field_type,
                     (),
                 ));
             } else if attr.path().is_ident("secondary_key") {
+                let mut field_type_token_stream = TokenStream::new();
+                field.ty.to_tokens(&mut field_type_token_stream);
+                let field_type = field_type_token_stream.to_string();
                 let mut secondary_options = KeyOptions::default();
                 if let Ok(_) = attr.meta.require_list() {
                     attr.parse_nested_meta(|meta| {
@@ -100,6 +109,7 @@ impl ModelAttributes {
                         .ident
                         .clone()
                         .expect("Parsed field expected to have an ident for secondary_key"),
+                    field_type,
                     secondary_options,
                 ));
             }

@@ -1,4 +1,4 @@
-use crate::db_type::{KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
+use crate::db_type::{Error, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
@@ -38,8 +38,22 @@ impl RGet<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
+    pub fn primary<T: ToInput, K: ToKey>(&self, key: K) -> Result<Option<T>> {
         let model = T::native_db_model();
+        {
+            let expected_key_types: Vec<String> = model.primary_key.rust_types.clone();
+            if !K::key_names()
+                .iter()
+                .any(|name| expected_key_types.contains(name))
+            {
+                return Err(Error::MissmatchedKeyType {
+                    key_name: model.primary_key.unique_table_name.to_string(),
+                    expected_types: expected_key_types,
+                    got_types: K::key_names(),
+                    operation: "get".to_string(),
+                });
+            }
+        }
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
             Ok(Some(value.inner()?))

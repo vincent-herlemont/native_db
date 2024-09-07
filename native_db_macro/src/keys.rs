@@ -1,14 +1,17 @@
 use crate::struct_name::StructName;
 use crate::ToTokenStream;
 use quote::quote;
+use quote::ToTokens;
 use std::hash::Hash;
-use syn::Ident;
+use syn::PathArguments;
+use syn::{parse_str, Ident, Type};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct KeyDefinition<O: ToTokenStream> {
     pub(super) struct_name: StructName,
     field_name: Option<Ident>,
     function_name: Option<Ident>,
+    field_type: Option<String>,
     pub(crate) options: O,
 }
 
@@ -31,8 +34,41 @@ impl<O: ToTokenStream> ToTokenStream for KeyDefinition<O> {
         let options = self.options.new_to_token_stream();
         let struct_name = self.struct_name.ident();
         let key_name = self.name();
+        let rust_type_name = self
+            .field_type
+            .clone()
+            .expect("KeyDefinition must have a field type");
+
+        //let rust_type_name: &str = "Vec<32>";
+        //let type_str = "u32";
+        let mut parsed_type: Type = parse_str(&rust_type_name).expect("Failed to parse type");
+
+        if let Type::Path(ref mut path, ..) = parsed_type {
+            if let Some(segment) = path.path.segments.last_mut() {
+                if let PathArguments::AngleBracketed(ref mut args) = segment.arguments {
+                    if args.colon2_token.is_none() {
+                        let new_args = args.clone();
+                        segment.arguments = PathArguments::None;
+
+                        let modified_path: syn::Path = syn::parse_quote! {
+                            #path :: #new_args
+                        };
+
+                        path.path.segments = modified_path.segments;
+                    }
+                }
+            }
+        }
+
+        let parsed_type_token_stream = parsed_type.to_token_stream();
         quote! {
-            native_db::db_type::KeyDefinition::new(#struct_name::native_model_id(), #struct_name::native_model_version(), #key_name, #options)
+            native_db::db_type::KeyDefinition::new(
+                #struct_name::native_model_id(),
+                #struct_name::native_model_version(),
+                #key_name,
+                #parsed_type_token_stream::key_names(),
+                #options
+            )
         }
     }
 }
@@ -96,11 +132,17 @@ impl<O: ToTokenStream> KeyDefinition<O> {
         }
     }
 
-    pub(crate) fn new_field(table_name: StructName, field_name: Ident, options: O) -> Self {
+    pub(crate) fn new_field(
+        table_name: StructName,
+        field_name: Ident,
+        field_type: String,
+        options: O,
+    ) -> Self {
         Self {
             struct_name: table_name,
             field_name: Some(field_name),
             function_name: None,
+            field_type: Some(field_type),
             options,
         }
     }
@@ -117,6 +159,7 @@ impl<O: ToTokenStream> KeyDefinition<O> {
             struct_name: table_name,
             field_name: None,
             function_name: None,
+            field_type: None,
             options: O::default(),
         }
     }
