@@ -60,7 +60,7 @@ jobs:
       - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.6.8 cargo-dinghy; fi
       - run: if ! command -v just &> /dev/null; then cargo install --version 1.25.2 just; fi
       - run: just --version
-      - uses: hustcer/setup-nu@v3.12
+      - uses: hustcer/setup-nu@v3.13
         with:
           version: '0.85'
         env:
