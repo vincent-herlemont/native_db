@@ -124,6 +124,8 @@ fn watch_multithreading() {
             }
         });
 
+        std::thread::sleep(std::time::Duration::from_millis(20));
+
         let dbb = Arc::clone(&db);
         let rw = dbb.rw_transaction().unwrap();
         {
