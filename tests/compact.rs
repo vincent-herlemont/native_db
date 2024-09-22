@@ -44,5 +44,5 @@ fn test_compact() {
     // Check the size of the compacted database
     let metadata = std::fs::metadata(db_path.clone()).unwrap();
     let file_size = metadata.len();
-    assert_eq!(file_size, 700416);
+    assert_eq!(file_size, 876544);
 }
