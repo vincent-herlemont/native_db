@@ -1,4 +1,4 @@
-use crate::db_type::ToKey;
+use crate::db_type::{check_key_type_from_key_definition, check_range_key_range_bounds_from_key_definition, KeyDefinition, KeyOptions, ToKey, ToKeyDefinition};
 use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
 use redb::{self};
 use std::marker::PhantomData;
@@ -12,6 +12,7 @@ where
 {
     pub(crate) primary_table: PrimaryTable,
     pub(crate) secondary_table: SecondaryTable,
+    pub(crate) key_def: KeyDefinition<KeyOptions>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -20,10 +21,11 @@ where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
     SecondaryTable: redb::ReadableMultimapTable<Key, Key>,
 {
-    pub(crate) fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable) -> Self {
+    pub(crate) fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable, key_def: impl ToKeyDefinition<KeyOptions>) -> Self {
         Self {
             primary_table,
             secondary_table,
+            key_def: key_def.key_definition(),
             _marker: PhantomData::default(),
         }
     }
@@ -116,10 +118,11 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn range<TR: ToKey, R: RangeBounds<TR>>(
+    pub fn range<R: RangeBounds<impl ToKey>>(
         &self,
         range: R,
     ) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+        check_range_key_range_bounds_from_key_definition(&self.key_def, &range)?;
         let mut primary_keys = vec![];
         let database_inner_key_value_range = KeyRange::new(range);
         for keys in self
@@ -174,10 +177,11 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn start_with<'a>(
-        &'a self,
-        start_with: impl ToKey + 'a,
-    ) -> Result<SecondaryScanIterator<'a, PrimaryTable, T>> {
+    pub fn start_with(
+        &self,
+        start_with: impl ToKey,
+    ) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+        check_key_type_from_key_definition(&self.key_def, &start_with)?;
         let start_with = start_with.to_key();
         let mut primary_keys = vec![];
         for keys in self.secondary_table.range::<Key>(start_with.clone()..)? {
@@ -241,37 +245,6 @@ where
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         match self.primary_keys.next_back() {
-            Some(primary_key) => {
-                if let Ok(value) = self.primary_table.get(primary_key.value()) {
-                    unwrap_item(value)
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        }
-    }
-}
-
-pub struct SecondaryScanIteratorStartWith<'a, PrimaryTable, T>
-where
-    PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
-    T: ToInput,
-{
-    pub(crate) primary_table: &'a PrimaryTable,
-    pub(crate) primary_keys: IntoIter<redb::AccessGuard<'a, Key>>,
-    pub(crate) _marker: PhantomData<T>,
-}
-
-impl<'a, PrimaryTable, T> Iterator for SecondaryScanIteratorStartWith<'a, PrimaryTable, T>
-where
-    PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
-    T: ToInput,
-{
-    type Item = Result<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.primary_keys.next() {
             Some(primary_key) => {
                 if let Ok(value) = self.primary_table.get(primary_key.value()) {
                     unwrap_item(value)

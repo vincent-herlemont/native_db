@@ -1,4 +1,4 @@
-use crate::db_type::ToKey;
+use crate::db_type::{check_key_type, check_range_key_range_bounds, ToKey};
 use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
@@ -91,7 +91,9 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn range<TR: ToKey, R: RangeBounds<TR>>(&self, range: R) -> Result<PrimaryScanIterator<T>> {
+    pub fn range<R: RangeBounds<impl ToKey>>(&self, range: R) -> Result<PrimaryScanIterator<T>> {
+        let model = T::native_db_model();
+        check_range_key_range_bounds(&model, &range)?;
         let database_inner_key_value_range = KeyRange::new(range);
         let range = self
             .primary_table
@@ -132,10 +134,9 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn start_with<'a>(
-        &'a self,
-        start_with: impl ToKey + 'a,
-    ) -> Result<PrimaryScanIteratorStartWith<'a, T>> {
+    pub fn start_with(&self, start_with: impl ToKey) -> Result<PrimaryScanIteratorStartWith<T>> {
+        let model = T::native_db_model();
+        check_key_type(&model, &start_with)?;
         let start_with = start_with.to_key();
         let range = self.primary_table.range::<Key>(start_with.clone()..)?;
 

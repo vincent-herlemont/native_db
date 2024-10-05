@@ -86,7 +86,7 @@ fn test_skip_version() {
 
     let r_txn = db.r_transaction().unwrap();
 
-    let item: ItemV1 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: ItemV1 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV1 {
@@ -110,7 +110,7 @@ fn test_skip_version() {
     rw.commit().unwrap();
 
     let r_txn = db.r_transaction().unwrap();
-    let item: ItemV3 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: ItemV3 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV3 {
@@ -156,7 +156,7 @@ fn test_skip_version_with_data_should_fail() {
     rw_txn.commit().unwrap();
 
     let r_txn = db.r_transaction().unwrap();
-    let item: ItemV1 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: ItemV1 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV1 {
@@ -165,7 +165,7 @@ fn test_skip_version_with_data_should_fail() {
         }
     );
 
-    let item: ItemV2 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: ItemV2 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV2 {

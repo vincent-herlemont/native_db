@@ -28,7 +28,7 @@ fn test_secondary() {
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(1, 1, "name", Default::default()))
+            .get(&KeyDefinition::new(1, 1, "name", vec!["u32".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Default("test".to_key())
     );
@@ -58,7 +58,7 @@ fn test_secondary_optional() {
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(2, 1, "name", Default::default()))
+            .get(&KeyDefinition::new(2, 1, "name", vec!["Option<String>".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Optional(Some("test".to_key()))
     );
@@ -68,7 +68,7 @@ fn test_secondary_optional() {
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(2, 1, "name", Default::default()))
+            .get(&KeyDefinition::new(2, 1, "name", vec!["Option<String>".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Optional(None)
     );
@@ -98,7 +98,7 @@ fn test_secondary_unique() {
     assert_eq!(secondary_key.len(), 1);
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(3, 1, "name", Default::default()))
+            .get(&KeyDefinition::new(3, 1, "name", vec!["u32".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Default("test".to_key())
     );
@@ -131,13 +131,13 @@ fn test_secondary_others() {
     assert_eq!(secondary_key.len(), 2);
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(4, 1, "name", Default::default()))
+            .get(&KeyDefinition::new(4, 1, "name", vec!["String".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Default("test".to_key())
     );
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(4, 1, "name2", Default::default()))
+            .get(&KeyDefinition::new(4, 1, "name2", vec!["String".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Default("test2".to_key())
     );

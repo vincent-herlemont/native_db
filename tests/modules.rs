@@ -1,3 +1,4 @@
+mod check_type;
 mod custom_type;
 mod macro_def;
 

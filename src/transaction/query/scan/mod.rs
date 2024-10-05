@@ -48,7 +48,7 @@ impl<'txn> RScan<'_, 'txn> {
         let primary_table = self.internal.get_primary_table(&model)?;
         let secondary_key = key_def.key_definition();
         let secondary_table = self.internal.get_secondary_table(&model, &secondary_key)?;
-        let out = SecondaryScan::new(primary_table, secondary_table);
+        let out = SecondaryScan::new(primary_table, secondary_table, key_def);
         Ok(out)
     }
 }
@@ -90,7 +90,7 @@ where
         let primary_table = self.internal.get_primary_table(&model)?;
         let secondary_key = key_def.key_definition();
         let secondary_table = self.internal.get_secondary_table(&model, &secondary_key)?;
-        let out = SecondaryScan::new(primary_table, secondary_table);
+        let out = SecondaryScan::new(primary_table, secondary_table, key_def);
         Ok(out)
     }
 }

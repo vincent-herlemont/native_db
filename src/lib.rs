@@ -74,7 +74,7 @@
 //!
 //! > 👉 Unlike the usual database where there is a difference between *schema* and *model*, here, as we can directly use Rust types that are serialized in the database, we do not have the concept of *schema*, only that of the *model*.
 //!
-//! In this section, we will create a simple model. I have chosen a particular organization using Rust modules, which I find to be a best practice. However, it is not mandatory; you can do it as you prefer.
+//! In this section, we will create a simple model. I have chosen a particular organization using Rust modules, which I find to be a best practice. However, it is not mandatory; you can do it as you prefer. (see [`define`](crate::Models::define) for more information)
 //!
 //! In this example:
 //! - We create a module `data` which contains **all versions of all models**.
@@ -195,7 +195,7 @@
 //!
 //!     // Get the person
 //!     let r = db.r_transaction()?;
-//!     let person: data::Person = r.get().primary(&"Alice".to_string())?.unwrap();
+//!     let person: data::Person = r.get().primary("Alice".to_string())?.unwrap();
 //!     assert_eq!(person.name, "Alice");
 //!     Ok(())
 //! }

@@ -1,4 +1,4 @@
-use crate::db_type::{KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
+use crate::db_type::{check_key_type, check_key_type_from_key_definition, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
 use crate::watch;
 use crate::watch::query::internal;
 use crate::watch::MpscReceiver;
@@ -42,6 +42,8 @@ impl WatchGet<'_, '_> {
         &self,
         key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
+        let model = T::native_db_model();
+        check_key_type(&model, &key)?;
         self.internal.watch_primary::<T>(key)
     }
 
@@ -81,6 +83,7 @@ impl WatchGet<'_, '_> {
         key_def: impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
+        check_key_type_from_key_definition(&key_def.key_definition(), &key)?;
         self.internal.watch_secondary::<T>(&key_def, key)
     }
 }

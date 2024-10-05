@@ -9,9 +9,13 @@ use shortcut_assert_fs::TmpFs;
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone)]
 struct City(String);
 
-impl ToKey for &City {
+impl ToKey for City {
     fn to_key(&self) -> Key {
         Key::new(self.0.as_bytes().to_vec())
+    }
+
+    fn key_names() -> Vec<String> {
+        vec!["City".to_string()]
     }
 }
 
@@ -52,7 +56,7 @@ fn insert_item_fields() {
     let r = db.r_transaction().unwrap();
     let result_item = r
         .get()
-        .secondary(ItemFieldsKey::city2, &item.city2)
+        .secondary(ItemFieldsKey::city2, item.city2.clone())
         .unwrap()
         .unwrap();
     assert_eq!(item, result_item);
@@ -64,10 +68,10 @@ fn insert_item_fields() {
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 #[native_model(id = 1, version = 1)]
 #[native_db(
-    primary_key(m_city1),
-    secondary_key(m_city2, unique),
-    secondary_key(m_city2_ref, unique),
-    secondary_key(m_city3, optional)
+    primary_key(m_city1 -> City),
+    secondary_key(m_city2 -> City, unique),
+    secondary_key(m_city2_ref -> City, unique),
+    secondary_key(m_city3 -> Option<City>, optional),
 )]
 struct ItemFunctions {
     city1: City,
@@ -115,7 +119,7 @@ fn test_item_functions() {
     let r = db.r_transaction().unwrap();
     let result_item = r
         .get()
-        .secondary(ItemFunctionsKey::m_city2, &item.city2)
+        .secondary(ItemFunctionsKey::m_city2, item.city2.clone())
         .unwrap()
         .unwrap();
     assert_eq!(item, result_item);

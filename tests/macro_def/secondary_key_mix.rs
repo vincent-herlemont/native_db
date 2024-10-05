@@ -4,10 +4,14 @@ use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::vec;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
-#[native_db(primary_key(compute_primary_key), secondary_key(compute_secondary_key))]
+#[native_db(
+    primary_key(compute_primary_key -> String),
+    secondary_key(compute_secondary_key -> String),
+)]
 struct ItemSecondaryMix {
     id: u32,
     #[secondary_key(unique)]
@@ -40,6 +44,7 @@ fn test_secondary() {
             1,
             1,
             "compute_secondary_key",
+            vec!["String".to_string()],
             Default::default()
         )),
         Some(&KeyEntry::Default("test-1".to_key()))
@@ -47,7 +52,7 @@ fn test_secondary() {
 
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(1, 1, "name", Default::default()))
+            .get(&KeyDefinition::new(1, 1, "name", vec!["String".to_string()], Default::default()))
             .unwrap(),
         &KeyEntry::Default("test".to_key())
     );

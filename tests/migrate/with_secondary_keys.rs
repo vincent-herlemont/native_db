@@ -8,7 +8,9 @@ use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
-#[native_db(primary_key(id_key), secondary_key(name_key))]
+#[native_db(
+    primary_key(id_key -> u32),
+    secondary_key(name_key -> String))]
 struct ItemV1 {
     id: u32,
     name: String,
@@ -35,9 +37,9 @@ impl ItemV1 {
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 2, from = ItemV1)]
 #[native_db(
-    primary_key(id_key),
-    secondary_key(first_name_key, unique),
-    secondary_key(last_name_key, unique)
+    primary_key(id_key -> u64),
+    secondary_key(first_name_key -> String, unique),
+    secondary_key(last_name_key -> String, unique)
 )]
 struct ItemV2 {
     id: u64,

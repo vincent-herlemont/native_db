@@ -5,7 +5,9 @@ use shortcut_assert_fs::TmpFs;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
-#[native_db(primary_key(generate_my_primary_key))]
+#[native_db(
+    primary_key(generate_my_primary_key -> String),
+)]
 struct ItemV1 {
     id: u32,
     name: String,
@@ -20,7 +22,9 @@ impl ItemV1 {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 2, from = ItemV1)]
-#[native_db(primary_key(generate_my_primary_key))]
+#[native_db(
+    primary_key(generate_my_primary_key -> String),
+)]
 struct ItemV2 {
     id: u64,
     name: String,

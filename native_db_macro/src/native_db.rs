@@ -56,6 +56,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
             #native_db_gks
         }
 
+        #[allow(non_camel_case_types)]
         pub(crate) enum #keys_enum_name {
             #(#keys_enum),*
         }

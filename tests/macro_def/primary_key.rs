@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
-#[native_db(primary_key(compute_primary_key))]
+#[native_db(primary_key(compute_primary_key -> String))]
 struct Item {
     id: u32,
     name: String,
