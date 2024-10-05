@@ -128,7 +128,7 @@ fn redb_remove(db: &redb::Database, x: u32) {
 
 fn use_native_db_insert(db: &Database, data: Data) {
     let rw = db.rw_transaction().unwrap();
-    rw.insert(data).unwrap();
+    rw.upsert(data).unwrap();
     rw.commit().unwrap();
 }
 

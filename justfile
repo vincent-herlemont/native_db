@@ -73,8 +73,8 @@ test_android *args:
 bench_build:
     cargo bench --no-run
 
-bench:
-    CRITERION_DEBUG=1 cargo bench; \
+bench bench_name:
+    CRITERION_DEBUG=1 cargo bench --bench {{bench_name}}; \
     start ./target/criterion/report/index.html
 
 expand test_file_name="util":
