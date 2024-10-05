@@ -1,4 +1,6 @@
-use crate::db_type::{KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
+use crate::db_type::{
+    check_key_type, check_key_type_from_key_definition, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition
+};
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
@@ -40,6 +42,7 @@ impl RGet<'_, '_> {
     /// ```
     pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
+        check_key_type(&model, &key)?;
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
             Ok(Some(value.inner()?))
@@ -90,6 +93,7 @@ impl RGet<'_, '_> {
         key: impl ToKey,
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
+        check_key_type_from_key_definition(&key_def.key_definition(), &key)?;
         let result = self.internal.get_by_secondary_key(model, key_def, key)?;
         if let Some(value) = result {
             Ok(Some(value.inner()?))
@@ -109,6 +113,7 @@ impl RwGet<'_, '_> {
     /// See [`primary`](crate::transaction::query::RGet::primary).
     pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
+        check_key_type(&model, &key)?;
         let result = self.internal.get_by_primary_key(model, key)?;
         if let Some(value) = result {
             Ok(Some(value.inner()?))
@@ -125,6 +130,7 @@ impl RwGet<'_, '_> {
         key_def: impl ToKeyDefinition<KeyOptions>,
         key: impl ToKey,
     ) -> Result<Option<T>> {
+        check_key_type_from_key_definition(&key_def.key_definition(), &key)?;
         let model = T::native_db_model();
         let result = self.internal.get_by_secondary_key(model, key_def, key)?;
         if let Some(value) = result {

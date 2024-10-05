@@ -1,5 +1,7 @@
 use crate::keys::{KeyDefinition, KeyOptions};
 use crate::struct_name::StructName;
+use proc_macro2::TokenStream;
+use quote::ToTokens;
 use std::collections::HashSet;
 use syn::meta::ParseNestedMeta;
 use syn::parse::Result;
@@ -20,44 +22,56 @@ impl ModelAttributes {
     pub(crate) fn parse(&mut self, meta: ParseNestedMeta) -> Result<()> {
         if meta.path.is_ident("primary_key") {
             let mut key: KeyDefinition<()> = KeyDefinition::new_empty(self.struct_name.clone());
-            meta.parse_nested_meta(|meta| {
-                let ident = meta
-                    .path
-                    .get_ident()
-                    .expect("Expected ident for primary_key");
-                if key.is_empty() {
-                    key.set_function_name(ident.clone());
-                } else {
-                    panic!(
-                        "Unknown attribute \"{}\" for primary_key",
-                        ident.to_string()
-                    );
-                }
-                Ok(())
-            })?;
+            let content;
+            syn::parenthesized!(content in meta.input);
+
+            // Parse the identifier
+            let ident: syn::Ident = content.parse()?;
+            key.set_function_name(ident);
+
+            // Expect a comma
+            content.parse::<syn::Token![->]>()?;
+
+            // Parse the type
+            let ty: syn::Type = content.parse()?;
+            let ty_string = ty.to_token_stream().to_string();
+            key.field_type = Some(ty_string);
+
             self.primary_key = Some(key);
         } else if meta.path.is_ident("secondary_key") {
             let mut key: KeyDefinition<KeyOptions> =
                 KeyDefinition::new_empty(self.struct_name.clone());
-            meta.parse_nested_meta(|meta| {
-                let ident = meta
-                    .path
-                    .get_ident()
-                    .expect("Expected ident for secondary_key");
-                if key.is_empty() {
-                    key.set_function_name(ident.clone());
-                } else if meta.path.is_ident("unique") {
-                    key.options.unique = true;
-                } else if meta.path.is_ident("optional") {
-                    key.options.optional = true;
-                } else {
-                    panic!(
-                        "Unknown attribute \"{}\" for secondary_key",
-                        ident.to_string()
-                    );
+            let content;
+            syn::parenthesized!(content in meta.input);
+
+            // Parse the identifier
+            let ident: syn::Ident = content.parse()?;
+            key.set_function_name(ident);
+
+            // Expect a comma
+            content.parse::<syn::Token![->]>()?;
+
+            // Parse the type
+            let ty: syn::Type = content.parse()?;
+            let ty_string = ty.to_token_stream().to_string();
+            key.field_type = Some(ty_string);
+
+            // Parse optional flags
+            while !content.is_empty() {
+                content.parse::<syn::Token![,]>()?;
+                let option: syn::Ident = content.parse()?;
+                match option.to_string().as_str() {
+                    "unique" => key.options.unique = true,
+                    "optional" => key.options.optional = true,
+                    _ => {
+                        return Err(syn::Error::new_spanned(
+                            option,
+                            "Unknown option for secondary_key, expected 'unique' or 'optional'",
+                        ));
+                    }
                 }
-                Ok(())
-            })?;
+            }
+
             self.secondary_keys.insert(key);
         } else {
             panic!(
@@ -71,15 +85,22 @@ impl ModelAttributes {
     pub(crate) fn parse_field(&mut self, field: &Field) -> Result<()> {
         for attr in &field.attrs {
             if attr.path().is_ident("primary_key") {
+                let mut field_type_token_stream = TokenStream::new();
+                field.ty.to_tokens(&mut field_type_token_stream);
+                let field_type = field_type_token_stream.to_string();
                 self.primary_key = Some(KeyDefinition::new_field(
                     self.struct_name.clone(),
                     field
                         .ident
                         .clone()
                         .expect("Parsed field expected to have an ident for primary_key"),
+                    field_type,
                     (),
                 ));
             } else if attr.path().is_ident("secondary_key") {
+                let mut field_type_token_stream = TokenStream::new();
+                field.ty.to_tokens(&mut field_type_token_stream);
+                let field_type = field_type_token_stream.to_string();
                 let mut secondary_options = KeyOptions::default();
                 if let Ok(_) = attr.meta.require_list() {
                     attr.parse_nested_meta(|meta| {
@@ -100,6 +121,7 @@ impl ModelAttributes {
                         .ident
                         .clone()
                         .expect("Parsed field expected to have an ident for secondary_key"),
+                    field_type,
                     secondary_options,
                 ));
             }

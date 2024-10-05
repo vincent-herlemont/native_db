@@ -6,8 +6,8 @@ use shortcut_assert_fs::TmpFs;
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
 #[native_db(
-    primary_key(generate_my_primary_key),
-    secondary_key(generate_my_secondary_key, unique)
+    primary_key(generate_my_primary_key -> u32),
+    secondary_key(generate_my_secondary_key -> String, unique)
 )]
 struct Item {
     id: u32,

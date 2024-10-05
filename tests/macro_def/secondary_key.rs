@@ -6,7 +6,10 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
-#[native_db(primary_key(compute_primary_key), secondary_key(compute_secondary_key))]
+#[native_db(
+    primary_key(compute_primary_key -> String),
+    secondary_key(compute_secondary_key -> String),
+)]
 struct ItemSecondary {
     id: u32,
     name: String,
@@ -39,6 +42,7 @@ fn test_secondary() {
                 1,
                 1,
                 "compute_secondary_key",
+                vec!["String".to_string()],
                 Default::default()
             ))
             .unwrap(),
@@ -49,8 +53,8 @@ fn test_secondary() {
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 2, version = 1)]
 #[native_db(
-    primary_key(compute_primary_key),
-    secondary_key(compute_secondary_key, unique)
+    primary_key(compute_primary_key -> String),
+    secondary_key(compute_secondary_key -> String, unique)
 )]
 struct ItemSecondaryUnique {
     id: u32,
@@ -84,6 +88,7 @@ fn test_secondary_unique() {
                 2,
                 1,
                 "compute_secondary_key",
+                vec!["String".to_string()],
                 Default::default()
             ))
             .unwrap(),
@@ -94,8 +99,8 @@ fn test_secondary_unique() {
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 2, version = 1)]
 #[native_db(
-    primary_key(compute_primary_key),
-    secondary_key(compute_secondary_key, optional)
+    primary_key(compute_primary_key -> String),
+    secondary_key(compute_secondary_key -> Option<String>, optional)
 )]
 struct ItemSecondaryOptional {
     id: u32,
@@ -133,6 +138,7 @@ fn test_secondary_optional() {
                 2,
                 1,
                 "compute_secondary_key",
+                vec!["Option<String>".to_string()],
                 Default::default()
             ))
             .unwrap(),
@@ -148,6 +154,7 @@ fn test_secondary_optional() {
                 2,
                 1,
                 "compute_secondary_key",
+                vec!["Option<String>".to_string()],
                 Default::default()
             ))
             .unwrap(),

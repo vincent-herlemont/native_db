@@ -79,7 +79,7 @@ bench:
 
 expand test_file_name="util":
     rm -f {{test_file_name}}.expanded.rs; \
-    cargo expand --test {{test_file_name}} | save -f --raw src/{{test_file_name}}_expanded.rs
+    RUSTFLAGS="-Zmacro-backtrace" cargo expand --test {{test_file_name}} | save -f --raw src/{{test_file_name}}_expanded.rs
 
 expand_clean:
     rm -f src/*_expanded.rs

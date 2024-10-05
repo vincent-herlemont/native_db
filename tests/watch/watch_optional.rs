@@ -32,7 +32,7 @@ fn watch_one_secondary_key_some() {
     let (recv, _) = db
         .watch()
         .get()
-        .secondary::<ItemAOptional>(ItemAOptionalKey::name, "a")
+        .secondary::<ItemAOptional>(ItemAOptionalKey::name, Some("a"))
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();
@@ -66,7 +66,7 @@ fn watch_one_secondary_key_none() {
     let (recv, _) = db
         .watch()
         .get()
-        .secondary::<ItemAOptional>(ItemAOptionalKey::name, "a")
+        .secondary::<ItemAOptional>(ItemAOptionalKey::name, Some("a"))
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();
@@ -111,7 +111,7 @@ fn watch_start_with_by_key() {
         .watch()
         .scan()
         .secondary(ItemAOptionalKey::name)
-        .start_with::<ItemAOptional>("a")
+        .start_with::<ItemAOptional>(Some("a"))
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();

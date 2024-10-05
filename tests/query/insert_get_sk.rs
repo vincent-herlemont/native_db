@@ -5,7 +5,10 @@ use shortcut_assert_fs::TmpFs;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 #[native_model(id = 1, version = 1)]
-#[native_db(primary_key(pk), secondary_key(gk_1, unique))]
+#[native_db(
+    primary_key(pk -> String), 
+    secondary_key(gk_1 -> String, unique)
+)]
 struct Item {
     id: u32,
     name: String,
@@ -156,7 +159,7 @@ fn test_insert_optional() {
     let r = db.r_transaction().unwrap();
     let result_item = r
         .get()
-        .secondary(ItemOptionalKey::name, "test")
+        .secondary(ItemOptionalKey::name, Some("test"))
         .unwrap()
         .unwrap();
     assert_eq!(item_1, result_item);

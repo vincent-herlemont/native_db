@@ -68,26 +68,34 @@ impl Models {
 
     /// Defines a table using the given model.
     ///
-    /// Native DB depends of `native_model` to define the model.
-    /// And `native_model` by default uses [`serde`](https://serde.rs/) to serialize and deserialize the data but
-    /// you can use any other serialization library see the documentation of [`native_model`](https://github.com/vincent-herlemont/native_model) for more information.
-    /// So in the example below we import `serde` and we use the `Serialize` and `Deserialize` traits.
+    /// Native DB depends on `native_model` to define the model.
+    /// By default, `native_model` uses [`serde`](https://serde.rs/) to serialize and deserialize the data, but
+    /// you can use any other serialization library. See the documentation of [`native_model`](https://github.com/vincent-herlemont/native_model) for more information.
+    /// In the examples below, we import `serde` and use the `Serialize` and `Deserialize` traits.
     ///
-    /// # Primary key
+    /// # Primary Key
     ///
-    /// The primary key is *strict*, you **must**:
-    /// - define it.
-    /// - define only one.
+    /// The primary key is **mandatory**, and you **must**:
+    /// - Define it.
+    /// - Define only one.
     ///
-    /// If the primary key is not defined, the compiler will return an error `Primary key is not set`.
+    /// If the primary key is not defined, the compiler will return an error: `Primary key is not set`.
     ///
-    /// You can define with two ways:
-    /// - `#[primary_key]` on the field
-    /// - `#[native_db(primary_key(<method_name>))]` on any type `enum`, `struct`, `tuple struct` or `unit struct`.
+    /// There are two ways to define a primary key:
+    ///
+    /// 1. **On a Field**:
+    ///    - Use the `#[primary_key]` attribute on the field that will serve as the primary key.
+    ///    - The type of the field will be used as the primary key type.
+    ///
+    /// 2. **With a Custom Method**:
+    ///    - Use the `#[native_db(primary_key(<method_name> -> <return_type>))]` attribute on the type (`enum`, `struct`, `tuple struct`, or `unit struct`).
+    ///    - Implement a method with the given `<method_name>` that returns the primary key of type `<return_type>`.
+    ///    - **Important:** You must specify both the method name and the return type using the syntax `primary_key(<method_name> -> <return_type>)`. The type must be specified because it is used at runtime to check the query types.
     ///
     /// The primary key is **unique**, so you can't have two instances of the model with the same primary key saved in the database.
     ///
-    /// ## Define a simple model with a primary key
+    /// ## Defining a Simple Model with a Primary Key on a Field
+    ///
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
@@ -106,7 +114,12 @@ impl Models {
     ///     models.define::<Data>()
     /// }
     /// ```
-    /// ## Define a model with a method as primary key
+    ///
+    /// In this example, we have:
+    /// - **One primary key** named `id` of type `u64`, defined directly on the field using the `#[primary_key]` attribute.
+    ///
+    /// ## Defining a Model with a Method as Primary Key
+    ///
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
@@ -115,33 +128,43 @@ impl Models {
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
     /// #[native_db(
-    ///     primary_key(custom_id)
+    ///     primary_key(custom_id -> u32)
     /// )]
     /// struct Data(u64);
     ///
     /// impl Data {
-    ///   fn custom_id(&self) -> u32 {
-    ///     (self.0 + 1) as u32
-    ///   }
+    ///     fn custom_id(&self) -> u32 {
+    ///         (self.0 + 1) as u32
+    ///     }
     /// }
-    ///
     /// ```
     ///
-    /// ## Secondary key
+    /// In this example, we have:
+    /// - **One primary key** named `custom_id` of type `u32`, defined using a custom method. The method `custom_id` computes and returns the primary key value.
     ///
-    /// The secondary key is *flexible*, you can:
-    /// - define it or not.
-    /// - define one or more.
+    /// # Secondary Key
     ///
-    /// You can define with two ways:
-    /// - `#[secondary_key]` on the field
-    /// - `#[native_db(secondary_key(<method_name>, <options>))]` on any type `enum`, `struct`, `tuple struct` or `unit struct`.
+    /// The secondary key is *flexible*, and you can:
+    /// - Define it or not.
+    /// - Define one or more.
+    ///
+    /// There are two ways to define a secondary key:
+    ///
+    /// 1. **On a Field**:
+    ///    - Use the `#[secondary_key]` attribute on the field that will serve as a secondary key.
+    ///    - The type of the field will be used as the secondary key type.
+    ///
+    /// 2. **With a Custom Method**:
+    ///    - Use the `#[native_db(secondary_key(<method_name> -> <return_type>, <options>))]` attribute on the type.
+    ///    - Implement a method with the given `<method_name>` that returns the secondary key value of type `<return_type>`.
+    ///    - **Important:** You must specify both the method name and the return type using the syntax `secondary_key(<method_name> -> <return_type>, <options>)`. The type must be specified because it is used at runtime to check the query types.
     ///
     /// The secondary key can have two options:
     /// - [`unique`](#unique) (default: false)
     /// - [`optional`](#optional) (default: false)
     ///
-    /// ## Define a model with a secondary key
+    /// ## Defining a Model with a Secondary Key on a Field
+    ///
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
@@ -158,7 +181,12 @@ impl Models {
     /// }
     /// ```
     ///
-    /// ## Define a model wit a secondary key optional and unique
+    /// In the above example, we have:
+    /// - **One primary key** named `id` of type `u64`, defined on the field.
+    /// - **One secondary key** named `name` of type `String`, defined on the field using the `#[secondary_key]` attribute.
+    ///
+    /// ## Defining a Model with an Optional and Unique Secondary Key
+    ///
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
@@ -174,7 +202,12 @@ impl Models {
     ///     name: Option<String>,
     /// }
     /// ```
-    /// - Note: the secondary key can be `unique` **or** `optional` as well.
+    ///
+    /// In the above example, we have:
+    /// - **One primary key** named `id` of type `u64`, defined on the field.
+    /// - **One secondary key** named `name` of type `Option<String>`, defined on the field with options `unique` and `optional`.
+    ///
+    /// - **Note:** The secondary key can be `unique`, `optional`, or both.
     ///
     /// ## Unique
     ///
@@ -184,14 +217,15 @@ impl Models {
     /// ## Optional
     ///
     /// This means that an instance of the model can have a value for the secondary key or not.
-    /// When`optional` is set the value **must** be an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html).
-    /// if the value is not an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html) the compiler will return
-    /// an error `error[E0282]: type annotations needed: cannot infer type`.
-    ///  
-    /// Under the hood, the secondary key is stored in a separate redb table. So if the secondary key is optional,
+    /// When `optional` is set, the value **must** be an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html).
+    /// If the value is not an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html), the compiler will return
+    /// an error: `error[E0282]: type annotations needed: cannot infer type`.
+    ///
+    /// Under the hood, the secondary key is stored in a separate `redb` table. So if the secondary key is optional,
     /// the value will be stored in the table only if the value is not `None`.
     ///
-    /// # Define a model with a secondary key and a custom secondary key optional
+    /// ## Defining a Model with a Custom Optional Secondary Key
+    ///
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
@@ -200,7 +234,7 @@ impl Models {
     /// #[derive(Serialize, Deserialize)]
     /// #[native_model(id=1, version=1)]
     /// #[native_db(
-    ///     secondary_key(custom_name, optional)
+    ///     secondary_key(custom_name -> Option<String>, optional)
     /// )]
     /// struct Data {
     ///     #[primary_key]
@@ -220,12 +254,21 @@ impl Models {
     ///     }
     /// }
     /// ```
-    /// # Define multiple models
     ///
-    /// To define multiple models, you **must** use different `id` for each model. If you use the same `id` for two models,
-    /// the program will panic with the message `The table <table_name> has the same native model version as the table <table_name> and it's not allowed`.
+    /// In the above example, we have:
+    /// - **One primary key** named `id` of type `u64`, defined on the field.
+    /// - **One secondary key** named `name` of type `String`, defined on the field.
+    /// - **One custom secondary key** named `custom_name` of type `Option<String>`, defined using a custom method with the option `optional`.
+    ///
+    /// The method `custom_name` returns an `Option<String>` based on some logic involving the `flag` field.
+    ///
+    /// # Defining Multiple Models
+    ///
+    /// To define multiple models, you **must** use different `id` values for each model. If you use the same `id` for two models,
+    /// the program will panic with the message: `The table <table_name> has the same native model version as the table <table_name> and it's not allowed`.
     ///
     /// Example:
+    ///
     /// ```rust
     /// use native_db::*;
     /// use native_model::{native_model, Model};
@@ -253,6 +296,12 @@ impl Models {
     ///     models.define::<Vegetable>()
     /// }
     /// ```
+    ///
+    /// In the above example, we have:
+    /// - We have two models, `Animal` and `Vegetable`.
+    /// - Both have:
+    ///   - **One primary key** named `name` of type `String`, defined on the field.
+    /// - Each model has a unique `id` (`id=1` for `Animal`, `id=2` for `Vegetable`), which is necessary to avoid conflicts.
     pub fn define<T: ToInput>(&mut self) -> Result<()> {
         let mut new_model_builder = ModelBuilder {
             model: T::native_db_model(),

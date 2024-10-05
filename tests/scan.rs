@@ -9,9 +9,9 @@ use shortcut_assert_fs::TmpFs;
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
 #[native_db(
-    primary_key(generate_my_primary_key),
-    secondary_key(secondary_key_1, unique),
-    secondary_key(secondary_key_2, unique)
+    primary_key(generate_my_primary_key -> u32),
+    secondary_key(secondary_key_1 -> String, unique),
+    secondary_key(secondary_key_2 -> String, unique)
 )]
 struct Item {
     id: u32,
@@ -169,7 +169,7 @@ fn test_iter_range() {
         .scan()
         .primary()
         .unwrap()
-        .range(..2_i32)
+        .range(..2u32)
         .unwrap()
         .try_collect()
         .unwrap();
@@ -183,7 +183,7 @@ fn test_iter_range() {
         .scan()
         .primary()
         .unwrap()
-        .range(2_i32..)
+        .range(2u32..)
         .unwrap()
         .try_collect()
         .unwrap();
@@ -201,7 +201,7 @@ fn test_iter_range() {
         .scan()
         .primary()
         .unwrap()
-        .range(2_i32..3_i32)
+        .range(2u32..3u32)
         .unwrap()
         .try_collect()
         .unwrap();
@@ -297,7 +297,7 @@ fn test_double_ended_iter_by_key_range() {
 
     let r = db.r_transaction().unwrap();
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.range(..b"2".as_slice()).unwrap();
+    let iter = scan.range(.."2").unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 1);
@@ -307,7 +307,7 @@ fn test_double_ended_iter_by_key_range() {
     assert_eq!(obj1.name, "test");
 
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.range(b"2".as_slice()..).unwrap();
+    let iter = scan.range("2"..).unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
@@ -320,7 +320,7 @@ fn test_double_ended_iter_by_key_range() {
     assert_eq!(obj2.name, "test2");
 
     let scan = r.scan().secondary(ItemKey::secondary_key_1).unwrap();
-    let iter = scan.range(b"2".as_slice()..b"3".as_slice()).unwrap();
+    let iter = scan.range("2".."3").unwrap();
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
 
     assert_eq!(result.len(), 1);
@@ -332,7 +332,7 @@ fn test_double_ended_iter_by_key_range() {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 2, version = 1)]
-#[native_db(primary_key(generate_my_primary_key))]
+#[native_db(primary_key(generate_my_primary_key -> String))]
 struct ItemFlag {
     name: String,
 }
@@ -400,7 +400,7 @@ fn test_start_with_scenario() {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 3, version = 1)]
-#[native_db(primary_key(generate_my_primary_key), secondary_key(flag, unique))]
+#[native_db(primary_key(generate_my_primary_key -> String), secondary_key(flag -> String, unique))]
 struct ItemIdFlag {
     id: String,
     flag: String,
@@ -577,7 +577,7 @@ fn test_txn_write_iter_range() {
         .scan()
         .primary()
         .unwrap()
-        .range(..2_i32.to_be_bytes().as_slice())
+        .range(..2u32)
         .unwrap()
         .try_collect()
         .unwrap();
@@ -591,7 +591,7 @@ fn test_txn_write_iter_range() {
         .scan()
         .primary()
         .unwrap()
-        .range(2_i32.to_be_bytes().as_slice()..)
+        .range(2u32..)
         .unwrap()
         .try_collect()
         .unwrap();
@@ -609,7 +609,7 @@ fn test_txn_write_iter_range() {
         .scan()
         .primary()
         .unwrap()
-        .range(2_i32.to_be_bytes().as_slice()..3_i32.to_be_bytes().as_slice())
+        .range(2u32..3u32)
         .unwrap()
         .try_collect()
         .unwrap();
@@ -722,7 +722,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
-        .range(0..10)
+        .range(0u32..10u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -735,7 +735,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
-        .range(2..3)
+        .range(2u32..3u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -748,7 +748,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::unique_nr)
         .unwrap()
-        .range(1..3)
+        .range(1u32..3u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -761,7 +761,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::unique_nr)
         .unwrap()
-        .range(1..=3)
+        .range(1u32..=3u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -774,7 +774,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::unique_nr)
         .unwrap()
-        .range(3..=3)
+        .range(3u32..=3u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -787,7 +787,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
-        .range(2..=3)
+        .range(2u32..=3u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -800,7 +800,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
-        .range(2..=2)
+        .range(2u32..=2u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()
@@ -813,7 +813,7 @@ fn test_scan_range() {
         .scan()
         .secondary(ItemScanRangeKey::nr)
         .unwrap()
-        .range(0..=2)
+        .range(0u32..=2u32)
         .unwrap()
         .collect::<Result<Vec<ItemScanRange>, _>>()
         .unwrap()

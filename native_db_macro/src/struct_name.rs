@@ -1,6 +1,6 @@
 use proc_macro2::Ident;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct StructName(Ident);
 
 impl StructName {

@@ -77,7 +77,7 @@ fn test_migrate() {
 
     let r_txn = db.r_transaction().unwrap();
 
-    let item: ItemV1 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: ItemV1 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV1 {
@@ -101,7 +101,7 @@ fn test_migrate() {
     rw.commit().unwrap();
 
     let r_txn = db.r_transaction().unwrap();
-    let item: ItemV2 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: ItemV2 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         ItemV2 {
@@ -110,7 +110,7 @@ fn test_migrate() {
         }
     );
 
-    let item: Item2 = r_txn.get().primary(1).unwrap().unwrap();
+    let item: Item2 = r_txn.get().primary(1u32).unwrap().unwrap();
     assert_eq!(
         item,
         Item2 {

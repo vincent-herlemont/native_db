@@ -35,9 +35,13 @@ impl Key {
 /// #[derive(Debug, Deserialize, Serialize)]
 /// struct City(String);
 ///
-/// impl ToKey for &City {
-///    fn to_key(&self) -> Key {
+/// impl ToKey for City {
+///   fn to_key(&self) -> Key {
 ///       Key::new(self.0.as_bytes().to_vec())
+///   }
+/// 
+///   fn key_names() -> Vec<String> {
+///     vec!["City".to_string()]
 ///   }
 /// }
 ///
@@ -60,10 +64,10 @@ impl Key {
 ///     let r = db.r_transaction()?;
 ///     
 ///     // Get contry by the capital city (primary key)
-///     let _us: Option<Contry> = r.get().primary(&City("Washington, D.C.".to_string()))?;
+///     let _us: Option<Contry> = r.get().primary(City("Washington, D.C.".to_string()))?;
 ///
 ///     // Get contry by the bigest city (secondary key)
-///     let _us: Option<Contry> = r.get().secondary(ContryKey::bigest_city,&City("New York".to_string()))?;
+///     let _us: Option<Contry> = r.get().secondary(ContryKey::bigest_city, City("New York".to_string()))?;
 ///     Ok(())
 /// }
 /// ```
@@ -80,9 +84,13 @@ impl Key {
 /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
 /// struct Uuid(uuid::Uuid);
 ///
-/// impl ToKey for &Uuid {
+/// impl ToKey for Uuid {
 ///     fn to_key(&self) -> Key {
 ///         Key::new(self.0.as_bytes().to_vec())
+///     }
+/// 
+///     fn key_names() -> Vec<String> {
+///         vec!["Uuid".to_string()]
 ///     }
 /// }
 ///
@@ -105,7 +113,7 @@ impl Key {
 ///     rw.commit()?;
 ///
 ///     let r = db.r_transaction()?;
-///     let result_item: Item = r.get().primary(&item.uuid)?.unwrap();
+///     let result_item: Item = r.get().primary(item.uuid.clone())?.unwrap();
 ///     assert_eq!(result_item.uuid, item.uuid);
 ///     Ok(())
 /// }
@@ -124,9 +132,13 @@ impl Key {
 /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
 /// struct DateTime(chrono::DateTime<chrono::Utc>);
 ///
-/// impl ToKey for &DateTime {
+/// impl ToKey for DateTime {
 ///     fn to_key(&self) -> Key {
 ///         Key::new(self.0.timestamp_millis().to_be_bytes().to_vec())
+///     }
+/// 
+///     fn key_names() -> Vec<String> {
+///         vec!["DateTime".to_string()]
 ///     }
 /// }
 ///
@@ -165,6 +177,7 @@ impl Key {
 /// ```
 pub trait ToKey: Debug {
     fn to_key(&self) -> Key;
+    fn key_names() -> Vec<String>;
 }
 
 // Implement for char
@@ -172,12 +185,18 @@ impl ToKey for char {
     fn to_key(&self) -> Key {
         Key::new(u32::from(*self).to_be_bytes().to_vec())
     }
+    fn key_names() -> Vec<String> {
+        vec!["char".to_string()]
+    }
 }
 
-// Implement for String
-impl ToKey for &String {
+// Implement for &String
+impl ToKey for String {
     fn to_key(&self) -> Key {
         self.as_str().to_key()
+    }
+    fn key_names() -> Vec<String> {
+        vec!["String".to_string()]
     }
 }
 
@@ -185,6 +204,9 @@ impl ToKey for &String {
 impl ToKey for &str {
     fn to_key(&self) -> Key {
         Key::new(self.as_bytes().to_vec())
+    }
+    fn key_names() -> Vec<String> {
+        vec!["String".to_string(), "&str".to_string()]
     }
 }
 
@@ -194,19 +216,9 @@ impl ToKey for Key {
     fn to_key(&self) -> Key {
         self.clone()
     }
-}
 
-// Implement for Slice
-impl<T> ToKey for &[T]
-where
-    T: ToKey,
-{
-    fn to_key(&self) -> Key {
-        let mut data = Vec::new();
-        for item in self.iter().as_slice() {
-            data.extend(item.to_key().0);
-        }
-        Key::new(data)
+    fn key_names() -> Vec<String> {
+        vec!["Key".to_string()]
     }
 }
 
@@ -214,6 +226,9 @@ where
 impl ToKey for () {
     fn to_key(&self) -> Key {
         Key::new(Vec::new())
+    }
+    fn key_names() -> Vec<String> {
+        vec!["()".to_string()]
     }
 }
 
@@ -228,6 +243,15 @@ macro_rules! impl_inner_key_value_for_tuple {
                 )+
                 data.extend(self.$i_last.to_key().0);
                 Key::new(data)
+            }
+            fn key_names() -> Vec<String> {
+                let mut name = String::new();
+                $(
+                    name.push_str(<$t as ToKey>::key_names()[0].as_str());
+                    name.push_str(", ");
+                )+
+                name.push_str(<$t_last as ToKey>::key_names()[0].as_str());
+                vec![format!("({})", name)]
             }
         }
     }
@@ -322,6 +346,36 @@ where
         }
         Key::new(data)
     }
+    fn key_names() -> Vec<String> {
+        let mut names = Vec::new();
+        for name in T::key_names() {
+            names.push(format!("Vec<{}>", name));
+            names.push(format!("[{}]", name));
+        }
+        names
+    }
+}
+
+// Implement for Slice
+impl<T> ToKey for &[T]
+where
+    T: ToKey,
+{
+    fn to_key(&self) -> Key {
+        let mut data = Vec::new();
+        for item in self.iter().as_slice() {
+            data.extend(item.to_key().0);
+        }
+        Key::new(data)
+    }
+    fn key_names() -> Vec<String> {
+        let mut names = Vec::new();
+        for name in T::key_names() {
+            names.push(format!("[{}]", name));
+        }
+
+        names
+    }
 }
 
 // Implement InnerKeyValue for Option<T> where T: InnerKeyValue
@@ -335,6 +389,13 @@ where
             None => Key::new(Vec::new()),
         }
     }
+    fn key_names() -> Vec<String> {
+        let mut names = Vec::new();
+        for name in T::key_names() {
+            names.push(format!("Option<{}>", name));
+        }
+        names
+    }
 }
 
 // Macro for implementing InnerKeyValue for u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64
@@ -343,6 +404,9 @@ macro_rules! impl_inner_key_value_for_primitive {
         impl ToKey for $type {
             fn to_key(&self) -> Key {
                 Key::new(self.to_be_bytes().to_vec())
+            }
+            fn key_names() -> Vec<String> {
+                vec![stringify!($type).to_string()]
             }
         }
     };
