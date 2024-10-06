@@ -11,6 +11,9 @@ use criterion::{
 use native_model::{native_model, Model};
 use rand::Rng;
 
+// #[global_allocator]
+// static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_name: &str) {
     let mut group = c.benchmark_group(format!("insert_{}", item_name));
     group.plot_config(
@@ -149,41 +152,41 @@ fn bench_select<T: Default + Item + native_db::ToInput + Clone + Debug>(
             let start = std::time::Instant::now();
             let native_db = native_db.r_transaction().unwrap();
             for _ in 0..iters {
-                let from_sk = 1;
-                let to_sk = 100;
-                let items: Vec<T> = native_db.scan().secondary(Item1SK_NUni_NOptKey::sk_1).unwrap().range(from_sk..).unwrap().try_collect().unwrap();
-                println!("from_sk: {:?}, to_sk: {:?}, len: {:?}", from_sk, to_sk, items.len());
+                let from_sk: i64 = rand::thread_rng().gen_range(0..50);
+                let to_sk: i64 = rand::thread_rng().gen_range(50..100);
+                let _items: Vec<T> = native_db.scan().secondary(Item1SK_NUni_NOptKey::sk_1).unwrap().range(from_sk..to_sk).unwrap().try_collect().unwrap();
+                // println!("len: {:?}", _items.len());
             }
             start.elapsed()
         })
     });
 
 
-    // group.bench_function(BenchmarkId::new("random range", "Sqlite"), |b| {
-    //     b.iter_custom(|iters| {
-    //         let sqlite = SqliteBenchDatabase::setup();
-    //         sqlite.insert_bulk_random::<T>(NUMBER_OF_ITEMS);
-    //         let start = std::time::Instant::now();
-    //         for _ in 0..iters {
-    //             let from_sk = rand::thread_rng().gen_range(0..50);
-    //             let to_sk = rand::thread_rng().gen_range(50..100);
-    //             let mut db = sqlite.db().borrow_mut();
-    //             let transaction = db
-    //                 .transaction_with_behavior(TransactionBehavior::Immediate)
-    //                 .unwrap();
-    //             let sql = T::generate_select_range_sk(&"sk_1");
-    //             let mut stmt = transaction.prepare_cached(&sql).unwrap();
-    //             let rows = stmt.query_map(&[(":from_sk", &from_sk), (":to_sk", &to_sk)], |row| {
-    //                 let binary: Vec<u8> = row.get(1)?;
-    //                 let item = T::native_db_bincode_decode_from_slice(&binary).unwrap();
-    //                 Ok(item)
-    //             });
-    //             let out = rows.unwrap().map(|r| r.unwrap()).collect::<Vec<T>>();
-    //             println!("len: {:?}", out.len());
-    //         }
-    //         start.elapsed()
-    //     });
-    // });
+    group.bench_function(BenchmarkId::new("random range", "Sqlite"), |b| {
+        b.iter_custom(|iters| {
+            let sqlite = SqliteBenchDatabase::setup();
+            sqlite.insert_bulk_random::<T>(NUMBER_OF_ITEMS);
+            let start = std::time::Instant::now();
+            for _ in 0..iters {
+                let from_sk: i64 = rand::thread_rng().gen_range(0..50);
+                let to_sk: i64 = rand::thread_rng().gen_range(50..100);
+                let mut db = sqlite.db().borrow_mut();
+                let transaction = db
+                    .transaction_with_behavior(TransactionBehavior::Immediate)
+                    .unwrap();
+                let sql = T::generate_select_range_sk(&"sk_1");
+                let mut stmt = transaction.prepare_cached(&sql).unwrap();
+                let rows = stmt.query_map(&[(":from_sk", &from_sk), (":to_sk", &to_sk)], |row| {
+                    let binary: Vec<u8> = row.get(1)?;
+                    let item = T::native_db_bincode_decode_from_slice(&binary).unwrap();
+                    Ok(item)
+                });
+                let _out = rows.unwrap().map(|r| r.unwrap()).collect::<Vec<T>>();
+                // println!("len: {:?}", _out.len());
+            }
+            start.elapsed()
+        });
+    });
 }
 
 fn first_compare(c: &mut Criterion) {

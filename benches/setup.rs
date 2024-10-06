@@ -200,7 +200,7 @@ impl BenchDatabase for NativeDBBenchDatabase {
     fn setup() -> Self {
         let tmp = TmpFs::new().unwrap();
         let db_path = tmp.path("native_db_bench");
-        let db = Builder::new().create(&MODELS, db_path.clone()).unwrap();
+        let db = Builder::new().set_cache_size(1024 * 1024 * 1024).create(&MODELS, db_path.clone()).unwrap();
         Self { tmp, db }
     }
 
