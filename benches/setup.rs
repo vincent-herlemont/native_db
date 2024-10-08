@@ -1,6 +1,5 @@
-use std::{cell::RefCell, clone, fmt::Debug, rc::Rc};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
-use concat_idents::concat_idents;
 use native_db::*;
 use native_model::{native_model, Model};
 use once_cell::sync::Lazy;
@@ -200,7 +199,7 @@ impl BenchDatabase for NativeDBBenchDatabase {
     fn setup() -> Self {
         let tmp = TmpFs::new().unwrap();
         let db_path = tmp.path("native_db_bench");
-        let db = Builder::new().set_cache_size(1024 * 1024 * 1024).create(&MODELS, db_path.clone()).unwrap();
+        let db = Builder::new().set_cache_size(0).create(&MODELS, db_path.clone()).unwrap();
         Self { tmp, db }
     }
 
@@ -251,18 +250,18 @@ impl BenchDatabase for SqliteBenchDatabase {
         )
         .unwrap();
         db.set_prepared_statement_cache_capacity(0);
-        db.pragma_update(None, "journal_mode", &"DELETE").unwrap();
-        db.pragma_update(None, "synchronous", &"OFF").unwrap();
+        //db.pragma_update(None, "journal_mode", &"DELETE").unwrap();
+        //db.pragma_update(None, "synchronous", &"OFF").unwrap();
         db.pragma_update(None, "cache_size", &"0").unwrap();
-        db.pragma_update(None, "foreign_keys", &"ON").unwrap();
+        //db.pragma_update(None, "foreign_keys", &"ON").unwrap();
         db.execute(&Item1SK_NUni_NOpt::generate_sqlite_table(), ())
             .unwrap();
-        // db.execute(&Item10SK_NUni_NOpt::generate_sqlite_table(), ())
-        //     .unwrap();
-        // db.execute(&Item50SK_NUni_NOpt::generate_sqlite_table(), ())
-        //     .unwrap();
-        // db.execute(&Item100SK_NUni_NOpt::generate_sqlite_table(), ())
-        //     .unwrap();
+        db.execute(&Item10SK_NUni_NOpt::generate_sqlite_table(), ())
+            .unwrap();
+        db.execute(&Item50SK_NUni_NOpt::generate_sqlite_table(), ())
+            .unwrap();
+        db.execute(&Item100SK_NUni_NOpt::generate_sqlite_table(), ())
+            .unwrap();
         Self {
             tmp,
             db: Rc::new(RefCell::new(db)),

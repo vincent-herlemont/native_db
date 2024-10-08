@@ -1,14 +1,15 @@
 mod setup;
-use std::fmt::Debug;
+use std::{fmt::Debug, time::Duration};
 
 use rusqlite::TransactionBehavior;
 use setup::*;
 use itertools::Itertools;
 use criterion::{
-    black_box, criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, BenchmarkId,
+    criterion_group, criterion_main, BenchmarkId,
     Criterion,
 };
-use native_model::{native_model, Model};
+use native_db::db_type::ToKeyDefinition;
+
 use rand::Rng;
 
 // #[global_allocator]
@@ -131,9 +132,10 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
     });
 }
 
-fn bench_select<T: Default + Item + native_db::ToInput + Clone + Debug>(
+fn bench_select_range_random_data<T: Default + Item + native_db::ToInput + Clone + Debug>(
     c: &mut Criterion,
     item_name: &str,
+    key_def: impl ToKeyDefinition<native_db::db_type::KeyOptions>,
 ) {
     let mut group = c.benchmark_group(format!("select_{}", item_name));
     group.plot_config(
@@ -142,6 +144,8 @@ fn bench_select<T: Default + Item + native_db::ToInput + Clone + Debug>(
     group.sampling_mode(criterion::SamplingMode::Flat);
 
     const NUMBER_OF_ITEMS: usize = 10000;
+
+    let key_def = key_def.key_definition();
 
     group.bench_function(BenchmarkId::new("random range", "Native DB"), |b| {
         b.iter_custom(|iters| {
@@ -154,14 +158,14 @@ fn bench_select<T: Default + Item + native_db::ToInput + Clone + Debug>(
             for _ in 0..iters {
                 let from_sk: i64 = rand::thread_rng().gen_range(0..50);
                 let to_sk: i64 = rand::thread_rng().gen_range(50..100);
-                let _items: Vec<T> = native_db.scan().secondary(Item1SK_NUni_NOptKey::sk_1).unwrap().range(from_sk..to_sk).unwrap().try_collect().unwrap();
+                let _items: Vec<T> = native_db.scan().secondary(key_def.clone()).unwrap().range(from_sk..to_sk).unwrap().try_collect().unwrap();
                 // println!("len: {:?}", _items.len());
             }
             start.elapsed()
         })
     });
 
-
+    
     group.bench_function(BenchmarkId::new("random range", "Sqlite"), |b| {
         b.iter_custom(|iters| {
             let sqlite = SqliteBenchDatabase::setup();
@@ -187,6 +191,7 @@ fn bench_select<T: Default + Item + native_db::ToInput + Clone + Debug>(
             start.elapsed()
         });
     });
+
 }
 
 fn first_compare(c: &mut Criterion) {
@@ -195,8 +200,32 @@ fn first_compare(c: &mut Criterion) {
     // bench_insert::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional");
     // bench_insert::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional");
 
-    bench_select::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional");
+    // TODO update
+
+    // TODO get once
+
+    // TODO: range with no random data
+    // bench_select_range
+
+    bench_select_range_random_data::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional", Item1SK_NUni_NOptKey::sk_1);
+    bench_select_range_random_data::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional", Item10SK_NUni_NOptKey::sk_1);
+    bench_select_range_random_data::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional", Item50SK_NUni_NOptKey::sk_1);
+    bench_select_range_random_data::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional", Item100SK_NUni_NOptKey::sk_1);
+
+    // TODO delete
+
+    // TODO: insert select update concurently
 }
 
-criterion_group!(benches, first_compare);
+fn configure_criterion() -> Criterion {
+    Criterion::default()
+        .sample_size(10)
+        .measurement_time(Duration::from_secs(5))
+}
+
+criterion_group!(
+    name = benches;
+    config = configure_criterion();
+    targets = first_compare
+);
 criterion_main!(benches);
