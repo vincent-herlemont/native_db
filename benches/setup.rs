@@ -12,6 +12,7 @@ pub trait Item {
     fn generate_sqlite_table() -> String;
     fn generate_sqlite_insert(&self) -> String;
     fn generate_select_range_sk(sk_name: &str) -> String;
+    fn generate_select_by_pk() -> String;
     fn get_pk(&self) -> i64;
     fn update_pk(&mut self, pk: i64);
     // TODO: rename update_sk_with_random
@@ -108,6 +109,16 @@ macro_rules! define_item_struct {
                 sql
             }
 
+            fn generate_select_by_pk() -> String {
+                let mut sql = String::new();
+                sql.push_str("SELECT * FROM ");
+                sql.push_str(stringify!($struct_name));
+                sql.push_str(" WHERE ");
+                sql.push_str("pk");
+                sql.push_str(" = :pk");
+                sql
+            }
+
             fn generate_select_range_sk(sk_name: &str) -> String {
                 let mut sql = String::new();
                 sql.push_str("SELECT * FROM ");
@@ -185,7 +196,15 @@ pub trait BenchDatabase {
     fn insert<T: native_db::ToInput + Item>(&self, item: T);
     fn db(&self) -> &Self::DB;
     fn insert_bulk<T: native_db::ToInput + Item + Default + Debug>(&self, items: Vec<T>);
+    // TODO: seem to be impemented on the trait
+    fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
+        &self,
+        pk_start: i64,
+        n: usize,
+    );
+    // TODO: seem to be impemented on the trait
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize);
+    // TODO: seem to be impemented on the trait
     fn insert_bulk_sk_value<T: native_db::ToInput + Item + Default + Clone + Debug>(
         &self,
         pk_start: i64,
@@ -227,6 +246,18 @@ impl BenchDatabase for NativeDBBenchDatabase {
             rw.insert(item).unwrap();
         }
         rw.commit().unwrap();
+    }
+
+    fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
+            &self,
+            pk_start: i64,
+            n: usize,
+        ) {
+        let mut items = vec![T::default(); n];
+        for (usize, item) in &mut items.iter_mut().enumerate() {
+            item.update_pk(pk_start + usize as i64);
+        }
+        self.insert_bulk(items);
     }
 
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
@@ -315,6 +346,18 @@ impl BenchDatabase for SqliteBenchDatabase {
         db.cache_flush().unwrap();
     }
 
+    fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
+            &self,
+            pk_start: i64,
+            n: usize,
+        ) {
+        let mut items = vec![T::default(); n];
+        for (usize, item) in &mut items.iter_mut().enumerate() {
+            item.update_pk(pk_start + usize as i64);
+        }
+        self.insert_bulk(items);
+    }
+
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
         let mut items = vec![T::default(); n];
         for (usize, item) in &mut items.iter_mut().enumerate() {
@@ -383,6 +426,18 @@ impl BenchDatabase for RedbBenchDatabase {
             }
         }
         rw.commit().unwrap();
+    }
+
+    fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
+            &self,
+            pk_start: i64,
+            n: usize,
+        ) {
+        let mut items = vec![T::default(); n];
+        for (usize, item) in &mut items.iter_mut().enumerate() {
+            item.update_pk(pk_start + usize as i64);
+        }
+        self.insert_bulk(items);
     }
 
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, _: usize) {

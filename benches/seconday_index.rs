@@ -246,64 +246,141 @@ fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
     });
 }
 
+fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(c: &mut Criterion, item_name: &str) {
+    let mut group = c.benchmark_group(format!("get_{}", item_name));
+    group.plot_config(
+        criterion::PlotConfiguration::default().summary_scale(criterion::AxisScale::Linear),
+    );
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    const NUMBER_OF_ITEMS: usize = 10000;
+
+    group.bench_function(BenchmarkId::new("get", "Native DB"), |b| {
+        b.iter_custom(|iters| {
+            let native_db = NativeDBBenchDatabase::setup();
+            native_db.insert_bulk_inc::<T>(0, NUMBER_OF_ITEMS);
+
+            let native_db = native_db.db();
+            let start = std::time::Instant::now();
+            let r = native_db.r_transaction().unwrap();
+            for _ in 0..iters {
+                let pk = rand::thread_rng().gen_range(0..NUMBER_OF_ITEMS as i64);
+                let _item: T = r.get().primary(pk).unwrap().unwrap();
+            }
+            start.elapsed()
+        })
+    });
+
+    group.bench_function(BenchmarkId::new("get", "Sqlite"), |b| {
+        b.iter_custom(|iters| {
+            let sqlite = SqliteBenchDatabase::setup();
+            sqlite.insert_bulk_inc::<T>(0, NUMBER_OF_ITEMS);
+
+            let start = std::time::Instant::now();
+            let db = sqlite.db();
+            let mut db = db.borrow_mut();
+            let transaction = db
+                .transaction_with_behavior(TransactionBehavior::Immediate)
+                .unwrap();
+            for _ in 0..iters {
+                let pk = rand::thread_rng().gen_range(0..NUMBER_OF_ITEMS as i64);
+                let sql = T::generate_select_by_pk();
+                let mut stmt = transaction.prepare(&sql).unwrap();
+                let mut rows = stmt.query(&[(":pk", &pk)]).unwrap();
+                let _item: T = if let Some(row) = rows.next().unwrap() {
+                    let binary: Vec<u8> = row.get(1).unwrap();
+                    Some(T::native_db_bincode_decode_from_slice(&binary).unwrap())
+                } else {
+                    None
+                }.unwrap();
+            }
+            start.elapsed()
+        })
+    });
+
+    group.bench_function(BenchmarkId::new("get", "Redb"), |b| {
+        b.iter_custom(|iters| {
+            let redb = RedbBenchDatabase::setup();
+            redb.insert_bulk_inc::<T>(0, NUMBER_OF_ITEMS);
+
+            let redb = redb.db();
+            let start = std::time::Instant::now();
+            let read_txn = redb.begin_read().unwrap();
+            for _ in 0..iters {
+                let pk = rand::thread_rng().gen_range(0..NUMBER_OF_ITEMS as i64);
+                let table = read_txn.open_table(REDB_TABLE).unwrap();
+                let item = table.get(&pk).unwrap();
+                let _item: T = item.map(|v| {
+                    let bytes = v.value();
+                    T::native_db_bincode_decode_from_slice(&bytes).unwrap()
+                }).unwrap();
+            }
+            start.elapsed()
+        })
+    });
+}
+
 fn first_compare(c: &mut Criterion) {
-    bench_insert::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional");
-    bench_insert::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional");
-    bench_insert::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional");
-    bench_insert::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional");
+    // bench_insert::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional");
+    // bench_insert::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional");
+    // bench_insert::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional");
+    // bench_insert::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional");
 
-    // TODO get
+    bench_get::<Item1SK_NUni_NOpt>(c, "1 PK no unique no optional");
+    bench_get::<Item10SK_NUni_NOpt>(c, "10 PK no unique no optional");
+    bench_get::<Item50SK_NUni_NOpt>(c, "50 PK no unique no optional");
+    bench_get::<Item100SK_NUni_NOpt>(c, "100 PK no unique no optional");
 
-    // Range
-    bench_select_range::<Item1SK_NUni_NOpt>(
-        c,
-        "1 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item1SK_NUni_NOptKey::sk_1),
-    );
-    bench_select_range::<Item10SK_NUni_NOpt>(
-        c,
-        "10 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item10SK_NUni_NOptKey::sk_1),
-    );
-    bench_select_range::<Item50SK_NUni_NOpt>(
-        c,
-        "50 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item50SK_NUni_NOptKey::sk_1),
-    );
-    bench_select_range::<Item100SK_NUni_NOpt>(
-        c,
-        "100 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1),
-    );
+    // // Range
+    // bench_select_range::<Item1SK_NUni_NOpt>(
+    //     c,
+    //     "1 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item1SK_NUni_NOptKey::sk_1),
+    // );
+    // bench_select_range::<Item10SK_NUni_NOpt>(
+    //     c,
+    //     "10 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item10SK_NUni_NOptKey::sk_1),
+    // );
+    // bench_select_range::<Item50SK_NUni_NOpt>(
+    //     c,
+    //     "50 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item50SK_NUni_NOptKey::sk_1),
+    // );
+    // bench_select_range::<Item100SK_NUni_NOpt>(
+    //     c,
+    //     "100 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1),
+    // );
 
-    // Range random
-    bench_select_range::<Item1SK_NUni_NOpt>(
-        c,
-        "1 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item1SK_NUni_NOptKey::sk_1).random(),
-    );
-    bench_select_range::<Item10SK_NUni_NOpt>(
-        c,
-        "10 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item10SK_NUni_NOptKey::sk_1).random(),
-    );
-    bench_select_range::<Item50SK_NUni_NOpt>(
-        c,
-        "50 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item50SK_NUni_NOptKey::sk_1).random(),
-    );
-    bench_select_range::<Item100SK_NUni_NOpt>(
-        c,
-        "100 SK no unique no optional",
-        BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1).random(),
-    );
+    // // Range random
+    // bench_select_range::<Item1SK_NUni_NOpt>(
+    //     c,
+    //     "1 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item1SK_NUni_NOptKey::sk_1).random(),
+    // );
+    // bench_select_range::<Item10SK_NUni_NOpt>(
+    //     c,
+    //     "10 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item10SK_NUni_NOptKey::sk_1).random(),
+    // );
+    // bench_select_range::<Item50SK_NUni_NOpt>(
+    //     c,
+    //     "50 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item50SK_NUni_NOptKey::sk_1).random(),
+    // );
+    // bench_select_range::<Item100SK_NUni_NOpt>(
+    //     c,
+    //     "100 SK no unique no optional",
+    //     BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1).random(),
+    // );
 }
 
 fn configure_criterion() -> Criterion {
     Criterion::default()
-        .sample_size(200)
+        .sample_size(10)
         // 5 minutes
-        .measurement_time(Duration::from_secs(300))
+        // .measurement_time(Duration::from_secs(300))
 }
 
 criterion_group!(
