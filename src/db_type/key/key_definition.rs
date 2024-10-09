@@ -81,7 +81,9 @@ pub fn composite_key(secondary_key: &Key, primary_key: &Key) -> Key {
     secondary_key.extend_with_delimiter(0, primary_key);
     secondary_key
 }
-fn _check_key_type_from_key_definition<K: ToKey>(key_definition: &KeyDefinition<KeyOptions>) -> Result<()> {
+fn _check_key_type_from_key_definition<K: ToKey>(
+    key_definition: &KeyDefinition<KeyOptions>,
+) -> Result<()> {
     if !K::key_names()
         .iter()
         .any(|name| key_definition.rust_types.contains(name))
@@ -115,7 +117,10 @@ pub(crate) fn check_key_type<K: ToKey>(model: &Model, _key: &K) -> Result<()> {
     _check_key_type::<K>(model)
 }
 
-pub(crate) fn check_key_type_from_key_definition<K: ToKey>(key_definition: &KeyDefinition<KeyOptions>, _key: &K) -> Result<()> {
+pub(crate) fn check_key_type_from_key_definition<K: ToKey>(
+    key_definition: &KeyDefinition<KeyOptions>,
+    _key: &K,
+) -> Result<()> {
     _check_key_type_from_key_definition::<K>(key_definition)
 }
 

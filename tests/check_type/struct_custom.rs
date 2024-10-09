@@ -58,7 +58,6 @@ fn test_get_primary_key_custom_pk() {
     rw.insert(item.clone()).unwrap();
     rw.commit().unwrap();
 
-
     // // Get primary key for read transaction for unique
     // let r = db.r_transaction().unwrap();
     // let id = vec!["1".to_string()];

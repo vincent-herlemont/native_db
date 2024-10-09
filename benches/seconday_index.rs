@@ -1,14 +1,11 @@
 mod setup;
 use std::{fmt::Debug, time::Duration};
 
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use itertools::Itertools;
+use native_db::db_type::{KeyDefinition, KeyOptions, ToKeyDefinition};
 use rusqlite::TransactionBehavior;
 use setup::*;
-use itertools::Itertools;
-use criterion::{
-    criterion_group, criterion_main, BenchmarkId,
-    Criterion,
-};
-use native_db::db_type::ToKeyDefinition;
 
 use rand::Rng;
 
@@ -132,10 +129,32 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
     });
 }
 
-fn bench_select_range_random_data<T: Default + Item + native_db::ToInput + Clone + Debug>(
+struct BenchSelectRangeRandomDataCfg {
+    key_def: KeyDefinition<KeyOptions>,
+    random: bool,
+}
+
+impl BenchSelectRangeRandomDataCfg {
+    fn new(key_def: impl ToKeyDefinition<KeyOptions>) -> Self {
+        let key_def = key_def.key_definition();
+        Self {
+            key_def,
+            random: false,
+        }
+    }
+
+    fn random(self) -> Self {
+        Self {
+            key_def: self.key_def,
+            random: true,
+        }
+    }
+}
+
+fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
     c: &mut Criterion,
     item_name: &str,
-    key_def: impl ToKeyDefinition<native_db::db_type::KeyOptions>,
+    cfg: BenchSelectRangeRandomDataCfg,
 ) {
     let mut group = c.benchmark_group(format!("select_{}", item_name));
     group.plot_config(
@@ -144,83 +163,147 @@ fn bench_select_range_random_data<T: Default + Item + native_db::ToInput + Clone
     group.sampling_mode(criterion::SamplingMode::Flat);
 
     const NUMBER_OF_ITEMS: usize = 10000;
+    const NUMBER_OF_ITEMS_SMALL: usize = NUMBER_OF_ITEMS / 2;
+    const FROM_SK_MIN: i64 = 0;
+    const FROM_SK_MAX: i64 = 50;
+    const TO_SK_MIN: i64 = 50;
+    const TO_SK_MAX: i64 = 100;
 
-    let key_def = key_def.key_definition();
+    let key_def = cfg.key_def.key_definition();
 
-    group.bench_function(BenchmarkId::new("random range", "Native DB"), |b| {
+    let function_name  = if cfg.random { "random range" } else { "value range" };
+
+    group.bench_function(BenchmarkId::new(function_name, "Native DB"), |b| {
         b.iter_custom(|iters| {
             let native_db = NativeDBBenchDatabase::setup();
-            native_db.insert_bulk_random::<T>(NUMBER_OF_ITEMS);
+            if cfg.random {
+                native_db.insert_bulk_sk_random::<T>(NUMBER_OF_ITEMS);
+            } else {
+                native_db.insert_bulk_sk_value::<T>(0, NUMBER_OF_ITEMS_SMALL, FROM_SK_MIN);
+                native_db.insert_bulk_sk_value::<T>(NUMBER_OF_ITEMS_SMALL as i64, NUMBER_OF_ITEMS_SMALL, TO_SK_MAX);
+            }
 
             let native_db = native_db.db();
             let start = std::time::Instant::now();
             let native_db = native_db.r_transaction().unwrap();
             for _ in 0..iters {
-                let from_sk: i64 = rand::thread_rng().gen_range(0..50);
-                let to_sk: i64 = rand::thread_rng().gen_range(50..100);
-                let _items: Vec<T> = native_db.scan().secondary(key_def.clone()).unwrap().range(from_sk..to_sk).unwrap().try_collect().unwrap();
-                // println!("len: {:?}", _items.len());
+                let (from_sk, to_sk) = if cfg.random {
+                    let from_sk: i64 = rand::thread_rng().gen_range(FROM_SK_MIN..FROM_SK_MAX);
+                    let to_sk: i64 = rand::thread_rng().gen_range(TO_SK_MIN..TO_SK_MAX);
+                    (from_sk, to_sk)
+                } else {
+                    (FROM_SK_MIN, TO_SK_MIN)
+                };
+                let _items: Vec<T> = native_db
+                    .scan()
+                    .secondary(key_def.clone())
+                    .unwrap()
+                    .range(from_sk..to_sk)
+                    .unwrap()
+                    .try_collect()
+                    .unwrap();
+                //println!("Native len: {:?}", _items.len());
             }
             start.elapsed()
         })
     });
 
-    
-    group.bench_function(BenchmarkId::new("random range", "Sqlite"), |b| {
+    group.bench_function(BenchmarkId::new(function_name, "Sqlite"), |b| {
         b.iter_custom(|iters| {
             let sqlite = SqliteBenchDatabase::setup();
-            sqlite.insert_bulk_random::<T>(NUMBER_OF_ITEMS);
+            if cfg.random {
+                sqlite.insert_bulk_sk_random::<T>(NUMBER_OF_ITEMS);
+            } else {
+                sqlite.insert_bulk_sk_value::<T>(0, NUMBER_OF_ITEMS_SMALL, FROM_SK_MIN);
+                sqlite.insert_bulk_sk_value::<T>(NUMBER_OF_ITEMS_SMALL as i64, NUMBER_OF_ITEMS_SMALL, TO_SK_MAX);
+            }
+
             let start = std::time::Instant::now();
             for _ in 0..iters {
-                let from_sk: i64 = rand::thread_rng().gen_range(0..50);
-                let to_sk: i64 = rand::thread_rng().gen_range(50..100);
+                let (from_sk, to_sk) = if cfg.random {
+                    let from_sk: i64 = rand::thread_rng().gen_range(FROM_SK_MIN..FROM_SK_MAX);
+                    let to_sk: i64 = rand::thread_rng().gen_range(TO_SK_MIN..TO_SK_MAX);
+                    (from_sk, to_sk)
+                } else {
+                    (FROM_SK_MIN, TO_SK_MIN)
+                };
                 let mut db = sqlite.db().borrow_mut();
                 let transaction = db
                     .transaction_with_behavior(TransactionBehavior::Immediate)
                     .unwrap();
                 let sql = T::generate_select_range_sk(&"sk_1");
-                let mut stmt = transaction.prepare_cached(&sql).unwrap();
+                let mut stmt = transaction.prepare(&sql).unwrap();
                 let rows = stmt.query_map(&[(":from_sk", &from_sk), (":to_sk", &to_sk)], |row| {
                     let binary: Vec<u8> = row.get(1)?;
                     let item = T::native_db_bincode_decode_from_slice(&binary).unwrap();
                     Ok(item)
                 });
                 let _out = rows.unwrap().map(|r| r.unwrap()).collect::<Vec<T>>();
-                // println!("len: {:?}", _out.len());
+                //println!("Sqlite len: {:?}", _out.len());
             }
             start.elapsed()
         });
     });
-
 }
 
 fn first_compare(c: &mut Criterion) {
-    // bench_insert::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional");
-    // bench_insert::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional");
-    // bench_insert::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional");
-    // bench_insert::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional");
+    bench_insert::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional");
+    bench_insert::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional");
+    bench_insert::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional");
+    bench_insert::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional");
 
-    // TODO update
+    // TODO get
 
-    // TODO get once
+    // Range
+    bench_select_range::<Item1SK_NUni_NOpt>(
+        c,
+        "1 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item1SK_NUni_NOptKey::sk_1),
+    );
+    bench_select_range::<Item10SK_NUni_NOpt>(
+        c,
+        "10 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item10SK_NUni_NOptKey::sk_1),
+    );
+    bench_select_range::<Item50SK_NUni_NOpt>(
+        c,
+        "50 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item50SK_NUni_NOptKey::sk_1),
+    );
+    bench_select_range::<Item100SK_NUni_NOpt>(
+        c,
+        "100 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1),
+    );
 
-    // TODO: range with no random data
-    // bench_select_range
-
-    bench_select_range_random_data::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional", Item1SK_NUni_NOptKey::sk_1);
-    bench_select_range_random_data::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional", Item10SK_NUni_NOptKey::sk_1);
-    bench_select_range_random_data::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional", Item50SK_NUni_NOptKey::sk_1);
-    bench_select_range_random_data::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional", Item100SK_NUni_NOptKey::sk_1);
-
-    // TODO delete
-
-    // TODO: insert select update concurently
+    // Range random
+    bench_select_range::<Item1SK_NUni_NOpt>(
+        c,
+        "1 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item1SK_NUni_NOptKey::sk_1).random(),
+    );
+    bench_select_range::<Item10SK_NUni_NOpt>(
+        c,
+        "10 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item10SK_NUni_NOptKey::sk_1).random(),
+    );
+    bench_select_range::<Item50SK_NUni_NOpt>(
+        c,
+        "50 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item50SK_NUni_NOptKey::sk_1).random(),
+    );
+    bench_select_range::<Item100SK_NUni_NOpt>(
+        c,
+        "100 SK no unique no optional",
+        BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1).random(),
+    );
 }
 
 fn configure_criterion() -> Criterion {
     Criterion::default()
-        .sample_size(10)
-        .measurement_time(Duration::from_secs(5))
+        .sample_size(200)
+        // 5 minutes
+        .measurement_time(Duration::from_secs(300))
 }
 
 criterion_group!(

@@ -52,7 +52,13 @@ fn test_secondary() {
 
     assert_eq!(
         secondary_key
-            .get(&KeyDefinition::new(1, 1, "name", vec!["String".to_string()], Default::default()))
+            .get(&KeyDefinition::new(
+                1,
+                1,
+                "name",
+                vec!["String".to_string()],
+                Default::default()
+            ))
             .unwrap(),
         &KeyEntry::Default("test".to_key())
     );

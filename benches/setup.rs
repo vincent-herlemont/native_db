@@ -5,7 +5,7 @@ use native_model::{native_model, Model};
 use once_cell::sync::Lazy;
 use rand::Rng;
 use rusqlite::TransactionBehavior;
-use serde::{Deserialize, Serialize};
+use serde::{de::value, Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;
 
 pub trait Item {
@@ -14,7 +14,10 @@ pub trait Item {
     fn generate_select_range_sk(sk_name: &str) -> String;
     fn get_pk(&self) -> i64;
     fn update_pk(&mut self, pk: i64);
-    fn update_with_random(&mut self);
+    // TODO: rename update_sk_with_random
+    fn update_sk_with_random(&mut self);
+    // TODO: rename update_sk_with_value
+    fn update_sk_with_value(&mut self, value: i64);
 }
 
 pub const REDB_TABLE: redb::TableDefinition<i64, Vec<u8>> = redb::TableDefinition::new("item");
@@ -35,11 +38,16 @@ macro_rules! define_item_struct {
 
         impl Item for $struct_name {
 
-            fn update_with_random(&mut self) {
-                // Random between 0 and 100
+            fn update_sk_with_random(&mut self) {
                 $(
                     let mut rng = rand::thread_rng();
-                    self.$secondary_key = rng.gen_range(0..50);
+                    self.$secondary_key = rng.gen_range(0..100);
+                )*
+            }
+
+            fn update_sk_with_value(&mut self, value: i64) {
+                $(
+                    self.$secondary_key = value;
                 )*
             }
 
@@ -177,11 +185,17 @@ pub trait BenchDatabase {
     fn insert<T: native_db::ToInput + Item>(&self, item: T);
     fn db(&self) -> &Self::DB;
     fn insert_bulk<T: native_db::ToInput + Item + Default + Debug>(&self, items: Vec<T>);
-    fn insert_bulk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize);
+    fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize);
+    fn insert_bulk_sk_value<T: native_db::ToInput + Item + Default + Clone + Debug>(
+        &self,
+        pk_start: i64,
+        n: usize,
+        value: i64,
+    );
 }
 
 pub struct NativeDBBenchDatabase {
-    tmp: TmpFs,
+    _tmp: TmpFs,
     db: Database<'static>,
 }
 
@@ -199,8 +213,12 @@ impl BenchDatabase for NativeDBBenchDatabase {
     fn setup() -> Self {
         let tmp = TmpFs::new().unwrap();
         let db_path = tmp.path("native_db_bench");
-        let db = Builder::new().set_cache_size(0).create(&MODELS, db_path.clone()).unwrap();
-        Self { tmp, db }
+        let db = Builder::new()
+            // Set cache size to 500 MB
+            .set_cache_size(500 * 1024 * 1024)
+            .create(&MODELS, db_path.clone())
+            .unwrap();
+        Self { _tmp: tmp, db }
     }
 
     fn insert_bulk<T: native_db::ToInput + Item + Debug>(&self, items: Vec<T>) {
@@ -211,11 +229,25 @@ impl BenchDatabase for NativeDBBenchDatabase {
         rw.commit().unwrap();
     }
 
-    fn insert_bulk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
+    fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
         let mut items = vec![T::default(); n];
         for (usize, item) in &mut items.iter_mut().enumerate() {
-            item.update_with_random();
+            item.update_sk_with_random();
             item.update_pk(usize as i64);
+        }
+        self.insert_bulk(items);
+    }
+
+    fn insert_bulk_sk_value<T: native_db::ToInput + Item + Default + Clone + Debug>(
+        &self,
+        pk_start: i64,
+        n: usize,
+        value: i64,
+    ) {
+        let mut items = vec![T::default(); n];
+        for (usize, item) in &mut items.iter_mut().enumerate() {
+            item.update_sk_with_value(value);
+            item.update_pk(pk_start + usize as i64);
         }
         self.insert_bulk(items);
     }
@@ -232,7 +264,7 @@ impl BenchDatabase for NativeDBBenchDatabase {
 }
 
 pub struct SqliteBenchDatabase {
-    tmp: TmpFs,
+    _tmp: TmpFs,
     db: Rc<RefCell<rusqlite::Connection>>,
 }
 
@@ -249,10 +281,10 @@ impl BenchDatabase for SqliteBenchDatabase {
                 | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )
         .unwrap();
-        db.set_prepared_statement_cache_capacity(0);
+        db.set_prepared_statement_cache_capacity(100);
         //db.pragma_update(None, "journal_mode", &"DELETE").unwrap();
         //db.pragma_update(None, "synchronous", &"OFF").unwrap();
-        db.pragma_update(None, "cache_size", &"0").unwrap();
+        //db.pragma_update(None, "cache_size", &"0").unwrap();
         //db.pragma_update(None, "foreign_keys", &"ON").unwrap();
         db.execute(&Item1SK_NUni_NOpt::generate_sqlite_table(), ())
             .unwrap();
@@ -263,7 +295,7 @@ impl BenchDatabase for SqliteBenchDatabase {
         db.execute(&Item100SK_NUni_NOpt::generate_sqlite_table(), ())
             .unwrap();
         Self {
-            tmp,
+            _tmp: tmp,
             db: Rc::new(RefCell::new(db)),
         }
     }
@@ -283,11 +315,25 @@ impl BenchDatabase for SqliteBenchDatabase {
         db.cache_flush().unwrap();
     }
 
-    fn insert_bulk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
+    fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
         let mut items = vec![T::default(); n];
         for (usize, item) in &mut items.iter_mut().enumerate() {
-            item.update_with_random();
+            item.update_sk_with_random();
             item.update_pk(usize as i64);
+        }
+        self.insert_bulk(items);
+    }
+
+    fn insert_bulk_sk_value<T: native_db::ToInput + Item + Default + Clone + Debug>(
+        &self,
+        pk_start: i64,
+        n: usize,
+        value: i64,
+    ) {
+        let mut items = vec![T::default(); n];
+        for (usize, item) in &mut items.iter_mut().enumerate() {
+            item.update_sk_with_value(value);
+            item.update_pk(pk_start + usize as i64);
         }
         self.insert_bulk(items);
     }
@@ -321,7 +367,9 @@ impl BenchDatabase for RedbBenchDatabase {
     fn setup() -> Self {
         let tmp = TmpFs::new().unwrap();
         let db_path = tmp.path("redb_bench");
-        let db = redb::Database::create(&db_path).unwrap();
+        let mut builder = redb::Builder::new();
+        builder.set_cache_size(500 * 1024 * 1024);
+        let db = builder.create(&db_path).unwrap();
         Self { tmp, db }
     }
 
@@ -337,13 +385,17 @@ impl BenchDatabase for RedbBenchDatabase {
         rw.commit().unwrap();
     }
 
-    fn insert_bulk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
-        let mut data = vec![T::default(); n];
-        for (usize, item) in &mut data.iter_mut().enumerate() {
-            item.update_with_random();
-            item.update_pk(usize as i64);
-        }
-        self.insert_bulk(data);
+    fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, _: usize) {
+        unreachable!("no secondary key");
+    }
+
+    fn insert_bulk_sk_value<T: native_db::ToInput + Item + Default + Clone + Debug>(
+        &self,
+        _: i64,
+        _: usize,
+        _: i64,
+    ) {
+        unreachable!("no secondary key");
     }
 
     fn db(&self) -> &Self::DB {

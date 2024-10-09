@@ -39,7 +39,7 @@ impl Key {
 ///   fn to_key(&self) -> Key {
 ///       Key::new(self.0.as_bytes().to_vec())
 ///   }
-/// 
+///
 ///   fn key_names() -> Vec<String> {
 ///     vec!["City".to_string()]
 ///   }
@@ -88,7 +88,7 @@ impl Key {
 ///     fn to_key(&self) -> Key {
 ///         Key::new(self.0.as_bytes().to_vec())
 ///     }
-/// 
+///
 ///     fn key_names() -> Vec<String> {
 ///         vec!["Uuid".to_string()]
 ///     }
@@ -136,7 +136,7 @@ impl Key {
 ///     fn to_key(&self) -> Key {
 ///         Key::new(self.0.timestamp_millis().to_be_bytes().to_vec())
 ///     }
-/// 
+///
 ///     fn key_names() -> Vec<String> {
 ///         vec!["DateTime".to_string()]
 ///     }

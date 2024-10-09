@@ -1,4 +1,7 @@
-use crate::db_type::{check_key_type, check_key_type_from_key_definition, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
+use crate::db_type::{
+    check_key_type, check_key_type_from_key_definition, KeyOptions, Result, ToInput, ToKey,
+    ToKeyDefinition,
+};
 use crate::watch;
 use crate::watch::query::internal;
 use crate::watch::MpscReceiver;
