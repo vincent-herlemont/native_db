@@ -91,7 +91,7 @@ impl Builder {
     }
 
     /// Similar to [redb::Builder::open(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.open)
-    /// But it also upgrades the database if needed if
+    /// But it also upgrades the database if needed.
     pub fn open<'a>(&self, models: &'a Models, path: impl AsRef<Path>) -> Result<Database<'a>> {
         let builder = self.database_configuration.new_rdb_builder();
         let database_instance = match DatabaseInstance::open_on_disk(builder, &path) {
