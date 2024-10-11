@@ -19,7 +19,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
     );
     group.sampling_mode(criterion::SamplingMode::Flat);
 
-    group.bench_function(BenchmarkId::new("XT", "Sqlite"), |b| {
+    group.bench_function(BenchmarkId::new("n by transaction", "Sqlite"), |b| {
         b.iter_custom(|iters| {
             let sqlite = SqliteBenchDatabase::setup();
             let start = std::time::Instant::now();
@@ -34,7 +34,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
         });
     });
 
-    group.bench_function(BenchmarkId::new("1T", "Sqlite"), |b| {
+    group.bench_function(BenchmarkId::new("n by transaction", "Sqlite"), |b| {
         b.iter_custom(|iters| {
             let sqlite = SqliteBenchDatabase::setup();
             let sqlite = sqlite.db();
@@ -58,7 +58,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
         });
     });
 
-    group.bench_function(BenchmarkId::new("XT", "Native DB"), |b| {
+    group.bench_function(BenchmarkId::new("n by transaction", "Native DB"), |b| {
         b.iter_custom(|iters| {
             let native_db = NativeDBBenchDatabase::setup();
             let start = std::time::Instant::now();
@@ -73,7 +73,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
         });
     });
 
-    group.bench_function(BenchmarkId::new("1T", "Native DB"), |b| {
+    group.bench_function(BenchmarkId::new("n by transaction", "Native DB"), |b| {
         b.iter_custom(|iters| {
             let native_db = NativeDBBenchDatabase::setup();
             let native_db = native_db.db();
@@ -91,7 +91,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
         });
     });
 
-    group.bench_function(BenchmarkId::new("XT", "Redb"), |b| {
+    group.bench_function(BenchmarkId::new("n by transaction", "Redb"), |b| {
         b.iter_custom(|iters| {
             let redb = RedbBenchDatabase::setup();
             let start = std::time::Instant::now();
@@ -106,7 +106,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(c: &mut Criterion, item_
         });
     });
 
-    group.bench_function(BenchmarkId::new("1T", "Redb"), |b| {
+    group.bench_function(BenchmarkId::new("n by transaction", "Redb"), |b| {
         b.iter_custom(|iters| {
             let redb = RedbBenchDatabase::setup();
             let redb = redb.db();
@@ -320,16 +320,145 @@ fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(c: &mut Cri
     });
 }
 
+
+fn bench_delete<T: Default + Item + native_db::ToInput + Clone + Debug>(c: &mut Criterion, item_name: &str) {
+    let mut group = c.benchmark_group(format!("delete_{}", item_name));
+    group.plot_config(
+        criterion::PlotConfiguration::default().summary_scale(criterion::AxisScale::Linear),
+    );
+    group.sampling_mode(criterion::SamplingMode::Flat);
+
+    group.bench_function(BenchmarkId::new("n by transaction", "Native DB"), |b| {
+        b.iter_custom(|iters| {
+            let native_db = NativeDBBenchDatabase::setup();
+            let items = native_db.insert_bulk_inc::<T>(0, iters as usize);
+
+            let native_db = native_db.db();
+            let start = std::time::Instant::now();
+            let w = native_db.rw_transaction().unwrap();
+            for item in items {
+                w.remove(item).unwrap();
+            }
+            w.commit().unwrap();
+            start.elapsed()
+        })
+    });
+
+    group.bench_function(BenchmarkId::new("n by transaction", "Sqlite"), |b| {
+        b.iter_custom(|iters| {
+            let sqlite = SqliteBenchDatabase::setup();
+            let items = sqlite.insert_bulk_inc::<T>(0, iters as usize);
+
+            let start = std::time::Instant::now();
+            let db = sqlite.db();
+            let mut db = db.borrow_mut();
+            let transaction = db
+                .transaction_with_behavior(TransactionBehavior::Immediate)
+                .unwrap();
+            for item in items {
+                let pk = item.get_pk();
+                let sql = T::generate_delete_by_pk();
+                let mut stmt = transaction.prepare(&sql).unwrap();
+                stmt.execute(&[(":pk", &pk)]).unwrap();
+            }
+            transaction.commit().unwrap();
+            start.elapsed()
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("n by transaction", "Redb"), |b| {
+        b.iter_custom(|iters| {
+            let redb = RedbBenchDatabase::setup();
+            let items = redb.insert_bulk_inc::<T>(0, iters as usize);
+
+            let redb = redb.db();
+            let start = std::time::Instant::now();
+            let write_txn = redb.begin_write().unwrap();
+            {
+                let mut table = write_txn.open_table(REDB_TABLE).unwrap();
+                for item in items {
+                    let pk = item.get_pk();
+                    table.remove(&pk).unwrap();
+                }
+            }
+            write_txn.commit().unwrap();
+            start.elapsed()
+        });
+    });
+
+    // Benchmarks for deleting items one by one, each in its own transaction
+    group.bench_function(BenchmarkId::new("1 by transaction", "Native DB"), |b| {
+        b.iter_custom(|iters| {
+            let native_db = NativeDBBenchDatabase::setup();
+            let items = native_db.insert_bulk_inc::<T>(0, iters as usize);
+
+            let native_db = native_db.db();
+            let start = std::time::Instant::now();
+            for item in items {
+                let w = native_db.rw_transaction().unwrap();
+                w.remove(item).unwrap();
+                w.commit().unwrap();
+            }
+            start.elapsed()
+        })
+    });
+
+    group.bench_function(BenchmarkId::new("1 by transaction", "Sqlite"), |b| {
+        b.iter_custom(|iters| {
+            let sqlite = SqliteBenchDatabase::setup();
+            let items = sqlite.insert_bulk_inc::<T>(0, iters as usize);
+
+            let start = std::time::Instant::now();
+            let db = sqlite.db();
+            for item in items {
+                let mut db = db.borrow_mut();
+                let transaction = db
+                    .transaction_with_behavior(TransactionBehavior::Immediate)
+                    .unwrap();
+                {
+                    let pk = item.get_pk();
+                    let sql = T::generate_delete_by_pk();
+                    let mut stmt = transaction.prepare(&sql).unwrap();
+                    stmt.execute(&[(":pk", &pk)]).unwrap();
+                }
+                transaction.commit().unwrap();
+            }
+            start.elapsed()
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("1 by transaction", "Redb"), |b| {
+        b.iter_custom(|iters| {
+            let redb = RedbBenchDatabase::setup();
+            let items = redb.insert_bulk_inc::<T>(0, iters as usize);
+
+            let redb = redb.db();
+            let start = std::time::Instant::now();
+            for item in items {
+                let write_txn = redb.begin_write().unwrap();
+                {
+                    let mut table = write_txn.open_table(REDB_TABLE).unwrap();
+                    let pk = item.get_pk();
+                    table.remove(&pk).unwrap();
+                }
+                write_txn.commit().unwrap();
+            }
+            start.elapsed()
+        });
+    });
+}
+
+
 fn first_compare(c: &mut Criterion) {
     // bench_insert::<Item1SK_NUni_NOpt>(c, "1 SK no unique no optional");
     // bench_insert::<Item10SK_NUni_NOpt>(c, "10 SK no unique no optional");
     // bench_insert::<Item50SK_NUni_NOpt>(c, "50 SK no unique no optional");
     // bench_insert::<Item100SK_NUni_NOpt>(c, "100 SK no unique no optional");
 
-    bench_get::<Item1SK_NUni_NOpt>(c, "1 PK no unique no optional");
-    bench_get::<Item10SK_NUni_NOpt>(c, "10 PK no unique no optional");
-    bench_get::<Item50SK_NUni_NOpt>(c, "50 PK no unique no optional");
-    bench_get::<Item100SK_NUni_NOpt>(c, "100 PK no unique no optional");
+    // bench_get::<Item1SK_NUni_NOpt>(c, "1 PK no unique no optional");
+    // bench_get::<Item10SK_NUni_NOpt>(c, "10 PK no unique no optional");
+    // bench_get::<Item50SK_NUni_NOpt>(c, "50 PK no unique no optional");
+    // bench_get::<Item100SK_NUni_NOpt>(c, "100 PK no unique no optional");
 
     // // Range
     // bench_select_range::<Item1SK_NUni_NOpt>(
@@ -374,6 +503,12 @@ fn first_compare(c: &mut Criterion) {
     //     "100 SK no unique no optional",
     //     BenchSelectRangeRandomDataCfg::new(Item100SK_NUni_NOptKey::sk_1).random(),
     // );
+
+    bench_delete::<Item1SK_NUni_NOpt>(
+        c,
+        "1 SK no unique no optional",
+    );
+
 }
 
 fn configure_criterion() -> Criterion {

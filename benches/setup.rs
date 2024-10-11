@@ -13,11 +13,10 @@ pub trait Item {
     fn generate_sqlite_insert(&self) -> String;
     fn generate_select_range_sk(sk_name: &str) -> String;
     fn generate_select_by_pk() -> String;
+    fn generate_delete_by_pk() -> String;
     fn get_pk(&self) -> i64;
     fn update_pk(&mut self, pk: i64);
-    // TODO: rename update_sk_with_random
     fn update_sk_with_random(&mut self);
-    // TODO: rename update_sk_with_value
     fn update_sk_with_value(&mut self, value: i64);
 }
 
@@ -130,6 +129,16 @@ macro_rules! define_item_struct {
                 sql.push_str(" <= :to_sk");
                 sql
             }
+
+            fn generate_delete_by_pk() -> String {
+                let mut sql = String::new();
+                sql.push_str("DELETE FROM ");
+                sql.push_str(stringify!($struct_name));
+                sql.push_str(" WHERE ");
+                sql.push_str("pk");
+                sql.push_str(" = :pk");
+                sql
+            }
         }
     };
 }
@@ -195,13 +204,13 @@ pub trait BenchDatabase {
     fn setup() -> Self;
     fn insert<T: native_db::ToInput + Item>(&self, item: T);
     fn db(&self) -> &Self::DB;
-    fn insert_bulk<T: native_db::ToInput + Item + Default + Debug>(&self, items: Vec<T>);
+    fn insert_bulk<T: native_db::ToInput + Item + Default + Debug + Clone>(&self, items: Vec<T>) -> Vec<T>;
     // TODO: seem to be impemented on the trait
     fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
         &self,
         pk_start: i64,
         n: usize,
-    );
+    ) -> Vec<T>;
     // TODO: seem to be impemented on the trait
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize);
     // TODO: seem to be impemented on the trait
@@ -240,24 +249,25 @@ impl BenchDatabase for NativeDBBenchDatabase {
         Self { _tmp: tmp, db }
     }
 
-    fn insert_bulk<T: native_db::ToInput + Item + Debug>(&self, items: Vec<T>) {
+    fn insert_bulk<T: native_db::ToInput + Item + Debug + Clone>(&self, items: Vec<T>) -> Vec<T> {
         let rw = self.db.rw_transaction().unwrap();
-        for item in items {
-            rw.insert(item).unwrap();
+        for item in &items {
+            rw.insert(item.clone()).unwrap();
         }
         rw.commit().unwrap();
+        items
     }
 
     fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
             &self,
             pk_start: i64,
             n: usize,
-        ) {
+        ) -> Vec<T> {
         let mut items = vec![T::default(); n];
         for (usize, item) in &mut items.iter_mut().enumerate() {
             item.update_pk(pk_start + usize as i64);
         }
-        self.insert_bulk(items);
+        self.insert_bulk(items)
     }
 
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
@@ -331,12 +341,12 @@ impl BenchDatabase for SqliteBenchDatabase {
         }
     }
 
-    fn insert_bulk<T: native_db::ToInput + Item + Default>(&self, items: Vec<T>) {
+    fn insert_bulk<T: native_db::ToInput + Item + Default + Clone>(&self, items: Vec<T>) -> Vec<T> {
         let mut db = self.db.borrow_mut();
         let transaction = db
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .unwrap();
-        for item in items {
+        for item in &items {
             let binary = item.native_model_encode().unwrap();
             transaction
                 .execute(&item.generate_sqlite_insert(), (binary,))
@@ -344,18 +354,19 @@ impl BenchDatabase for SqliteBenchDatabase {
         }
         transaction.commit().unwrap();
         db.cache_flush().unwrap();
+        items
     }
 
     fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
             &self,
             pk_start: i64,
             n: usize,
-        ) {
+        ) -> Vec<T> {
         let mut items = vec![T::default(); n];
         for (usize, item) in &mut items.iter_mut().enumerate() {
             item.update_pk(pk_start + usize as i64);
         }
-        self.insert_bulk(items);
+        self.insert_bulk(items)
     }
 
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, n: usize) {
@@ -416,28 +427,29 @@ impl BenchDatabase for RedbBenchDatabase {
         Self { tmp, db }
     }
 
-    fn insert_bulk<T: native_db::ToInput + Item + Default>(&self, items: Vec<T>) {
+    fn insert_bulk<T: native_db::ToInput + Item + Default + Clone>(&self, items: Vec<T>) -> Vec<T> {
         let rw = self.db.begin_write().unwrap();
         {
             let mut table = rw.open_table(REDB_TABLE).unwrap();
-            for item in items {
+            for item in &items {
                 let binary = item.native_model_encode().unwrap();
                 table.insert(item.get_pk(), binary).unwrap();
             }
         }
         rw.commit().unwrap();
+        items
     }
 
     fn insert_bulk_inc<T: native_db::ToInput + Item + Default + Clone + Debug>(
             &self,
             pk_start: i64,
             n: usize,
-        ) {
+        ) -> Vec<T> {
         let mut items = vec![T::default(); n];
         for (usize, item) in &mut items.iter_mut().enumerate() {
             item.update_pk(pk_start + usize as i64);
         }
-        self.insert_bulk(items);
+        self.insert_bulk(items)
     }
 
     fn insert_bulk_sk_random<T: native_db::ToInput + Item + Default + Clone + Debug>(&self, _: usize) {
