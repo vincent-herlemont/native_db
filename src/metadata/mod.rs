@@ -1,4 +1,5 @@
 mod current_version;
+#[allow(clippy::module_inception)]
 mod metadata;
 mod table;
 

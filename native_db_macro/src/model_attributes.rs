@@ -76,7 +76,7 @@ impl ModelAttributes {
         } else {
             panic!(
                 "Unknown attribute: {}",
-                meta.path.get_ident().expect("Expected ident").to_string()
+                meta.path.get_ident().expect("Expected ident")
             );
         }
         Ok(())
@@ -102,7 +102,7 @@ impl ModelAttributes {
                 field.ty.to_tokens(&mut field_type_token_stream);
                 let field_type = field_type_token_stream.to_string();
                 let mut secondary_options = KeyOptions::default();
-                if let Ok(_) = attr.meta.require_list() {
+                if attr.meta.require_list().is_ok() {
                     attr.parse_nested_meta(|meta| {
                         if meta.path.is_ident("unique") {
                             secondary_options.unique = true;

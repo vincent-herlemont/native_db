@@ -182,7 +182,7 @@ fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
     bench_display: BenchDisplay,
     cfg: BenchSelectRangeRandomDataCfg,
 ) {
-    let mut group = c.benchmark_group(format!("Select Range Secondary Key"));
+    let mut group = c.benchmark_group("Select Range Secondary Key".to_string());
     group.plot_config(
         criterion::PlotConfiguration::default().summary_scale(criterion::AxisScale::Linear),
     );
@@ -280,7 +280,7 @@ fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
                     let transaction = db
                         .transaction_with_behavior(TransactionBehavior::Immediate)
                         .unwrap();
-                    let sql = T::generate_select_range_sk(&"sk_1");
+                    let sql = T::generate_select_range_sk("sk_1");
                     let mut stmt = transaction.prepare(&sql).unwrap();
                     let rows =
                         stmt.query_map(&[(":from_sk", &from_sk), (":to_sk", &to_sk)], |row| {
@@ -301,7 +301,7 @@ fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(
     c: &mut Criterion,
     bench_display: BenchDisplay,
 ) {
-    let mut group = c.benchmark_group(format!("Get"));
+    let mut group = c.benchmark_group("Get".to_string());
     group.plot_config(
         criterion::PlotConfiguration::default().summary_scale(criterion::AxisScale::Linear),
     );
@@ -392,7 +392,7 @@ fn bench_delete<T: Default + Item + native_db::ToInput + Clone + Debug>(
     c: &mut Criterion,
     bench_display: BenchDisplay,
 ) {
-    let mut group = c.benchmark_group(format!("Delete"));
+    let mut group = c.benchmark_group("Delete".to_string());
     group.plot_config(
         criterion::PlotConfiguration::default().summary_scale(criterion::AxisScale::Linear),
     );

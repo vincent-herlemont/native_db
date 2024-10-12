@@ -19,7 +19,7 @@ where
     pub(crate) fn new(table: PrimaryTable) -> Self {
         Self {
             primary_table: table,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -57,7 +57,7 @@ where
         let range = self.primary_table.range::<Key>(..)?;
         Ok(PrimaryScanIterator {
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
     }
 
@@ -100,7 +100,7 @@ where
             .range::<Key>(database_inner_key_value_range)?;
         Ok(PrimaryScanIterator {
             range,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
     }
 
@@ -143,7 +143,7 @@ where
         Ok(PrimaryScanIteratorStartWith {
             range,
             start_with,
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
     }
 }

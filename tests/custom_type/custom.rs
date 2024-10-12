@@ -46,7 +46,7 @@ fn insert_item_fields() {
     let mut models = Models::new();
     models.define::<ItemFields>().unwrap();
     let db = Builder::new()
-        .create(&&models, tf.path("test").as_std_path())
+        .create(&models, tf.path("test").as_std_path())
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();

@@ -33,7 +33,7 @@ where
             primary_table,
             secondary_table,
             key_def: key_def.key_definition(),
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         }
     }
 
@@ -87,7 +87,7 @@ where
         Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
     }
 
@@ -146,7 +146,7 @@ where
         Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
     }
 
@@ -209,7 +209,7 @@ where
         Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
     }
 }

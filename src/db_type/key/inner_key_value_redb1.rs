@@ -257,7 +257,7 @@ impl Value for DatabaseInnerKeyValue {
 
 impl Key for DatabaseInnerKeyValue {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
-        data1.cmp(&data2)
+        data1.cmp(data2)
     }
 }
 
@@ -347,8 +347,7 @@ mod tests {
     use std::ops::RangeBounds;
 
     fn range<T: InnerKeyValue, R: RangeBounds<T>>(range: R) -> DatabaseInnerKeyValueRange {
-        let range = DatabaseInnerKeyValueRange::new(range);
-        range
+        DatabaseInnerKeyValueRange::new(range)
     }
 
     #[test]

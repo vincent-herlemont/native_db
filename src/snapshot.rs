@@ -11,7 +11,7 @@ impl Database<'_> {
         let w = new_db.instance.redb_database()?.begin_write()?;
         {
             // Copy primary tables
-            for (_, primary_table_definition) in &self.primary_table_definitions {
+            for primary_table_definition in self.primary_table_definitions.values() {
                 let table = r.open_table(primary_table_definition.redb)?;
                 let mut new_table = w.open_table(primary_table_definition.redb)?;
                 for result in table.iter()? {
@@ -20,7 +20,8 @@ impl Database<'_> {
                 }
 
                 // Copy secondary tables
-                for (_, secondary_table_definition) in &primary_table_definition.secondary_tables {
+                for secondary_table_definition in primary_table_definition.secondary_tables.values()
+                {
                     let table = r.open_multimap_table(secondary_table_definition.redb)?;
                     let mut new_table = w.open_multimap_table(secondary_table_definition.redb)?;
                     for result in table.iter()? {

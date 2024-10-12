@@ -13,7 +13,7 @@ pub struct PrimaryTableDefinition<'a> {
     pub(crate) native_model_options: NativeModelOptions,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NativeModelOptions {
     pub(crate) native_model_id: u32,
     pub(crate) native_model_version: u32,
@@ -21,16 +21,6 @@ pub struct NativeModelOptions {
     // NOTE: Is impossible to write or read on a legacy table definition.
     //       Just a migration to a new version is allowed.
     pub(crate) native_model_legacy: bool,
-}
-
-impl Default for NativeModelOptions {
-    fn default() -> Self {
-        Self {
-            native_model_id: 0,
-            native_model_version: 0,
-            native_model_legacy: false,
-        }
-    }
 }
 
 impl<'a> From<(&ModelBuilder, RedbPrimaryTableDefinition<'a>)> for PrimaryTableDefinition<'a> {

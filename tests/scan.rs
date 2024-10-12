@@ -29,10 +29,10 @@ impl Item {
         self.id
     }
     pub fn secondary_key_1(&self) -> String {
-        format!("{}", self.id).into()
+        format!("{}", self.id)
     }
     pub fn secondary_key_2(&self) -> String {
-        format!("{}", self.name)
+        self.name.to_string()
     }
 }
 
@@ -62,7 +62,7 @@ fn test_iter() {
         .unwrap();
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
@@ -102,7 +102,7 @@ fn test_iter_many_items_to_be_bytes() {
             .unwrap();
         assert_eq!(iter.len(), 257);
 
-        let obj1 = iter.get(0).unwrap();
+        let obj1 = iter.first().unwrap();
         assert_eq!(obj1.id, 0);
         assert_eq!(obj1.name, "test_0");
 
@@ -138,7 +138,7 @@ fn test_double_ended_iter() {
 
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
 
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
@@ -175,7 +175,7 @@ fn test_iter_range() {
         .unwrap();
     assert_eq!(result.len(), 1);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
@@ -189,7 +189,7 @@ fn test_iter_range() {
         .unwrap();
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
 
@@ -207,7 +207,7 @@ fn test_iter_range() {
         .unwrap();
     assert_eq!(result.len(), 1);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
 }
@@ -239,7 +239,7 @@ fn test_iter_by_key() {
 
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
@@ -270,7 +270,7 @@ fn test_double_ended_iter_by_key() {
 
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
 
@@ -286,7 +286,7 @@ fn test_double_ended_iter_by_key_range() {
     let mut models = Models::new();
     models.define::<Item>().unwrap();
     let db = Builder::new()
-        .create(&&models, tf.path("test").as_std_path())
+        .create(&models, tf.path("test").as_std_path())
         .unwrap();
 
     let rw = db.rw_transaction().unwrap();
@@ -302,7 +302,7 @@ fn test_double_ended_iter_by_key_range() {
 
     assert_eq!(result.len(), 1);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
@@ -311,7 +311,7 @@ fn test_double_ended_iter_by_key_range() {
     let result: Vec<Item> = iter.rev().try_collect().unwrap();
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 3);
     assert_eq!(obj1.name, "test3");
 
@@ -325,7 +325,7 @@ fn test_double_ended_iter_by_key_range() {
 
     assert_eq!(result.len(), 1);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
 }
@@ -387,7 +387,7 @@ fn test_start_with_scenario() {
             .unwrap();
         assert_eq!(result.len(), 3);
 
-        let obj1 = result.get(0).unwrap();
+        let obj1 = result.first().unwrap();
         assert_eq!(obj1.name, format!("{}1", p));
 
         let obj2 = result.get(1).unwrap();
@@ -462,7 +462,7 @@ fn test_start_with_by_key_scenario_write_txn() {
             .unwrap();
         assert_eq!(result.len(), 3);
 
-        let obj1 = result.get(0).unwrap();
+        let obj1 = result.first().unwrap();
         assert_eq!(format!("{}:", obj1.flag), format!("{}", p));
 
         let obj2 = result.get(1).unwrap();
@@ -510,7 +510,7 @@ fn test_start_with_by_key_scenario_readonly_txn() {
             .unwrap();
         assert_eq!(result.len(), 3);
 
-        let obj1 = result.get(0).unwrap();
+        let obj1 = result.first().unwrap();
         assert_eq!(format!("{}:", obj1.flag), format!("{}", p));
 
         let obj2 = result.get(1).unwrap();
@@ -547,7 +547,7 @@ fn test_txn_write_iter() {
         .unwrap();
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
@@ -583,7 +583,7 @@ fn test_txn_write_iter_range() {
         .unwrap();
     assert_eq!(result.len(), 1);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 1);
     assert_eq!(obj1.name, "test");
 
@@ -597,7 +597,7 @@ fn test_txn_write_iter_range() {
         .unwrap();
     assert_eq!(result.len(), 2);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
 
@@ -615,7 +615,7 @@ fn test_txn_write_iter_range() {
         .unwrap();
     assert_eq!(result.len(), 1);
 
-    let obj1 = result.get(0).unwrap();
+    let obj1 = result.first().unwrap();
     assert_eq!(obj1.id, 2);
     assert_eq!(obj1.name, "test2");
 }
@@ -658,7 +658,7 @@ fn test_txn_write_start_with_scenario() {
             .unwrap();
         assert_eq!(result.len(), 3);
 
-        let obj1 = result.get(0).unwrap();
+        let obj1 = result.first().unwrap();
         assert_eq!(obj1.name, format!("{}1", p));
 
         let obj2 = result.get(1).unwrap();

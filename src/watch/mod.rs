@@ -49,9 +49,9 @@ pub(crate) fn push_batch(
     senders: Arc<RwLock<Watchers>>,
     batch: Batch,
 ) -> Result<(), WatchEventError> {
-    let watchers = senders.read().map_err(|err| match err {
-        _ => WatchEventError::LockErrorPoisoned,
-    })?;
+    let watchers = senders
+        .read()
+        .map_err(|_| WatchEventError::LockErrorPoisoned)?;
 
     let mut unused_watchers = vec![];
     for (watcher_request, event) in batch {
@@ -66,10 +66,10 @@ pub(crate) fn push_batch(
     drop(watchers);
 
     // Remove unused watchers
-    if unused_watchers.len() > 0 {
-        let mut w = senders.write().map_err(|err| match err {
-            _ => WatchEventError::LockErrorPoisoned,
-        })?;
+    if !unused_watchers.is_empty() {
+        let mut w = senders
+            .write()
+            .map_err(|_| WatchEventError::LockErrorPoisoned)?;
         for id in unused_watchers {
             w.remove_sender(id);
         }

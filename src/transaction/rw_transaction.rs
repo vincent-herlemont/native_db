@@ -82,7 +82,7 @@ impl<'db, 'txn> RwTransaction<'db> {
         self.internal.commit()?;
         // Send batch to watchers after commit succeeds
         let batch = self.batch.into_inner();
-        watch::push_batch(Arc::clone(&self.watcher), batch)?;
+        watch::push_batch(Arc::clone(self.watcher), batch)?;
         Ok(())
     }
 

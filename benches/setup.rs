@@ -27,6 +27,7 @@ macro_rules! define_item_struct {
         #[derive(Serialize, Deserialize, Clone, Default, Debug)]
         #[native_model(id = $id, version = 1)]
         #[native_db]
+        #[allow(non_camel_case_types)]
         pub struct $struct_name {
             #[primary_key]
             pub pk: i64,
@@ -220,7 +221,7 @@ impl BenchDisplay {
     }
 
     pub fn display_1_by_tranaction(&self) -> String {
-        format!("{}", self.display('1'))
+        self.display('1').to_string()
     }
 
     pub fn display_n_by_tranaction(&self) -> String {
@@ -229,10 +230,10 @@ impl BenchDisplay {
 
     pub fn display_read(&self) -> String {
         match self {
-            BenchDisplay::SK_1 => format!("1:SK"),
-            BenchDisplay::SK_10 => format!("10:SK"),
-            BenchDisplay::SK_50 => format!("50:SK"),
-            BenchDisplay::SK_100 => format!("100:SK"),
+            BenchDisplay::SK_1 => "1:SK".to_string(),
+            BenchDisplay::SK_10 => "10:SK".to_string(),
+            BenchDisplay::SK_50 => "50:SK".to_string(),
+            BenchDisplay::SK_100 => "100:SK".to_string(),
         }
     }
 
