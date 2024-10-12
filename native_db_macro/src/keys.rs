@@ -62,7 +62,7 @@ impl<O: ToTokenStream> ToTokenStream for KeyDefinition<O> {
         }
 
         let parsed_type_token_stream = parsed_type.to_token_stream();
-                
+
         quote! {
             native_db::db_type::KeyDefinition::new(
                 #struct_name::native_model_id(),

@@ -1,5 +1,6 @@
 use crate::db_type::{
-    check_key_type, check_key_type_from_key_definition, KeyDefinition, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition
+    check_key_type, check_key_type_from_key_definition, KeyDefinition, KeyOptions, Result, ToInput,
+    ToKey, ToKeyDefinition,
 };
 use crate::watch;
 use crate::watch::query::internal;

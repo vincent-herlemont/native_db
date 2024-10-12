@@ -1,4 +1,7 @@
-use crate::db_type::{check_key_type_from_key_definition, check_range_key_range_bounds_from_key_definition, KeyDefinition, KeyOptions, ToKey, ToKeyDefinition};
+use crate::db_type::{
+    check_key_type_from_key_definition, check_range_key_range_bounds_from_key_definition,
+    KeyDefinition, KeyOptions, ToKey, ToKeyDefinition,
+};
 use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
 use redb::{self};
 use std::marker::PhantomData;
@@ -21,7 +24,11 @@ where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
     SecondaryTable: redb::ReadableMultimapTable<Key, Key>,
 {
-    pub(crate) fn new(primary_table: PrimaryTable, secondary_table: SecondaryTable, key_def: impl ToKeyDefinition<KeyOptions>) -> Self {
+    pub(crate) fn new(
+        primary_table: PrimaryTable,
+        secondary_table: SecondaryTable,
+        key_def: impl ToKeyDefinition<KeyOptions>,
+    ) -> Self {
         Self {
             primary_table,
             secondary_table,

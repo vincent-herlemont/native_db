@@ -1,5 +1,6 @@
 use crate::db_type::{
-    check_key_type, check_key_type_from_key_definition, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition
+    check_key_type, check_key_type_from_key_definition, KeyOptions, Result, ToInput, ToKey,
+    ToKeyDefinition,
 };
 use crate::transaction::internal::private_readable_transaction::PrivateReadableTransaction;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
