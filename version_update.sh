@@ -5,7 +5,7 @@
 # How to test:
 # - Use docker `docker run -it --rm -v $(pwd):/mnt/native_db ubuntu bash` 
 # - `/mnt/native_db`
-# - `./release.sh 0.8.0`
+# - `./version_update.sh 0.8.0`
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
