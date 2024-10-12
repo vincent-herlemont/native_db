@@ -27,9 +27,6 @@ Explanation:
 """
 
 [table_comments]
-insert = """
-:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem TODO.
-"""
 delete = """
-:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem TODO.
+:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem https://github.com/vincent-herlemont/native_db/issues/256.
 """

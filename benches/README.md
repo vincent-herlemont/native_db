@@ -40,8 +40,6 @@ Explanation:
 
 ### Insert
 
-:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem TODO.
-
 |                       | `Native_db`               | `Redb`                           | `Sqlite`                           |
 |:----------------------|:--------------------------|:---------------------------------|:---------------------------------- |
 | **`1:SK with n:T`**   | `3.91 us` (✅ **1.00x**)   | `960.85 ns` (🚀 **4.07x faster**) | `1.11 us` (🚀 **3.53x faster**)     |
@@ -77,7 +75,7 @@ Explanation:
 
 ### Delete
 
-:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem TODO.
+:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem https://github.com/vincent-herlemont/native_db/issues/256.
 
 |                       | `Native_db`               | `Redb`                           | `Sqlite`                           |
 |:----------------------|:--------------------------|:---------------------------------|:---------------------------------- |
