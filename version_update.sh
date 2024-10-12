@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# How to use: `./version_update.sh 0.8.0`
+
+# How to test:
+# - Use docker `docker run -it --rm -v $(pwd):/mnt/native_db ubuntu bash` 
+# - `/mnt/native_db`
+# - `./release.sh 0.8.0`
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # Bash script to update version for native_db and native_db_macro
@@ -37,9 +44,9 @@ do
       sed -i -E "s/native_model = \"[0-9]+\.[0-9]+\.[0-9]+\"/native_model = \"$NATIVE_MODEL_VERSION\"/g" "$directory/README.md"
 
       # Replace on src/metadata/current_version.rs: const CURRENT_VERSION: &str = "x.x.x";
-      sed -i -E "s/pub const CURRENT_VERSION: &str = \"[0-9]+\.[0-9]+\.[0-9]+\";/pub const CURRENT_VERSION: &str = \"$NEW_VERSION\";/g" "$directory/src/metadata/current_version.rs"
+      sed -i -E "s/pub const CURRENT_VERSION: \&str = \"[0-9]+\.[0-9]+\.[0-9]+\";/pub const CURRENT_VERSION: \&str = \"$NEW_VERSION\";/g" "$directory/src/metadata/current_version.rs"
       # Replace on src/metadata/current_native_model_version.rs: const CURRENT_NATIVE_MODEL_VERSION: &str = "x.x.x";
-      sed -i -E "s/pub const CURRENT_NATIVE_MODEL_VERSION: &str = \"[0-9]+\.[0-9]+\.[0-9]+\";/pub const CURRENT_NATIVE_MODEL_VERSION: &str = \"$NATIVE_MODEL_VERSION\";/g" "$directory/src/metadata/current_native_model_version.rs"
+      sed -i -E "s/pub const CURRENT_NATIVE_MODEL_VERSION: \&str = \"[0-9]+\.[0-9]+\.[0-9]+\";/pub const CURRENT_NATIVE_MODEL_VERSION: \&str = \"$NATIVE_MODEL_VERSION\";/g" "$directory/src/metadata/current_native_model_version.rs"
 
       # Replace on tests/metadata/current_version.rs: assert_eq!(metadata.current_native_model_version(), "x.x.x");
       sed -i -E "s/assert_eq!\(metadata.current_native_model_version(), \"[0-9]+\.[0-9]+\.[0-9]+\";/assert_eq!\(metadata.current_native_model_version(), \"$NATIVE_MODEL_VERSION\";/g" "$directory/tests/metadata/current_version.rs"
