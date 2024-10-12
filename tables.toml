@@ -22,11 +22,11 @@ Explanation:
  - `1:SK`, `10:SK`, `50:SK`, `100:SK`, `N:SK` in this case `N` is the number of secondary keys (`SK`) for the same data. Regarding SQLite, it is the column with each having a secondary index.
  - `1:T`, `n:T` represent the number of operations per transaction.
    - `1:T` means one operation per transaction, for example, for insertion, it means there is only one insert operation per transaction.
-   - `n:T` means `n` operations per transaction, `n` is defined by criteria, meaning that all operations are within a single transaction.
+   - `n:T` means `n` operations per transaction, `n` is defined by `criterion`, meaning that all operations are within a single transaction.
  - We can see that `Redb` sometimes has no comparisons (`N/A`) because `Redb` is a key-value database and does not support secondary indexes. Therefore, it is pointless to compare with more or fewer secondary indexes.
 """
 
 [table_comments]
 delete = """
-:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem https://github.com/vincent-herlemont/native_db/issues/256.
+:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem [#256](https://github.com/vincent-herlemont/native_db/issues/256).
 """
