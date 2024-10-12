@@ -40,7 +40,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
     ) -> Result<Option<Output>> {
         let secondary_key = key_def.key_definition();
         // Provide a better error for the test of unicity of the secondary key
-        model.check_secondary_options(&secondary_key, |options| options.unique == true)?;
+        model.check_secondary_options(&secondary_key, |options| options.unique)?;
 
         let table = self.get_secondary_table(&model, &secondary_key)?;
 

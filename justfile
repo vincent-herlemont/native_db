@@ -90,3 +90,7 @@ expand test_file_name="util":
 
 expand_clean:
     rm -f src/*_expanded.rs
+
+format:
+    cargo clippy; \
+    cargo fmt --all

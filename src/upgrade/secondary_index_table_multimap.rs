@@ -12,7 +12,7 @@ pub(crate) fn upgrade_secondary_index_table_multimap(
     model_builder: &HashMap<String, ModelBuilder>,
 ) -> Result<()> {
     // List secondary index tables
-    for (_, model_builder) in model_builder {
+    for model_builder in model_builder.values() {
         for secondary_key in model_builder.model.secondary_keys.iter() {
             let secondary_table_name = secondary_key.unique_table_name.as_str();
             let secondary_table_name_tmp = secondary_table_name.to_string() + "_tmp";

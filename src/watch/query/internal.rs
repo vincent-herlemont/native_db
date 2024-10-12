@@ -30,7 +30,7 @@ impl InternalWatch<'_> {
             .watchers_counter_id
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         if value == u64::MAX {
-            Err(Error::MaxWatcherReached.into())
+            Err(Error::MaxWatcherReached)
         } else {
             Ok(value)
         }

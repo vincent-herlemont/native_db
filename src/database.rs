@@ -14,7 +14,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, RwLock};
-use std::u64;
 
 /// The database instance. Allows you to create [rw_transaction](database/struct.Database.html#method.rw_transaction) and [r_transaction](database/struct.Database.html#method.r_transaction), [watch](database/struct.Database.html#method.watch) queries, and [unwatch](database/struct.Database.html#method.unwatch) etc.
 ///
@@ -120,18 +119,14 @@ impl<'a> Database<'a> {
             (model_builder, main_table_definition).into();
 
         let rw = self.instance.redb_database()?.begin_write()?;
-        rw.open_table(primary_table_definition.redb.clone())?;
+        rw.open_table(primary_table_definition.redb)?;
 
         for secondary_key in model_builder.model.secondary_keys.iter() {
             primary_table_definition.secondary_tables.insert(
                 secondary_key.clone(),
                 redb::MultimapTableDefinition::new(secondary_key.unique_table_name.as_str()).into(),
             );
-            rw.open_multimap_table(
-                primary_table_definition.secondary_tables[&secondary_key]
-                    .redb
-                    .clone(),
-            )?;
+            rw.open_multimap_table(primary_table_definition.secondary_tables[secondary_key].redb)?;
         }
         rw.commit()?;
 
@@ -191,7 +186,7 @@ impl<'a> Database<'a> {
         use semver::VersionReq;
         let metadata = self.metadata();
         let comparator = VersionReq::parse(selector)
-            .expect(format!("Invalid version selector: {}", selector).as_str());
+            .unwrap_or_else(|_| panic!("Invalid version selector: {}", selector));
 
         let previous_version = if let Some(previous_version) = metadata.previous_version() {
             previous_version
@@ -200,9 +195,9 @@ impl<'a> Database<'a> {
         };
 
         let previous_version = Version::parse(previous_version)
-            .expect(format!("Invalid previous version: {}", previous_version).as_str());
+            .unwrap_or_else(|_| panic!("Invalid previous version: {}", previous_version));
         let current_version = Version::parse(metadata.current_version())
-            .expect(format!("Invalid current version: {}", metadata.current_version()).as_str());
+            .unwrap_or_else(|_| panic!("Invalid current version: {}", metadata.current_version()));
 
         // If the previous version is the same as the current version, the database is not upgrading
         if previous_version == current_version {
@@ -216,7 +211,7 @@ impl<'a> Database<'a> {
         let rx = self.instance.redb_database()?.begin_read()?;
         let mut stats_primary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {
-            let result_table_open = rx.open_table(primary_table.redb.clone());
+            let result_table_open = rx.open_table(primary_table.redb);
             let stats_table = match result_table_open {
                 Err(redb::TableError::TableDoesNotExist(_)) => StatsTable {
                     name: primary_table.redb.name().to_string(),
@@ -238,7 +233,7 @@ impl<'a> Database<'a> {
         let mut stats_secondary_tables = vec![];
         for primary_table in self.primary_table_definitions.values() {
             for secondary_table in primary_table.secondary_tables.values() {
-                let result_table_open = rx.open_multimap_table(secondary_table.redb.clone());
+                let result_table_open = rx.open_multimap_table(secondary_table.redb);
                 let stats_table = match result_table_open {
                     Err(redb::TableError::TableDoesNotExist(_)) => StatsTable {
                         name: secondary_table.redb.name().to_string(),

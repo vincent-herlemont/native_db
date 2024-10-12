@@ -22,7 +22,7 @@ impl<'db, 'txn> RwDrain<'db, 'txn> {
     /// Drain all items with a given secondary key.
     ///
     /// **TODO: needs to be implemented**
-    pub fn secondary<T: ToInput>(&self, _key_def: impl ToKeyDefinition<KeyOptions>) -> () {
+    pub fn secondary<T: ToInput>(&self, _key_def: impl ToKeyDefinition<KeyOptions>) {
         todo!()
     }
 }

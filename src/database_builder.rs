@@ -56,12 +56,18 @@ impl Builder {
         };
 
         for (_, model_builder) in models.models_builder.iter() {
-            database.seed_model(&model_builder)?;
+            database.seed_model(model_builder)?;
         }
 
         // TODO: Maybe we can do some migration with models here.
 
         Ok(database)
+    }
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

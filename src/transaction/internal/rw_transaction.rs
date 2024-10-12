@@ -26,7 +26,7 @@ where
     type RedbTransaction<'db_bis> = redb::WriteTransaction where Self: 'db_bis;
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
-        &self.primary_table_definitions
+        self.primary_table_definitions
     }
 
     fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable> {
@@ -53,7 +53,7 @@ where
             })?;
         let secondary_table_definition = main_table_definition
             .secondary_tables
-            .get(&secondary_key)
+            .get(secondary_key)
             .ok_or_else(|| Error::TableDefinitionNotFound {
                 table: secondary_key.unique_table_name.to_string(),
             })?;
@@ -76,11 +76,10 @@ impl<'db> InternalRwTransaction<'db> {
         item: Input,
     ) -> Result<(WatcherRequest, Output)> {
         let mut table = self.get_primary_table(&model)?;
-        if let Some(_) = table.get(&item.primary_key)? {
+        if table.get(&item.primary_key)?.is_some() {
             return Err(Error::DuplicateKey {
                 key_name: model.primary_key.unique_table_name.to_string(),
-            }
-            .into());
+            });
         }
         table.insert(&item.primary_key, item.value.as_slice())?;
 
@@ -125,8 +124,8 @@ impl<'db> InternalRwTransaction<'db> {
     /// This method insert secondary keys and check conflicts.
     /// It is used by [`concrete_insert`](Self::concrete_insert) and [`concrete_upsert`](Self::concrete_upsert).
     pub(crate) fn util_insert_secondary_keys(&self, item: &Input, model: &Model) -> Result<()> {
-        for (secondary_key_def, _value) in &item.secondary_keys {
-            let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
+        for secondary_key_def in item.secondary_keys.keys() {
+            let mut secondary_table = self.get_secondary_table(model, secondary_key_def)?;
             let secondary_key = match item.secondary_key_value(secondary_key_def)? {
                 KeyEntry::Default(secondary_key) => secondary_key,
                 KeyEntry::Optional(secondary_key) => {
@@ -141,13 +140,12 @@ impl<'db> InternalRwTransaction<'db> {
             if secondary_key_def.options.unique {
                 let check = {
                     let primary_keys = secondary_table.get(&secondary_key)?;
-                    primary_keys.len() > 0
+                    !primary_keys.is_empty()
                 };
                 if check {
                     return Err(Error::DuplicateKey {
                         key_name: secondary_key_def.unique_table_name.to_string(),
-                    }
-                    .into());
+                    });
                 }
             }
 
@@ -168,7 +166,7 @@ impl<'db> InternalRwTransaction<'db> {
             table.remove(&item.primary_key)?;
         }
 
-        for (secondary_key_def, _value) in keys {
+        for secondary_key_def in keys.keys() {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             match &item.secondary_key_value(secondary_key_def)? {
                 KeyEntry::Default(secondary_key) => {
@@ -203,7 +201,7 @@ impl<'db> InternalRwTransaction<'db> {
         Ok((watcher_request, old_binary_value, new_binary_value))
     }
 
-    pub(crate) fn concrete_primary_drain<'a>(&self, model: Model) -> Result<Vec<Output>> {
+    pub(crate) fn concrete_primary_drain(&self, model: Model) -> Result<Vec<Output>> {
         let mut items = vec![];
         let mut key_items = HashSet::new();
 
@@ -225,8 +223,7 @@ impl<'db> InternalRwTransaction<'db> {
                 table: model.primary_key.unique_table_name.to_string(),
             })?
             .secondary_tables
-            .iter()
-            .map(|(key, _)| key)
+            .keys()
             .collect();
 
         // Drain secondary tables
@@ -290,18 +287,17 @@ impl<'db> InternalRwTransaction<'db> {
         // Find the old model table with data
         for new_primary_table_definition in model_table_definitions {
             // check if table exists, if the table does not exist continue
-            if self
+            if !self
                 .redb_transaction
                 .list_tables()?
-                .find(|table| table.name() == new_primary_table_definition.redb.name())
-                .is_none()
+                .any(|table| table.name() == new_primary_table_definition.redb.name())
             {
                 continue;
             }
 
             let table = self
                 .redb_transaction
-                .open_table(new_primary_table_definition.redb.clone())?;
+                .open_table(new_primary_table_definition.redb)?;
             let len = table.len()?;
             if len > 0 && old_table_definition.is_some() {
                 panic!(

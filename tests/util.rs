@@ -6,7 +6,7 @@ fn test_builder() {
     let tf = TmpFs::new().unwrap();
     // Create without error
     let mut _db = Builder::new()
-        .create(&Models::new(), &tf.path("test"))
+        .create(&Models::new(), tf.path("test"))
         .unwrap();
 }
 
@@ -17,7 +17,7 @@ fn test_builder_with_set_cache_size() {
     let mut builder = Builder::new();
     let _db = builder
         .set_cache_size(100)
-        .create(&Models::new(), &tf.path("test"))
+        .create(&Models::new(), tf.path("test"))
         .unwrap();
 }
 
@@ -26,7 +26,7 @@ fn test_open_unexisting_database() {
     let tf = TmpFs::new().unwrap();
     // Open an unexisting database
     assert!(Builder::new()
-        .open(&Models::new(), &tf.path("test"))
+        .open(&Models::new(), tf.path("test"))
         .is_err());
 }
 
@@ -37,11 +37,11 @@ fn test_open_existing_database() {
     // Create a database
     let builder = Builder::new();
     let models = Models::new();
-    let db = builder.create(&models, &tf.path("test")).unwrap();
+    let db = builder.create(&models, tf.path("test")).unwrap();
     drop(db);
 
     // Open an existing database
-    let _db = Builder::new().open(&models, &tf.path("test")).unwrap();
+    let _db = Builder::new().open(&models, tf.path("test")).unwrap();
 }
 
 use native_model::{native_model, Model};

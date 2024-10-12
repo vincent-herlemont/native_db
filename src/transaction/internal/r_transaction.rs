@@ -20,7 +20,7 @@ where
     type RedbTransaction<'db_bis> = redb::ReadTransaction where Self: 'db_bis;
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
-        &self.table_definitions
+        self.table_definitions
     }
 
     fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable> {
@@ -47,7 +47,7 @@ where
             })?;
         let secondary_table_definition = main_table_definition
             .secondary_tables
-            .get(&secondary_key)
+            .get(secondary_key)
             .ok_or_else(|| Error::TableDefinitionNotFound {
                 table: secondary_key.unique_table_name.to_string(),
             })?;

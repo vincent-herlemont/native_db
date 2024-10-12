@@ -21,7 +21,7 @@ impl WatchScan<'_, '_> {
     /// - [`range`](crate::watch::query::WatchScanPrimary::range) - Watch items with a primary key in a given range.
     pub fn primary(&self) -> WatchScanPrimary {
         WatchScanPrimary {
-            internal: &self.internal,
+            internal: self.internal,
         }
     }
 
@@ -33,7 +33,7 @@ impl WatchScan<'_, '_> {
     pub fn secondary(&self, key_def: impl ToKeyDefinition<KeyOptions>) -> WatchScanSecondary {
         WatchScanSecondary {
             key_def: key_def.key_definition(),
-            internal: &self.internal,
+            internal: self.internal,
         }
     }
 }
@@ -162,7 +162,7 @@ impl WatchScanSecondary<'_, '_> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn all<'ws, T: ToInput>(&'ws self) -> Result<(MpscReceiver<watch::Event>, u64)> {
+    pub fn all<T: ToInput>(&self) -> Result<(MpscReceiver<watch::Event>, u64)> {
         self.internal.watch_secondary_all::<T>(&self.key_def)
     }
 

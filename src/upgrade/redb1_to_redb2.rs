@@ -100,7 +100,7 @@ pub(crate) fn upgrade_redb1_to_redb2(
     let db1 = redb1_builder.open(&redb1_path)?;
     let mut db2 = redb2_builder.create(&redb2_path)?;
 
-    for (_, model_builder) in model_builder {
+    for model_builder in model_builder.values() {
         let exist = upgrade_primary_table(
             model_builder.model.primary_key.unique_table_name.as_str(),
             &db1,

@@ -84,18 +84,18 @@ impl Watchers {
                         {
                             match request_secondary_key {
                                 KeyEntry::Default(value) => {
-                                    if key_def == request_secondary_key_def {
-                                        if value.as_slice().starts_with(key_prefix.as_slice()) {
-                                            event_senders.push((*id, Arc::clone(event_sender)));
-                                        }
+                                    if key_def == request_secondary_key_def
+                                        && value.as_slice().starts_with(key_prefix.as_slice())
+                                    {
+                                        event_senders.push((*id, Arc::clone(event_sender)));
                                     }
                                 }
                                 KeyEntry::Optional(value) => {
                                     if let Some(value) = value {
-                                        if key_def == request_secondary_key_def {
-                                            if value.as_slice().starts_with(key_prefix.as_slice()) {
-                                                event_senders.push((*id, Arc::clone(event_sender)));
-                                            }
+                                        if key_def == request_secondary_key_def
+                                            && value.as_slice().starts_with(key_prefix.as_slice())
+                                        {
+                                            event_senders.push((*id, Arc::clone(event_sender)));
                                         }
                                     }
                                 }

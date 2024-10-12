@@ -1,7 +1,6 @@
 use redb::{Key as RedbKey, TypeName, Value as RedbValue};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
-use std::u8;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Key(Vec<u8>);
@@ -455,7 +454,7 @@ impl RedbValue for Key {
 
 impl RedbKey for Key {
     fn compare(data1: &[u8], data2: &[u8]) -> std::cmp::Ordering {
-        data1.cmp(&data2)
+        data1.cmp(data2)
     }
 }
 
@@ -533,8 +532,7 @@ mod tests {
     use std::ops::RangeBounds;
 
     fn range<T: ToKey, R: RangeBounds<T>>(range: R) -> KeyRange {
-        let range = KeyRange::new(range);
-        range
+        KeyRange::new(range)
     }
 
     #[test]

@@ -17,13 +17,12 @@ impl Model {
     where
         F: Fn(KeyOptions) -> bool,
     {
-        let key = self
-            .secondary_keys
-            .get(secondary_key.into())
-            .ok_or_else(|| Error::SecondaryKeyDefinitionNotFound {
+        let key = self.secondary_keys.get(secondary_key).ok_or_else(|| {
+            Error::SecondaryKeyDefinitionNotFound {
                 table: self.primary_key.unique_table_name.to_string(),
                 key: secondary_key.unique_table_name.clone(),
-            })?;
+            }
+        })?;
 
         if check(key.options.clone()) {
             Ok(())

@@ -75,7 +75,7 @@ impl<O: ToTokenStream> ToTokenStream for KeyDefinition<O> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct KeyOptions {
     pub(crate) unique: bool,
     pub(crate) optional: bool,
@@ -97,15 +97,6 @@ impl ToTokenStream for KeyOptions {
 impl ToTokenStream for () {
     fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
         quote! {()}
-    }
-}
-
-impl Default for KeyOptions {
-    fn default() -> Self {
-        Self {
-            unique: false,
-            optional: false,
-        }
     }
 }
 
