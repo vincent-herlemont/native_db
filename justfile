@@ -81,7 +81,7 @@ bench_md bench_name:
     cargo criterion --message-format=json --bench {{bench_name}} | save -f --raw ./benches/result.json; \
     cat ./benches/result.json | criterion-table | save -f --raw ./benches/README.md
 
-bench_r_md bench_name:
+bench_r_md:
     cat ./benches/result.json | criterion-table | save -f --raw ./benches/README.md
 
 expand test_file_name="util":
