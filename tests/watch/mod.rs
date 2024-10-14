@@ -134,7 +134,10 @@ fn watch_multithreading() {
         }
         rw.commit().unwrap();
 
-        handle.join().unwrap();
+        handle.join().unwrap(); // TODO: un error has been raised here on windows
+                                //       need to investigate why.
+                                //       https://github.com/vincent-herlemont/native_db/actions/runs/11332244239/job/31513958170
+                                //       `Result::unwrap()` on an `Err` value: Any { .. }
         {
             let inner_event: ItemA =
                 if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap() {
