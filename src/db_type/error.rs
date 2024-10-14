@@ -62,6 +62,7 @@ pub enum Error {
     #[error("The secondary key {key_name} is not unique ")]
     NotUniqueSecondaryKey { key_name: String },
 
+    // TODO: key with key name.
     #[error("Key not found {key:?}")]
     KeyNotFound { key: Vec<u8> },
 
@@ -90,4 +91,10 @@ pub enum Error {
 
     #[error("Model error")]
     ModelError(#[from] native_model::Error),
+
+    #[error("Fail to remove secondary key: {0}")]
+    RemoveSecondaryKeyError(String),
+
+    #[error("Inccorect input data it does not match the model")]
+    IncorrectInputData { value: Vec<u8> },
 }

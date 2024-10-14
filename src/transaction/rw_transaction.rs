@@ -143,7 +143,7 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///
     /// If the primary key already exists, the value is updated.
     ///
-    /// Returns the old value if the primary key already exists.
+    /// Returns: the old value if the primary key already exists.
     ///
     /// # Example
     /// ```rust
@@ -209,6 +209,10 @@ impl<'db, 'txn> RwTransaction<'db> {
 
     /// Remove a value from the database.
     ///
+    /// Returns error:
+    /// - [crate::db_type::Error::KeyNotFound] if the `item` has a primary key that is not found in the database.
+    /// - [crate::db_type::Error::IncorrectInputData] if the `item` does not match the one in the database.
+    ///
     /// # Example
     /// ```rust
     /// use native_db::*;
@@ -228,11 +232,13 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
-    ///     // Open a read transaction
+    ///     // Open a read/write transaction
     ///     let rw = db.rw_transaction()?;
+    ///     // Insert a value
+    ///     rw.insert(Data { id: 1 })?;
     ///
     ///     // Remove a value
-    ///     let old_value = rw.remove(Data { id: 1 })?;
+    ///     rw.remove(Data { id: 1 })?;
     ///
     ///     // /!\ Don't forget to commit the transaction
     ///     rw.commit()?;
@@ -253,6 +259,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///
     /// That allow to update all keys (primary and secondary) of the value.
     ///
+    /// Returns error:
+    /// - [crate::db_type::Error::KeyNotFound] if the `item` has a primary key that is not found in the database.
+    /// - [crate::db_type::Error::IncorrectInputData] if the `item` does not match the one in the database.
+    ///
     /// # Example
     /// ```rust
     /// use native_db::*;
@@ -272,8 +282,10 @@ impl<'db, 'txn> RwTransaction<'db> {
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
     ///     
-    ///     // Open a read transaction
+    ///     // Open a read/write transaction
     ///     let rw = db.rw_transaction()?;
+    ///     // Insert a value
+    ///     rw.insert(Data { id: 1 })?;
     ///
     ///     // Update a value
     ///     rw.update(Data { id: 1 }, Data { id: 2 })?;
