@@ -1,4 +1,4 @@
-use crate::db_type::{Result, ToInput};
+use crate::db_type::{Input, Result, ToInput};
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 use crate::transaction::query::RwDrain;
 use crate::transaction::query::RwGet;
@@ -9,6 +9,8 @@ use crate::watch::Event;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
+
+use super::internal::private_readable_transaction::PrivateReadableTransaction;
 
 pub struct RwTransaction<'db> {
     pub(crate) watcher: &'db Arc<RwLock<watch::Watchers>>,
@@ -180,9 +182,19 @@ impl<'db, 'txn> RwTransaction<'db> {
     /// }
     /// ```
     pub fn upsert<T: ToInput>(&self, item: T) -> Result<Option<T>> {
-        let (watcher_request, new_binary_value, old_binary_value) = self
+        let model = T::native_db_model();
+        let old_item: Option<Input> = self
             .internal
-            .concrete_upsert(T::native_db_model(), item.native_db_input()?)?;
+            .get_by_primary_key(model, item.native_db_primary_key())?
+            .map(|item| item.inner())
+            .transpose()?
+            .map(|item: T| item.native_db_input())
+            .transpose()?;
+        let (watcher_request, new_binary_value, old_binary_value) = self.internal.concrete_upsert(
+            T::native_db_model(),
+            old_item,
+            item.native_db_input()?,
+        )?;
         if let Some(old_binary_value) = old_binary_value {
             let event = Event::new_update(old_binary_value.clone(), new_binary_value);
             self.batch.borrow_mut().add(watcher_request, event);
