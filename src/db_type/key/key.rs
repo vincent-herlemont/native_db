@@ -1,4 +1,4 @@
-use redb::{Key as RedbKey, TypeName, Value as RedbValue};
+use redb::{AccessGuard, Key as RedbKey, TypeName, Value as RedbValue};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
 
@@ -17,6 +17,12 @@ impl Key {
 
     pub(crate) fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
+    }
+}
+
+impl From<AccessGuard<'_, Key>> for Key {
+    fn from(guard: AccessGuard<'_, Key>) -> Self {
+        guard.value().to_owned()
     }
 }
 

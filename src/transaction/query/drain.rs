@@ -11,7 +11,7 @@ impl<'db, 'txn> RwDrain<'db, 'txn> {
     /// **TODO: needs to be improved, so don't use it yet.**
     pub fn primary<T: ToInput>(&self) -> Result<Vec<T>> {
         let model = T::native_db_model();
-        let out = self.internal.concrete_primary_drain(model)?;
+        let out = self.internal.concrete_drain_all(model)?;
         let out = out
             .into_iter()
             .map(|b| b.inner())

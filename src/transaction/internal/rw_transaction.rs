@@ -7,7 +7,7 @@ use redb::ReadableMultimapTable;
 use redb::ReadableTable;
 use redb::ReadableTableMetadata;
 use redb::TableHandle;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 pub struct InternalRwTransaction<'db> {
@@ -229,21 +229,10 @@ impl<'db> InternalRwTransaction<'db> {
         Ok((watcher_request, old_binary_value, new_binary_value))
     }
 
-    pub(crate) fn concrete_primary_drain(&self, model: Model) -> Result<Vec<Output>> {
-        let mut items = vec![];
-        let mut key_items = HashSet::new();
-
-        let mut primary_table = self.get_primary_table(&model)?;
-        // Drain primary table
-        let drain = primary_table.extract_from_if::<Key, _>(.., |_, _| true)?;
-        for result in drain {
-            let (primary_key, value) = result?;
-            // TODO: we should delay to an drain scan
-            let binary_value = Output(value.value().to_vec());
-            key_items.insert(primary_key.value().to_owned());
-            items.push(binary_value);
-        }
-
+    // TODO: Optimize the code to avoid too much memory allocation.
+    pub(crate) fn concrete_drain_all(&self, model: Model) -> Result<Vec<Output>> {
+        
+        // Truncate secondary tables
         let secondary_table_names: Vec<&KeyDefinition<KeyOptions>> = self
             .primary_table_definitions
             .get(model.primary_key.unique_table_name.as_str())
@@ -253,37 +242,27 @@ impl<'db> InternalRwTransaction<'db> {
             .secondary_tables
             .keys()
             .collect();
-
-        // Drain secondary tables
         for secondary_table_name in secondary_table_names {
             let mut secondary_table = self.get_secondary_table(&model, secondary_table_name)?;
-
-            // Detect secondary keys to delete
-            let mut secondary_keys_to_delete = vec![];
-            let mut number_detected_key_to_delete = key_items.len();
-            for secondary_items in secondary_table.iter()? {
-                let (secondary_key, primary_keys) = secondary_items?;
-                for primary_key in primary_keys {
-                    let primary_key = primary_key?;
-                    // Ta avoid to iter on all secondary keys if we have already detected all keys to delete
-                    if number_detected_key_to_delete == 0 {
-                        break;
-                    }
-                    if key_items.contains(&primary_key.value().to_owned()) {
-                        // TODO remove owned
-                        secondary_keys_to_delete.push((
-                            secondary_key.value().to_owned(),
-                            primary_key.value().to_owned(),
-                        ));
-                        number_detected_key_to_delete -= 1;
-                    }
-                }
+            let iter_secondary_keys = secondary_table.iter()?;
+            let mut all_secondary_key_to_delete: Vec<Key> = vec![];
+            for secondary_items in iter_secondary_keys {
+                let (secondary_key, _) = secondary_items?;
+                all_secondary_key_to_delete.push(secondary_key.into());
             }
-
-            // Delete secondary keys
-            for (secondary_key, primary_key) in secondary_keys_to_delete {
-                secondary_table.remove(secondary_key, primary_key)?;
+            for secondary_key_to_delete in all_secondary_key_to_delete {
+                secondary_table.remove_all(&secondary_key_to_delete)?;
             }
+        }
+
+        // Drain primary table
+        let mut items = vec![];
+        let mut primary_table = self.get_primary_table(&model)?;
+        let drain = primary_table.extract_from_if::<Key, _>(.., |_, _| true)?;
+        for result in drain {
+            let (_, value) = result?;
+            let binary_value = Output(value.value().to_vec());
+            items.push(binary_value);
         }
 
         Ok(items)
@@ -355,7 +334,7 @@ impl<'db> InternalRwTransaction<'db> {
         }
 
         // List all data from the old table
-        for old_data in self.concrete_primary_drain(old_table_definition.model.clone())? {
+        for old_data in self.concrete_drain_all(old_table_definition.model.clone())? {
             let (decoded_item, _) = native_model::decode::<T>(old_data.0)?;
             let decoded_item = decoded_item.native_db_input()?;
             self.concrete_insert(T::native_db_model(), decoded_item)?;
@@ -365,8 +344,10 @@ impl<'db> InternalRwTransaction<'db> {
     }
 
     pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
-        for data in self.concrete_primary_drain(T::native_db_model())? {
-            let (decoded_item, _) = native_model::decode::<T>(data.0)?;
+        let items = self.concrete_drain_all(T::native_db_model())?;
+
+        for item in items {
+            let (decoded_item, _) = native_model::decode::<T>(item.0)?;
             let decoded_item = decoded_item.native_db_input()?;
             self.concrete_insert(T::native_db_model(), decoded_item)?;
         }
