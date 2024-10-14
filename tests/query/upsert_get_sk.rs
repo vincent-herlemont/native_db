@@ -117,6 +117,46 @@ fn test_upsert_duplicate_key() {
     ));
 }
 
+#[test]
+fn upsert_get_update_secondary_key() {
+    let item_1 = ItemDuplicate {
+        id: 1,
+        name: "test".to_string(),
+    };
+
+    let mut models = Models::new();
+    models.define::<ItemDuplicate>().unwrap();
+    let db = Builder::new().create_in_memory(&models).unwrap();
+    let rw = db.rw_transaction().unwrap();
+    let _ = rw.upsert(item_1.clone()).unwrap();
+    rw.commit().unwrap();
+
+    // Stats
+    let stats = db.redb_stats().unwrap();
+    assert_eq!(stats.primary_tables.len(), 1);
+    assert_eq!(stats.primary_tables[0].name, "1_1_id");
+    assert_eq!(stats.primary_tables[0].n_entries, Some(1));
+    assert_eq!(stats.secondary_tables.len(), 1);
+    assert_eq!(stats.secondary_tables[0].name, "1_1_name");
+    assert_eq!(stats.secondary_tables[0].n_entries, Some(1));
+
+    // Update the secondary key
+    let rw = db.rw_transaction().unwrap();
+    let mut item: ItemDuplicate = rw.get().primary(1u32).unwrap().unwrap();
+    item.name = "test2".to_string();
+    rw.upsert(item).unwrap();
+    rw.commit().unwrap();
+
+    // Stats
+    let stats = db.redb_stats().unwrap();
+    assert_eq!(stats.primary_tables.len(), 1);
+    assert_eq!(stats.primary_tables[0].name, "1_1_id");
+    assert_eq!(stats.primary_tables[0].n_entries, Some(1));
+    assert_eq!(stats.secondary_tables.len(), 1);
+    assert_eq!(stats.secondary_tables[0].name, "1_1_name");
+    assert_eq!(stats.secondary_tables[0].n_entries, Some(1));
+}
+
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 #[native_model(id = 1, version = 1)]
 #[native_db]
