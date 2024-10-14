@@ -47,8 +47,10 @@ Active development. The API is not stable yet and may change in the future.
 - Full example with Tauri: [native_db_tauri_vanilla](https://github.com/vincent-herlemont/native_db_tauri_vanilla)
 
 # Projects using Native DB
+
 - [polly-scheduler](https://github.com/dongbin86/polly-scheduler)
 
+If you want to propose your project or company that uses Native DB, please open a PR.
 
 # Example
 
