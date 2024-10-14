@@ -98,17 +98,20 @@ impl<'db> InternalRwTransaction<'db> {
     pub(crate) fn concrete_upsert(
         &self,
         model: Model,
+        old_item: Option<Input>,
         item: Input,
     ) -> Result<(WatcherRequest, Output, Option<Output>)> {
-        let old_item = {
-            let mut table = self.get_primary_table(&model)?;
-            let old_item = table
-                .insert(&item.primary_key, item.value.as_slice())?
-                .map(|value| Output(value.value().to_vec()));
-            old_item
-        };
+        if let Some(old_item) = old_item.clone() {
+            self.concrete_update(model.clone(), old_item, item.clone())?;
+        } else {
+            self.concrete_insert(model.clone(), item.clone())?;
+        }
 
-        self.util_insert_secondary_keys(&item, &model)?;
+        let old_item: Option<Output> = if let Some(old_item) = old_item {
+            Some(old_item.into())
+        } else {
+            None
+        };
 
         Ok((
             WatcherRequest::new(

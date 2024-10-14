@@ -1,6 +1,6 @@
 use crate::db_type::{Error, Key, KeyDefinition, KeyEntry, KeyOptions, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Input {
     pub(crate) primary_key: Key,
     pub(crate) secondary_keys: std::collections::HashMap<KeyDefinition<KeyOptions>, KeyEntry>,

@@ -1,7 +1,15 @@
 use crate::db_type::{Result, ToInput};
 
+use super::Input;
+
 #[derive(Clone, Debug)]
 pub(crate) struct Output(pub(crate) Vec<u8>);
+
+impl From<Input> for Output {
+    fn from(input: Input) -> Self {
+        Self(input.value)
+    }
+}
 
 impl From<&[u8]> for Output {
     fn from(slice: &[u8]) -> Self {
