@@ -19,6 +19,7 @@ Here's a drop-in, fast, embedded database for multi-platform apps (server, deskt
 - Support for **multiple indexes** (primary, secondary, unique, non-unique, optional).
 - Fast, see [`sqlite` vs `redb` vs `native_db`](./benches/README.md) benchmarks.
 - Transparent serialization/deserialization using [native_model](https://github.com/vincent-herlemont/native_model). You can use any serialization library you want (`bincode`, `postcard`, your own etc.).
+- Ensure query **type safety** to prevent unexpected results caused by selecting with an incorrect type.
 - **Automatic model migration** 🌟.
 - **Thread-safe** and fully **ACID-compliant** transactions provided by [redb](https://github.com/cberner/redb).
 - **Real-time** subscription with filters for `insert`, `update` and `delete` operations.
