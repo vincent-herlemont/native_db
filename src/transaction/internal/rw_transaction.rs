@@ -165,19 +165,44 @@ impl<'db> InternalRwTransaction<'db> {
     ) -> Result<(WatcherRequest, Output)> {
         let keys = &item.secondary_keys;
         {
-            let mut table = self.get_primary_table(&model)?;
-            table.remove(&item.primary_key)?;
+            let mut table: redb::Table<Key, &[u8]> = self.get_primary_table(&model)?;
+            let result = if let Some(current_item) = table.remove(&item.primary_key)? {
+                let current_item = current_item.value();
+                if current_item == item.value {
+                    Ok(())
+                } else {
+                    Err(Error::IncorrectInputData {
+                        value: current_item.to_vec(),
+                    })
+                }
+            } else {
+                Err(Error::KeyNotFound {
+                    key: item.primary_key.as_slice().to_vec(),
+                })
+            };
+            if let Err(Error::IncorrectInputData { ref value }) = result {
+                table.insert(&item.primary_key, value.as_slice())?;
+            }
+            result?;
         }
 
         for secondary_key_def in keys.keys() {
             let mut secondary_table = self.get_secondary_table(&model, secondary_key_def)?;
             match &item.secondary_key_value(secondary_key_def)? {
                 KeyEntry::Default(secondary_key) => {
-                    secondary_table.remove(secondary_key, &item.primary_key)?;
+                    if !secondary_table.remove(secondary_key, &item.primary_key)? {
+                        return Err(Error::RemoveSecondaryKeyError(
+                            secondary_key_def.unique_table_name.to_string(),
+                        ));
+                    }
                 }
                 KeyEntry::Optional(secondary_key) => {
                     if let Some(value) = secondary_key {
-                        secondary_table.remove(value, &item.primary_key)?;
+                        if !secondary_table.remove(value, &item.primary_key)? {
+                            return Err(Error::RemoveSecondaryKeyError(
+                                secondary_key_def.unique_table_name.to_string(),
+                            ));
+                        }
                     }
                 }
             }
