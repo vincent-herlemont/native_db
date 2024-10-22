@@ -116,6 +116,21 @@ impl ModelNativeDB {
         Ident::new(&format!("{}Key", struct_name), Span::call_site().into())
     }
 
+    pub(crate) fn keys_enum_visibility(&self) -> proc_macro2::TokenStream {
+        let do_export = match &self.attrs.do_export_keys {
+            Some(do_export_keys) => do_export_keys.value,
+            None => false,
+        };
+
+        let visibility = if do_export {
+            ""
+        } else {
+            "(crate)"
+        };
+
+        format!("pub{}", visibility).parse().unwrap()
+    }
+
     pub(crate) fn secondary_keys_enum(&self) -> Vec<proc_macro2::TokenStream> {
         self.attrs
             .secondary_keys
