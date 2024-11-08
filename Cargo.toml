@@ -7,7 +7,6 @@ description = "Drop-in embedded database"
 license = "MIT"
 repository = "https://github.com/vincent-herlemont/native_db"
 readme = "README.md"
-build = "build.rs"
 keywords = ["embedded-database", "database", "multi-platform", "android", "ios"]
 categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
@@ -33,7 +32,6 @@ tokio = { version = "1.41.0", features = ["sync"], optional = true }
 assert_fs = "1.1.2"
 serial_test = { version = "3.1.1", features = ["file_locks"] }
 shortcut_assert_fs = { version = "0.1.0" }
-skeptic = "0.13.7"
 tokio = { version = "1.41.0", features = ["test-util","macros"] }
 bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 criterion = { version = "0.5.1" }
