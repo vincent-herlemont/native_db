@@ -391,11 +391,5 @@ doc_comment! {
     include_str!("../README.md")
 }
 
-/// Macro which link [`native_model`](https://crates.io/crates/native_model) to the Native DB. See
-/// [`Builder.define`](struct.Builder.html#method.define) for more information.
-///
-/// Optional parameter `export_keys` controls whether the model keys enum is visible outside of the
-/// crate, default value is false with visibility limited to `pub(crate)`. Use
-/// `#[native_db(export_keys = true)]` to make enum visible outside of crate (ie. `pub`).
 pub use native_db_macro::*;
 pub use serialization::*;
