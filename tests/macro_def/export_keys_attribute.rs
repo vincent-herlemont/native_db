@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
@@ -24,4 +25,37 @@ fn test_insert_my_item() {
 
     let key = item.native_db_primary_key();
     assert_eq!(key, 1_u32.to_key());
+
+    let mut models: Models = Models::new();
+    models.define::<Item>().unwrap();
+
+    let db = Builder::new().create_in_memory(&models).unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(Item {
+        id: 1,
+        name: "test".to_string(),
+    })
+    .unwrap();
+    rw.commit().unwrap();
+
+    // Get primary key
+    let r = db.r_transaction().unwrap();
+    let result_item: Item = r.get().primary(1u32).unwrap().unwrap();
+    assert_eq!(result_item.id, 1);
+    assert_eq!(result_item.name, "test");
+
+    // Get secondary key
+    let r = db.r_transaction().unwrap();
+    let result_item: Vec<Item> = r
+        .scan()
+        .secondary(ItemKey::name)
+        .unwrap()
+        .all()
+        .unwrap()
+        .try_collect()
+        .unwrap();
+    assert_eq!(result_item.len(), 1);
+    assert_eq!(result_item[0].id, 1);
+    assert_eq!(result_item[0].name, "test");
 }
