@@ -25,6 +25,19 @@ impl Event {
     }
 }
 
+/// Get the inner value of the event
+///
+/// NOTE: for update, it returns the new value
+impl Event {
+    pub fn inner<T: ToInput>(&self) -> Result<T> {
+        match self {
+            Event::Insert(insert) => insert.inner(),
+            Event::Update(update) => update.inner_new(),
+            Event::Delete(delete) => delete.inner(),
+        }
+    }
+}
+
 impl Debug for Event {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
