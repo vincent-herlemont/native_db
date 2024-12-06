@@ -66,6 +66,14 @@ impl Models {
         }
     }
 
+    ///
+    /// # Global Options
+    ///
+    /// `export_keys`: You can export the keys enum using the `export_keys` option, example: `#[native_db(export_keys = true)]`.
+    /// This option makes the keys enum visible outside of the crate with `pub` visibility, default value is `false` with visibility limited to `pub(crate)`.
+    ///
+    /// # Keys and Models
+    ///
     /// Defines a table using the given model.
     ///
     /// Native DB depends on `native_model` to define the model.
@@ -73,7 +81,8 @@ impl Models {
     /// you can use any other serialization library. See the documentation of [`native_model`](https://github.com/vincent-herlemont/native_model) for more information.
     /// In the examples below, we import `serde` and use the `Serialize` and `Deserialize` traits.
     ///
-    /// # Primary Key
+    ///
+    /// ## Primary Key
     ///
     /// The primary key is **mandatory**, and you **must**:
     /// - Define it.
@@ -94,7 +103,7 @@ impl Models {
     ///
     /// The primary key is **unique**, so you can't have two instances of the model with the same primary key saved in the database.
     ///
-    /// ## Defining a Simple Model with a Primary Key on a Field
+    /// ### Defining a Simple Model with a Primary Key on a Field
     ///
     /// ```rust
     /// use native_db::*;
@@ -118,7 +127,7 @@ impl Models {
     /// In this example, we have:
     /// - **One primary key** named `id` of type `u64`, defined directly on the field using the `#[primary_key]` attribute.
     ///
-    /// ## Defining a Model with a Method as Primary Key
+    /// ### Defining a Model with a Method as Primary Key
     ///
     /// ```rust
     /// use native_db::*;
@@ -142,7 +151,7 @@ impl Models {
     /// In this example, we have:
     /// - **One primary key** named `custom_id` of type `u32`, defined using a custom method. The method `custom_id` computes and returns the primary key value.
     ///
-    /// # Secondary Key
+    /// ## Secondary Key
     ///
     /// The secondary key is *flexible*, and you can:
     /// - Define it or not.
@@ -163,7 +172,7 @@ impl Models {
     /// - [`unique`](#unique) (default: false)
     /// - [`optional`](#optional) (default: false)
     ///
-    /// ## Defining a Model with a Secondary Key on a Field
+    /// ### Defining a Model with a Secondary Key on a Field
     ///
     /// ```rust
     /// use native_db::*;
@@ -185,7 +194,7 @@ impl Models {
     /// - **One primary key** named `id` of type `u64`, defined on the field.
     /// - **One secondary key** named `name` of type `String`, defined on the field using the `#[secondary_key]` attribute.
     ///
-    /// ## Defining a Model with an Optional and Unique Secondary Key
+    /// ### Defining a Model with an Optional and Unique Secondary Key
     ///
     /// ```rust
     /// use native_db::*;
@@ -209,12 +218,12 @@ impl Models {
     ///
     /// - **Note:** The secondary key can be `unique`, `optional`, or both.
     ///
-    /// ## Unique
+    /// ### Unique
     ///
     /// This means that each instance of the model must have a unique value for the secondary key.
     /// If the value is not unique, the [`insert`](crate::transaction::RwTransaction::insert) method will return an error.
     ///
-    /// ## Optional
+    /// ### Optional
     ///
     /// This means that an instance of the model can have a value for the secondary key or not.
     /// When `optional` is set, the value **must** be an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html).
@@ -224,7 +233,7 @@ impl Models {
     /// Under the hood, the secondary key is stored in a separate `redb` table. So if the secondary key is optional,
     /// the value will be stored in the table only if the value is not `None`.
     ///
-    /// ## Defining a Model with a Custom Optional Secondary Key
+    /// ### Defining a Model with a Custom Optional Secondary Key
     ///
     /// ```rust
     /// use native_db::*;
