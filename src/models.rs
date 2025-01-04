@@ -17,8 +17,11 @@ use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder,
 ///
 /// ```rust
 /// # pub mod data {
-/// #     use native_db::{native_db, ToKey};
-/// #     use native_model::{native_model, Model};
+/// #     use native_db::{
+/// #         native_db,
+/// #         native_model::{self, native_model, Model},
+/// #         ToKey,
+/// #     };
 /// #     use serde::{Deserialize, Serialize};
 /// #
 /// #     pub type Person = v1::Person;
@@ -107,7 +110,7 @@ impl Models {
     ///
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
@@ -131,7 +134,7 @@ impl Models {
     ///
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
@@ -176,7 +179,7 @@ impl Models {
     ///
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
@@ -198,7 +201,7 @@ impl Models {
     ///
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
@@ -237,7 +240,7 @@ impl Models {
     ///
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
@@ -280,7 +283,7 @@ impl Models {
     ///
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]

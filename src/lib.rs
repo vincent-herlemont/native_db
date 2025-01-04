@@ -83,8 +83,11 @@
 //!
 //! ```rust
 //! pub mod data {
-//!     use native_db::{native_db, ToKey};
-//!     use native_model::{native_model, Model};
+//!     use native_db::{
+//!         native_db,
+//!         native_model::{self, native_model, Model},
+//!         ToKey,
+//!     };
 //!     use serde::{Deserialize, Serialize};
 //!
 //!     pub type Person = v1::Person;
@@ -111,8 +114,11 @@
 //!
 //! ```rust
 //! # pub mod data {
-//! #     use native_db::{native_db, ToKey};
-//! #     use native_model::{native_model, Model};
+//! #     use native_db::{
+//! #         native_db,
+//! #         native_model::{self, native_model, Model},
+//! #         ToKey,
+//! #     };
 //! #     use serde::{Deserialize, Serialize};
 //! #
 //! #     pub type Person = v1::Person;
@@ -156,8 +162,11 @@
 //!
 //! ```rust
 //! # pub mod data {
-//! #     use native_db::{native_db, ToKey};
-//! #     use native_model::{native_model, Model};
+//! #     use native_db::{
+//! #         native_db,
+//! #         native_model::{self, native_model, Model},
+//! #         ToKey,
+//! #     };
 //! #     use serde::{Deserialize, Serialize};
 //! #
 //! #     pub type Person = v1::Person;
@@ -213,8 +222,11 @@
 //! ```rust
 //! pub mod data {
 //!     // ... same imports
-//! #    use native_db::{native_db, ToKey};
-//! #    use native_model::{native_model, Model};
+//! #     use native_db::{
+//! #         native_db,
+//! #         native_model::{self, native_model, Model},
+//! #         ToKey,
+//! #     };
 //! #    use serde::{Deserialize, Serialize};
 //!     
 //!     // Update the type alias to the latest version
@@ -271,8 +283,11 @@
 //! ```rust
 //! # pub mod data {
 //! #    // ... same imports
-//! #    use native_db::{native_db, ToKey};
-//! #    use native_model::{native_model, Model};
+//! #     use native_db::{
+//! #         native_db,
+//! #         native_model::{self, native_model, Model},
+//! #         ToKey,
+//! #     };
 //! #    use serde::{Deserialize, Serialize};
 //! #    
 //! #    // Update the type alias to the latest version
@@ -374,6 +389,7 @@ pub use db_type::Key;
 pub use db_type::ToInput;
 /// Allow to use a type as a key in the database.
 pub use db_type::ToKey;
+pub use native_model;
 
 // Export
 pub use database::*;
