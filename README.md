@@ -32,10 +32,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 native_db = "0.8.1"
-native_model = "0.4.20"
 ```
-
-NOTE: `native_db` requires `native_model` to work.
 
 # Status
 
@@ -59,7 +56,7 @@ If you want to propose your project or company that uses Native DB, please open 
 ```rust
 use serde::{Deserialize, Serialize};
 use native_db::*;
-use native_model::{native_model, Model};
+use native_db::native_model::{native_model, Model};
 use once_cell::sync::Lazy;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

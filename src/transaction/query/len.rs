@@ -14,7 +14,7 @@ impl RLen<'_, '_> {
     /// # Example
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
@@ -54,7 +54,7 @@ impl RLen<'_, '_> {
     /// # Example
     /// ```rust
     /// use native_db::*;
-    /// use native_model::{native_model, Model};
+    /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     ///
     /// #[derive(Serialize, Deserialize)]
