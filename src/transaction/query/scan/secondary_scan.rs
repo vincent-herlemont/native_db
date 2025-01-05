@@ -91,7 +91,7 @@ where
         })
     }
 
-    /// Iterate over all values by secondary key.
+    /// Iterate over all values by secondary key in a range.
     ///
     /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
     ///
@@ -150,7 +150,7 @@ where
         })
     }
 
-    /// Iterate over all values by secondary key.
+    /// Iterate over all values by secondary key starting with a prefix.
     ///
     /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
     ///
