@@ -368,4 +368,12 @@ impl InternalRwTransaction<'_> {
         }
         Ok(())
     }
+
+    pub fn set_two_phase_commit(&mut self, enabled: bool) {
+        self.redb_transaction.set_two_phase_commit(enabled)
+    }
+
+    pub fn set_quick_repair(&mut self, enabled: bool) {
+        self.redb_transaction.set_quick_repair(enabled)
+    }
 }

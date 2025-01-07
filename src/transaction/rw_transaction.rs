@@ -459,4 +459,17 @@ impl RwTransaction<'_> {
     pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
         self.internal.refresh::<T>()
     }
+
+    /// Enable or disable 2-phase commit (defaults to disabled)
+    /// See [redb::WriteTransaction::set_two_phase_commit()](https://docs.rs/redb/latest/redb/struct.WriteTransaction.html#method.set_two_phase_commit) for details.
+    pub fn set_two_phase_commit(&mut self, enabled: bool) {
+        self.internal.set_two_phase_commit(enabled)
+    }
+
+    /// Enable or disable quick-repair (defaults to disabled)
+    /// See [redb::WriteTransaction::set_quick_repair()](https://docs.rs/redb/latest/redb/struct.WriteTransaction.html#method.set_quick_repair) for details.
+    pub fn set_quick_repair(&mut self, enabled: bool) {
+        self.internal.set_quick_repair(enabled)
+    }
+
 }
