@@ -36,10 +36,10 @@ pub fn load_or_create_metadata(database_instance: &DatabaseInstance) -> Result<M
         let current_native_model_version = table
             .get(VERSION_NATIVE_MODEL_NAME)?
             .expect("Fatal error: current_native_model_version not found");
-        return Ok(Metadata::new(
+        Ok(Metadata::new(
             current_version.value().to_string(),
             current_native_model_version.value().to_string(),
-        ));
+        ))
     } else {
         // Create the metadata table if it does not exist
         let metadata = Metadata::default();
