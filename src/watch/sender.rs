@@ -5,6 +5,7 @@ use crate::watch::{Event, MpscSender};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+#[allow(clippy::type_complexity)]
 pub(crate) struct Watchers(HashMap<u64, (TableFilter, Arc<Mutex<MpscSender<Event>>>)>);
 
 impl Watchers {
