@@ -14,7 +14,7 @@ impl Batch {
     }
 }
 
-impl<'a> Iterator for Batch {
+impl Iterator for Batch {
     type Item = (WatcherRequest, Event);
 
     fn next(&mut self) -> Option<Self::Item> {

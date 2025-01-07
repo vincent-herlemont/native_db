@@ -5,7 +5,7 @@ pub struct RwDrain<'db, 'txn> {
     pub(crate) internal: &'txn InternalRwTransaction<'db>,
 }
 
-impl<'db, 'txn> RwDrain<'db, 'txn> {
+impl RwDrain<'_, '_> {
     /// Drain all items.
     ///
     /// **TODO: needs to be improved, so don't use it yet.**

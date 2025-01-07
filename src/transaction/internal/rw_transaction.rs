@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<'db> InternalRwTransaction<'db> {
+impl InternalRwTransaction<'_> {
     pub(crate) fn commit(self) -> Result<()> {
         self.redb_transaction.commit()?;
         Ok(())

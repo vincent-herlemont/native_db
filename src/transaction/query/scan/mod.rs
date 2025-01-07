@@ -14,7 +14,7 @@ pub struct RScan<'db, 'txn> {
     pub(crate) internal: &'txn InternalRTransaction<'db>,
 }
 
-impl<'txn> RScan<'_, 'txn> {
+impl RScan<'_, '_> {
     /// Get a values from the database by primary key.
     ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.

@@ -59,7 +59,7 @@ impl<'db> RwTransaction<'db> {
     }
 }
 
-impl<'db, 'txn> RwTransaction<'db> {
+impl RwTransaction<'_> {
     /// Commit the transaction.
     /// All changes will be applied to the database. If the commit fails, the transaction will be aborted. The
     /// database will be unchanged.
@@ -94,7 +94,7 @@ impl<'db, 'txn> RwTransaction<'db> {
     }
 }
 
-impl<'db, 'txn> RwTransaction<'db> {
+impl RwTransaction<'_> {
     /// Insert a value into the database.
     ///
     /// If the primary key already exists, an error is returned.

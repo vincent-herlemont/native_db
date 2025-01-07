@@ -153,7 +153,7 @@ pub struct PrimaryScanIterator<'a, T: ToInput> {
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, T: ToInput> Iterator for PrimaryScanIterator<'a, T> {
+impl<T: ToInput> Iterator for PrimaryScanIterator<'_, T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -163,7 +163,7 @@ impl<'a, T: ToInput> Iterator for PrimaryScanIterator<'a, T> {
         }
     }
 }
-impl<'a, T: ToInput> DoubleEndedIterator for PrimaryScanIterator<'a, T> {
+impl<T: ToInput> DoubleEndedIterator for PrimaryScanIterator<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         match self.range.next_back() {
             Some(Ok((_, v))) => unwrap_item(Some(v)),
@@ -178,7 +178,7 @@ pub struct PrimaryScanIteratorStartWith<'a, T: ToInput> {
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, T: ToInput> Iterator for PrimaryScanIteratorStartWith<'a, T> {
+impl<T: ToInput> Iterator for PrimaryScanIteratorStartWith<'_, T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
