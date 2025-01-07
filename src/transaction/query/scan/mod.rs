@@ -29,6 +29,7 @@ impl RScan<'_, '_> {
         Ok(out)
     }
 
+    #[allow(clippy::type_complexity)]
     /// Get a values from the database by secondary key.
     ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
@@ -75,6 +76,7 @@ where
         Ok(out)
     }
 
+    #[allow(clippy::type_complexity)]
     /// Get a values from the database by secondary key.
     ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
