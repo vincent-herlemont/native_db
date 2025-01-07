@@ -107,11 +107,7 @@ impl InternalRwTransaction<'_> {
             self.concrete_insert(model.clone(), item.clone())?;
         }
 
-        let old_item: Option<Output> = if let Some(old_item) = old_item {
-            Some(old_item.into())
-        } else {
-            None
-        };
+        let old_item: Option<Output> = old_item.map(|old_item| old_item.into());
 
         Ok((
             WatcherRequest::new(
