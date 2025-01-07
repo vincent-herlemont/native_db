@@ -225,7 +225,7 @@ where
     pub(crate) _marker: PhantomData<T>,
 }
 
-impl<'a, PrimaryTable, T: ToInput> Iterator for SecondaryScanIterator<'a, PrimaryTable, T>
+impl<PrimaryTable, T: ToInput> Iterator for SecondaryScanIterator<'_, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
@@ -245,8 +245,8 @@ where
     }
 }
 
-impl<'a, PrimaryTable, T: ToInput> DoubleEndedIterator
-    for SecondaryScanIterator<'a, PrimaryTable, T>
+impl<PrimaryTable, T: ToInput> DoubleEndedIterator
+    for SecondaryScanIterator<'_, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
