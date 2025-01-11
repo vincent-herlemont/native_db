@@ -32,6 +32,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 native_db = "0.8.1"
+native_model = "0.6.1" # (optional on the `main` branch)
 ```
 
 # Status
