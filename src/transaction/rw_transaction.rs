@@ -255,6 +255,8 @@ impl RwTransaction<'_> {
         binary_value.inner()
     }
 
+    /// **Deprecated**: should be replaced by [`auto_update`] which will be renamed to [`update`]
+    ///
     /// Update a value in the database.
     ///
     /// That allow to update all keys (primary and secondary) of the value.
@@ -296,6 +298,7 @@ impl RwTransaction<'_> {
     ///     Ok(())
     /// }
     /// ```
+    #[deprecated = "should be replaced by auto_update"]
     pub fn update<T: ToInput>(&self, old_item: T, updated_item: T) -> Result<()> {
         let (watcher_request, old_binary_value, new_binary_value) = self.internal.concrete_update(
             T::native_db_model(),
@@ -305,6 +308,91 @@ impl RwTransaction<'_> {
         let event = Event::new_update(old_binary_value, new_binary_value);
         self.batch.borrow_mut().add(watcher_request, event);
         Ok(())
+    }
+
+    /// **Warning**: this method will be renamed to [`update`]
+    ///
+    /// Auto-update a value in the database.
+    ///
+    /// Like upsert, but returns an error if the data does not exist instead of creating it.
+    ///
+    /// Returns:
+    /// - Ok(Some(T)) if the value was found and updated, containing the old value
+    /// - Ok(None) if the value was not found
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_db::native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     name: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///     
+    ///     // Open a read/write transaction
+    ///     let rw = db.rw_transaction()?;
+    ///     
+    ///     // Try to auto-update a non-existent value
+    ///     let old_value: Option<Data> = rw.auto_update(Data { id: 1, name: "new".to_string() })?;
+    ///     assert!(old_value.is_none()); // Returns None because the value does not exist
+    ///     
+    ///     // Insert a value first
+    ///     rw.insert(Data { id: 1, name: "initial".to_string() })?;
+    ///     
+    ///     // Now auto-update will work and change the name
+    ///     let old_value: Option<Data> = rw.auto_update(Data { id: 1, name: "updated".to_string() })?;
+    ///     assert!(old_value.is_some()); // Returns Some because the value exists
+    ///     assert_eq!(old_value.unwrap().name, "initial"); // Contains the old value
+    ///     
+    ///     // Check that the value was actually updated
+    ///     let current: Data = rw.get().primary(1u64)?.unwrap();
+    ///     assert_eq!(current.name, "updated");
+    ///
+    ///     // /!\ Don't forget to commit the transaction
+    ///     rw.commit()?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn auto_update<T: ToInput>(&self, item: T) -> Result<Option<T>> {
+        let model = T::native_db_model();
+        let old_item: Option<Input> = self
+            .internal
+            .get_by_primary_key(model, item.native_db_primary_key())?
+            .map(|item| item.inner())
+            .transpose()?
+            .map(|item: T| item.native_db_input())
+            .transpose()?;
+
+        if let Some(old_item) = old_item {
+            let (watcher_request, new_binary_value, old_binary_value) =
+                self.internal.concrete_upsert(
+                    T::native_db_model(),
+                    Some(old_item),
+                    item.native_db_input()?,
+                )?;
+            if let Some(old_binary_value) = old_binary_value {
+                let event = Event::new_update(old_binary_value.clone(), new_binary_value);
+                self.batch.borrow_mut().add(watcher_request, event);
+                let old_binary_value = old_binary_value.inner()?;
+                Ok(Some(old_binary_value))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /// Convert all values from the database.
@@ -471,5 +559,4 @@ impl RwTransaction<'_> {
     pub fn set_quick_repair(&mut self, enabled: bool) {
         self.internal.set_quick_repair(enabled)
     }
-
 }

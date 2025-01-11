@@ -11,3 +11,7 @@ mod insert_update_sk;
 // Upsert
 mod upsert_get_pk;
 mod upsert_get_sk;
+
+// Auto Update
+mod auto_update_pk;
+mod auto_update_sk;
