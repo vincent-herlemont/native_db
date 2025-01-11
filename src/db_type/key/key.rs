@@ -424,6 +424,16 @@ impl_inner_key_value_for_primitive!(i128);
 impl_inner_key_value_for_primitive!(f32);
 impl_inner_key_value_for_primitive!(f64);
 
+impl ToKey for bool {
+    fn to_key(&self) -> Key {
+        Key::new(vec![*self as u8])
+    }
+
+    fn key_names() -> Vec<String> {
+        vec!["bool".to_string()]
+    }
+}
+
 impl RedbValue for Key {
     type SelfType<'a> = Key;
     type AsBytes<'a> = &'a [u8] where Self: 'a;

@@ -282,3 +282,5 @@ create_test!(
     u128,
     1u128
 );
+
+create_test!(test_bool_bool, bool, true, bool, true, u8, 1u8);
