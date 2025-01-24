@@ -146,6 +146,49 @@ where
             _marker: PhantomData,
         })
     }
+
+    /// Iterate over all values matching a given value
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_db::native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///
+    ///     // Get the values equal to "victor"
+    ///     let _values: Vec<Data> = r.scan().primary()?.equal("victor")?.try_collect()?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn equal(&self, value: impl ToKey) -> Result<PrimaryScanIteratorEqual<T>> {
+        let model = T::native_db_model();
+        check_key_type(&model, &value)?;
+        let value = value.to_key();
+        let range = self.primary_table.range::<Key>(value.clone()..)?;
+
+        Ok(PrimaryScanIteratorEqual {
+            range,
+            start_with: value,
+            _marker: PhantomData,
+        })
+    }
 }
 
 pub struct PrimaryScanIterator<'a, T: ToInput> {
@@ -186,6 +229,30 @@ impl<T: ToInput> Iterator for PrimaryScanIteratorStartWith<'_, T> {
             Some(Ok((k, v))) => {
                 let k = k.value();
                 if k.as_slice().starts_with(self.start_with.as_slice()) {
+                    unwrap_item(Some(v))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+}
+
+pub struct PrimaryScanIteratorEqual<'a, T: ToInput> {
+    pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
+    pub(crate) start_with: Key,
+    pub(crate) _marker: PhantomData<T>,
+}
+
+impl<T: ToInput> Iterator for PrimaryScanIteratorEqual<'_, T> {
+    type Item = Result<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.range.next() {
+            Some(Ok((k, v))) => {
+                let k = k.value();
+                if k.eq(&self.start_with) {
                     unwrap_item(Some(v))
                 } else {
                     None

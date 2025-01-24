@@ -212,6 +212,67 @@ where
             _marker: PhantomData,
         })
     }
+
+    /// Iterate over all values by secondary key with a given value.
+    ///
+    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_db::native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    /// use itertools::Itertools;
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key]
+    ///     name: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///
+    ///     // Get only values that have "hello" as secondary key name
+    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.equal("hello")?.try_collect()?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn equal(
+        &self,
+        value: impl ToKey,
+    ) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+        check_key_type_from_key_definition(&self.key_def, &value)?;
+        let start_with = value.to_key();
+        let mut primary_keys = vec![];
+        for keys in self.secondary_table.range::<Key>(start_with.clone()..)? {
+            let (l_secondary_key, l_primary_keys) = keys?;
+            if !l_secondary_key
+                .value().eq(&start_with)
+            {
+                break;
+            }
+            for primary_key in l_primary_keys {
+                let primary_key = primary_key?;
+                primary_keys.push(primary_key);
+            }
+        }
+
+        Ok(SecondaryScanIterator {
+            primary_table: &self.primary_table,
+            primary_keys: primary_keys.into_iter(),
+            _marker: PhantomData,
+        })
+    }
 }
 
 use std::vec::IntoIter;

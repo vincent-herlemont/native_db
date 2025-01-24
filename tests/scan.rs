@@ -891,3 +891,70 @@ fn test_low_level_scan_range() {
     // And detect colision, use the return value of https://docs.rs/redb/latest/redb/struct.Table.html#method.insert
     // and re-insert the item if the return value is not null, recompute the primary key hash with a timestamp.
 }
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
+#[native_model(id = 1, version = 1)]
+#[native_db]
+pub struct ItemEqual {
+    #[primary_key]
+    pub primary: String,
+    #[secondary_key]
+    pub secondary: String
+}
+
+#[test]
+fn test_equal() {
+    let mut models = Models::new();
+    models.define::<ItemEqual>().unwrap();
+    let db = Builder::new()
+        .create_in_memory(&models)
+        .unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(ItemEqual { primary: "red".to_string(), secondary: "red".to_string() }).unwrap();
+    rw.insert(ItemEqual { primary: "redder".to_string(), secondary: "redder".to_string() }).unwrap();
+    rw.insert(ItemEqual { primary: "reddest".to_string(), secondary: "reddest".to_string() }).unwrap();
+    rw.commit().unwrap();
+
+    let r = db.r_transaction().unwrap();
+
+    let secondary_start_with_result: Vec<ItemEqual> = r
+        .scan()
+        .secondary(ItemEqualKey::secondary)
+        .unwrap()
+        .start_with("red")
+        .unwrap()
+        .try_collect()
+        .unwrap();
+    assert_eq!(secondary_start_with_result.len(), 3);
+
+    let primary_start_with_result: Vec<ItemEqual> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .start_with("red")
+        .unwrap()
+        .try_collect()
+        .unwrap();
+    assert_eq!(primary_start_with_result.len(), 3);
+
+    let secondary_equal_result: Vec<ItemEqual> = r
+        .scan()
+        .secondary(ItemEqualKey::secondary)
+        .unwrap()
+        .equal("red")
+        .unwrap()
+        .try_collect()
+        .unwrap();
+    assert_eq!(secondary_equal_result.len(), 1);
+
+    let primary_equal_result: Vec<ItemEqual> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .equal("red")
+        .unwrap()
+        .try_collect()
+        .unwrap();
+    assert_eq!(primary_equal_result.len(), 1);
+}
