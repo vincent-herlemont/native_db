@@ -36,7 +36,7 @@ tokio = { version = "1.43.0", features = ["test-util","macros"] }
 bincode = { version = "2.0.0-rc.3", features = ["serde"] }
 criterion = { version = "0.5.1" }
 doc-comment = "0.3.3"
-uuid = { version = "1.13.2", features = ["serde", "v4"] }
+uuid = { version = "1.14.0", features = ["serde", "v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.9.0"
 once_cell = "1.20.3"
