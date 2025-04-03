@@ -36,5 +36,7 @@ jobs:
         run: just --version
       - name: Build
         run: just build_all
+      - name: cat cargo.toml
+        run: cat Cargo.toml
       - name: Test
         run: just test_all
