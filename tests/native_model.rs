@@ -5,6 +5,7 @@ use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 
 pub struct Bincode;
+
 impl<T: bincode::Encode> native_model::Encode<T> for Bincode {
     type Error = bincode::error::EncodeError;
     fn encode(obj: &T) -> std::result::Result<Vec<u8>, bincode::error::EncodeError> {
@@ -12,7 +13,7 @@ impl<T: bincode::Encode> native_model::Encode<T> for Bincode {
     }
 }
 
-impl<T: bincode::Decode> native_model::Decode<T> for Bincode {
+impl<T: bincode::Decode<()>> native_model::Decode<T> for Bincode {
     type Error = bincode::error::DecodeError;
     fn decode(data: Vec<u8>) -> std::result::Result<T, bincode::error::DecodeError> {
         bincode::decode_from_slice(&data, config::standard()).map(|(result, _)| result)
