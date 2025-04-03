@@ -1,10 +1,10 @@
 # Native DB
 
-[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_linux.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_linux.yml)
-[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_macos.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_macos.yml)
-[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_windows.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_windows.yml)
-[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_ios.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_ios.yml)
-[![)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_android.yml/badge.svg)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_android.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_linux.yml/badge.svg?branch=main&event=push)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_linux.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_macos.yml/badge.svg?branch=main&event=push)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_macos.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_windows.yml/badge.svg?branch=main&event=push)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_windows.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_ios.yml/badge.svg?branch=main&event=push)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_ios.yml)
+[![](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_android.yml/badge.svg?branch=main&event=push)](https://github.com/vincent-herlemont/native_db/actions/workflows/build_test_android.yml)
 
 
 [![Crates.io](https://img.shields.io/crates/v/native_db)](https://crates.io/crates/native_db)
