@@ -20,7 +20,7 @@ jobs:
       - name: install npm
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '16.20.2'
 
       - name: install @semantic-release/exec
         run: npm install @semantic-release/exec
