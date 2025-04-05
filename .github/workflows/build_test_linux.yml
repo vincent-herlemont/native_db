@@ -26,7 +26,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
       - uses: hustcer/setup-nu@v3.19
         with:
           version: '0.85'
@@ -49,7 +49,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
       - uses: hustcer/setup-nu@v3.19
         with:
           version: '0.85'
