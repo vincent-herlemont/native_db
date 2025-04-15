@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder, ToInput};
 
@@ -325,27 +325,32 @@ impl Models {
 
         // Set native model legacy
         for model in self.models_builder.values_mut() {
-            if model.native_model_options.native_model_version
-                > new_model_builder.native_model_options.native_model_version
+            if model.native_model_options.native_model_id
+                != new_model_builder.native_model_options.native_model_id
             {
-                model.native_model_options.native_model_legacy = false;
-                new_model_builder.native_model_options.native_model_legacy = true;
-            } else {
-                model.native_model_options.native_model_legacy = true;
-                new_model_builder.native_model_options.native_model_legacy = false;
+                continue;
             }
 
-            // Panic if native model version are the same
-            if model.native_model_options.native_model_id
-                == new_model_builder.native_model_options.native_model_id
-                && model.native_model_options.native_model_version
-                    == new_model_builder.native_model_options.native_model_version
+            match model
+                .native_model_options
+                .native_model_version
+                .cmp(&new_model_builder.native_model_options.native_model_version)
             {
-                panic!(
-                    "The table {} has the same native model version as the table {} and it's not allowed",
-                    model.model.primary_key.unique_table_name,
-                    new_model_builder.model.primary_key.unique_table_name,
-                );
+                Ordering::Greater => {
+                    model.native_model_options.native_model_legacy = false;
+                    new_model_builder.native_model_options.native_model_legacy = true;
+                }
+                Ordering::Less => {
+                    model.native_model_options.native_model_legacy = true;
+                    new_model_builder.native_model_options.native_model_legacy = false;
+                }
+                Ordering::Equal => {
+                    panic!(
+                        "The table {} has the same native model version as the table {} and it's not allowed",
+                        model.model.primary_key.unique_table_name,
+                        new_model_builder.model.primary_key.unique_table_name
+                    )
+                }
             }
         }
 
