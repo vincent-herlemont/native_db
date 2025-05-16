@@ -44,7 +44,7 @@ dinghy-test = "0.8.0"
 itertools = "0.14.0"
 include_dir = "0.7"
 paste = "1.0.15"
-cc = "1.2.22"
+cc = "1.2.23"
 rusqlite = { version = "0.35.0", features = ["bundled"] }
 concat-idents = "1.1.5"
 
