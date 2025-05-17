@@ -34,7 +34,7 @@ serial_test = { version = "3.2.0", features = ["file_locks"] }
 shortcut_assert_fs = { version = "0.1.0" }
 tokio = { version = "1.45.0", features = ["test-util","macros"] }
 bincode = { version = "2.0.1", features = ["serde"] }
-criterion = { version = "0.5.1" }
+criterion = { version = "0.6.0" }
 doc-comment = "0.3.3"
 uuid = { version = "1.16.0", features = ["serde", "v4"] }
 chrono = { version = "0.4", features = ["serde"] }
