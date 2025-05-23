@@ -12,29 +12,29 @@
 ## Overview
 
 
-- :warning: This benchmark is an initial version and it can certainly be greatly improved to make the results as relevant as possible. Feel free to open issues to improve it. 
-- :point_right: Native DB will be further improved in the future as performance issues have not yet been addressed. That is indeed the purpose of this benchmark, which is to provide visibility on what needs to be improved.
+- :warning: This benchmark is an initial version and can certainly be greatly improved to make the results as relevant as possible. Feel free to open issues to improve it.
+- :point_right: Native DB will be further improved in the future, as performance issues have not yet been addressed. That is indeed the purpose of this benchmark: to provide visibility on what needs to be improved.
 
 Comparison between [`Native DB`](https://github.com/vincent-herlemont/native_db) vs [`Redb`](https://github.com/cberner/redb) vs [`SQLite`](https://www.sqlite.org/)
 
 - Why compare with `Redb`?
-  - To highlight the `Native DB` overhead, because `Redb` is the backend of `Native DB`, it should "normally" always be faster than `Native DB`.
+  - To highlight the `Native DB` overhead. Because `Redb` is the backend of `Native DB`, it should normally always be faster than `Native DB`.
 - Why compare with `SQLite`?
-  - Because even though `SQLite` offers a lot more options, `Native DB` can be seen as a very light alternative to `SQLite`.
-- And the other databases?
-  - Knowing the capabilities of `Native DB` compared to `Redb` with the benchmark below, you can check the benchmark of redb here: [cberner/redb/benchmarks](https://github.com/cberner/redb?tab=readme-ov-file#benchmarks)
+  - Because even though `SQLite` offers many more options, `Native DB` can be seen as a very light alternative.
+- And other databases?
+  - Knowing the capabilities of `Native DB` compared to `Redb` with the benchmark below, you can check the `Redb` benchmark here: [cberner/redb/benchmarks](https://github.com/cberner/redb?tab=readme-ov-file#benchmarks)
 
-The benchmarks ignore:
+The benchmarks ignore the following:
  - [`native_model`](https://github.com/vincent-herlemont/native_model) overhead.
- - Serialization overhead used by `native_model` like `bincode`,`postcard` etc.
- - The fact that `redb` can write the data using zero-copy.
+ - Serialization overhead used by `native_model`, such as `bincode`, `postcard`, etc.
+ - The fact that `Redb` can write data using zero-copy.
 
 Explanation:
- - `1:SK`, `10:SK`, `50:SK`, `100:SK`, `N:SK` in this case `N` is the number of secondary keys (`SK`) for the same data. Regarding SQLite, it is the column with each having a secondary index.
+ - `1:SK`, `10:SK`, `50:SK`, `100:SK`, `N:SK`: in this case, `N` is the number of secondary keys (`SK`) for the same data. Regarding `SQLite`, it is the column, with each having a secondary index.
  - `1:T`, `n:T` represent the number of operations per transaction.
-   - `1:T` means one operation per transaction, for example, for insertion, it means there is only one insert operation per transaction.
-   - `n:T` means `n` operations per transaction, `n` is defined by `criterion`, meaning that all operations are within a single transaction.
- - We can see that `Redb` sometimes has no comparisons (`N/A`) because `Redb` is a key-value database and does not support secondary indexes. Therefore, it is pointless to compare with more or fewer secondary indexes.
+   - `1:T` means one operation per transaction. For example, for insertion, it means there is only one insert operation per transaction.
+   - `n:T` means `n` operations per transaction, where `n` is defined by `criterion`, meaning that all operations are within a single transaction.
+ - We can see that `Redb` sometimes has no comparisons (`N/A`) because `Redb` is a key-value database and does not support secondary indexes. Therefore, it is pointless to compare it with more or fewer secondary indexes.
 
 ## Benchmark Results
 
@@ -75,7 +75,7 @@ Explanation:
 
 ### Delete
 
-:warning: We can see that when all operations are in a single transaction (`n:T`), Native DB has a huge overhead. An issue has been created to resolve this problem [#256](https://github.com/vincent-herlemont/native_db/issues/256).
+:warning: We can see that when all operations are in a single transaction (`n:T`), `Native DB` has a huge overhead. An issue has been created to resolve this problem: [#256](https://github.com/vincent-herlemont/native_db/issues/256).
 
 |                       | `Native_db`               | `Native_db_twophasecommit`          | `Native_db_quickrepair`          | `Redb`                          | `Sqlite`                          |
 |:----------------------|:--------------------------|:------------------------------------|:---------------------------------|:--------------------------------|:--------------------------------- |
@@ -90,4 +90,3 @@ Explanation:
 
 ---
 Made with [criterion-table](https://github.com/nu11ptr/criterion-table)
-

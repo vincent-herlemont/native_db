@@ -17,9 +17,9 @@ pub struct PrimaryTableDefinition<'a> {
 pub struct NativeModelOptions {
     pub(crate) native_model_id: u32,
     pub(crate) native_model_version: u32,
-    // If a model as a new version, the old version is still available but marked as legacy.
-    // NOTE: Is impossible to write or read on a legacy table definition.
-    //       Just a migration to a new version is allowed.
+    // If a model has a new version, the old version is still available but marked as legacy.
+    // NOTE: It is impossible to write to or read from a legacy table definition.
+    //       Only migration to a new version is allowed.
     pub(crate) native_model_legacy: bool,
 }
 

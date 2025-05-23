@@ -44,14 +44,14 @@ impl Database<'_> {
     /// This transaction allows you to read and write data.
     ///
     /// - Write operations:
-    ///     - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item.
-    ///     - [`update`](crate::transaction::RwTransaction::update) - Update a item.
-    ///     - [`remove`](crate::transaction::RwTransaction::remove) - Remove a item.
-    ///     - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affect all items.
+    ///     - [`insert`](crate::transaction::RwTransaction::insert) - Insert an item.
+    ///     - [`update`](crate::transaction::RwTransaction::update) - Update an item.
+    ///     - [`remove`](crate::transaction::RwTransaction::remove) - Remove an item.
+    ///     - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affecting all items.
     ///     - [`commit`](crate::transaction::RwTransaction::commit) - Commit the transaction.
     ///     - [`abort`](crate::transaction::RwTransaction::abort) - Abort the transaction.
     /// - Read operations:
-    ///    - [`get`](crate::transaction::RwTransaction::get) - Get a item.
+    ///    - [`get`](crate::transaction::RwTransaction::get) - Get an item.
     ///    - [`scan`](crate::transaction::RwTransaction::scan) - Scan items.
     ///    - [`len`](crate::transaction::RwTransaction::len) - Get the number of items.
     pub fn rw_transaction(&self) -> Result<RwTransaction> {
@@ -71,7 +71,7 @@ impl Database<'_> {
     /// This transaction allows you to read data.
     ///
     /// - Read operations:
-    ///   - [`get`](crate::transaction::RTransaction::get) - Get a item.
+    ///   - [`get`](crate::transaction::RTransaction::get) - Get an item.
     ///   - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
     ///   - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
     pub fn r_transaction(&self) -> Result<RTransaction> {
@@ -89,7 +89,7 @@ impl Database<'_> {
 impl Database<'_> {
     /// Watch queries.
     ///
-    /// - [`get`](crate::watch::query::Watch::get) - Watch a item.
+    /// - [`get`](crate::watch::query::Watch::get) - Watch an item.
     /// - [`scan`](crate::watch::query::Watch::scan) - Watch items.
     pub fn watch(&self) -> Watch {
         Watch {
@@ -102,8 +102,8 @@ impl Database<'_> {
 
     /// Unwatch the given `id`.
     /// You can get the `id` from the return value of [`watch`](Self::watch).
-    /// If the `id` is not valid anymore, this function will do nothing and return `false`.
-    /// If the `id` is valid, the corresponding watcher will be removed and return `true`.
+    /// If the `id` is no longer valid, this function will do nothing and return `false`.
+    /// If the `id` is valid, the corresponding watcher will be removed, and the function will return `true`.
     /// If the `id` is valid but the watcher is already removed, this function will return `false`.
     pub fn unwatch(&self, id: u64) -> Result<bool> {
         let mut watchers = self.watchers.write().unwrap();
@@ -161,8 +161,8 @@ impl<'a> Database<'a> {
 
     /// Returns true if the database is upgrading from the given version selector.
     ///
-    /// - If the database is the old version, not matching the selector the function will return `false.
-    /// - If the database is not upgrading, the function will return always `false`.
+    /// - If the database is an older version that does not match the selector, the function will return `false`.
+    /// - If the database is not upgrading, the function will always return `false`.
     ///
     /// Generally used with the method [refresh](crate::transaction::RwTransaction::refresh),
     /// to refresh the data for the given model.
