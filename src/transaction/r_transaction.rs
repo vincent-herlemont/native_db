@@ -10,8 +10,8 @@ pub struct RTransaction<'db> {
 impl<'db> RTransaction<'db> {
     /// Get a value from the database.
     ///
-    /// - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
-    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
+    /// - [`primary`](crate::transaction::query::RGet::primary) - Get an item by primary key.
+    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get an item by secondary key.
     pub fn get<'txn>(&'txn self) -> RGet<'db, 'txn> {
         RGet {
             internal: &self.internal,

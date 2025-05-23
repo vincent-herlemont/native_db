@@ -46,10 +46,10 @@ pub enum Error {
     #[error("IO error")]
     Io(#[from] std::io::Error),
 
-    #[error("Table definition not found {table}")]
+    #[error("Table definition not found for table: {table}")]
     TableDefinitionNotFound { table: String },
 
-    #[error("Secondary key definition not found {table} {key}")]
+    #[error("Secondary key definition not found for table: {table}, key: {key}")]
     SecondaryKeyDefinitionNotFound { table: String, key: String },
 
     #[error("Secondary key constraint mismatch {table} {key} got: {got:?}")]
@@ -59,7 +59,7 @@ pub enum Error {
         got: db_type::KeyOptions,
     },
 
-    #[error("The secondary key {key_name} is not unique ")]
+    #[error("The secondary key '{key_name}' is not unique.")]
     NotUniqueSecondaryKey { key_name: String },
 
     // TODO: key with key name.
@@ -72,7 +72,7 @@ pub enum Error {
     #[error("Duplicate key for \"{key_name}\"")]
     DuplicateKey { key_name: String },
 
-    #[error("Missmatched key type for \"{key_name}\" expected {expected_types:?} got {got_types:?} during {operation:?}")]
+    #[error("Mismatched key type for '{key_name}'. Expected {expected_types:?}, got {got_types:?} during {operation:?}.")]
     MissmatchedKeyType {
         key_name: String,
         expected_types: Vec<String>,
@@ -83,10 +83,10 @@ pub enum Error {
     #[error("Watch event error")]
     WatchEventError(#[from] watch::WatchEventError),
 
-    #[error("Max watcher reached (should be impossible)")]
+    #[error("Maximum number of watchers reached (should be impossible).")]
     MaxWatcherReached,
 
-    #[error("You can not migrate the table {0} because it is a legacy model")]
+    #[error("Cannot migrate table {0} because it is a legacy model.")]
     MigrateLegacyModel(String),
 
     #[error("Model error")]
@@ -95,6 +95,6 @@ pub enum Error {
     #[error("Fail to remove secondary key: {0}")]
     RemoveSecondaryKeyError(String),
 
-    #[error("Inccorect input data it does not match the model")]
+    #[error("Incorrect input data: it does not match the model.")]
     IncorrectInputData { value: Vec<u8> },
 }

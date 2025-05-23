@@ -46,7 +46,7 @@ impl RLen<'_, '_> {
 
     /// Get the number of values by secondary key.
     ///
-    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    /// The anatomy of a secondary key is an `enum` with the following structure: `<table_name>Key::<name>`.
     ///
     /// If the secondary key is [`optional`](struct.Builder.html#optional) you will
     /// get all values that have the secondary key set.

@@ -21,8 +21,8 @@ pub struct RwTransaction<'db> {
 impl<'db> RwTransaction<'db> {
     /// Get a value from the database.
     ///
-    /// - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
-    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
+    /// - [`primary`](crate::transaction::query::RGet::primary) - Get an item by primary key.
+    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get an item by secondary key.
     pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
         RwGet {
             internal: &self.internal,
@@ -143,7 +143,7 @@ impl RwTransaction<'_> {
     ///
     /// If the primary key already exists, the value is updated.
     ///
-    /// Returns: the old value if the primary key already exists.
+    /// Returns the old value if the primary key already exists.
     ///
     /// # Example
     /// ```rust
@@ -259,7 +259,7 @@ impl RwTransaction<'_> {
     ///
     /// Update a value in the database.
     ///
-    /// That allow to update all keys (primary and secondary) of the value.
+    /// This allows updating all keys (primary and secondary) of the value.
     ///
     /// Returns error:
     /// - [crate::db_type::Error::KeyNotFound] if the `item` has a primary key that is not found in the database.
@@ -314,7 +314,7 @@ impl RwTransaction<'_> {
     ///
     /// Auto-update a value in the database.
     ///
-    /// Like upsert, but returns an error if the data does not exist instead of creating it.
+    /// Similar to upsert, but returns an error if the data does not exist, instead of creating it.
     ///
     /// Returns:
     /// - Ok(Some(T)) if the value was found and updated, containing the old value
@@ -470,22 +470,22 @@ impl RwTransaction<'_> {
     /// Automatically migrate the data from the old model to the new model. **No matter the state of the database**,
     /// if all models remain defined in the application as they are, the data will be migrated to the most recent version automatically.
     ///
-    /// Native DB use the [`native_model`](https://crates.io/crates/native_model) identifier `id` to identify the model and `version` to identify the version of the model.
+    /// Native DB uses the [`native_model`](https://crates.io/crates/native_model) identifier `id` to identify the model and `version` to identify the version of the model.
     /// We can define a model with the same identifier `id` but with a different version `version`.
     ///
-    /// In the example below we define one model with the identifier `id=1` with tow versions `version=1` and `version=2`.
+    /// In the example below, we define one model with the identifier `id=1` and two versions: `version=1` and `version=2`.
     /// - You **must** link the previous version from the new one with `from` option like `#[native_model(id=1, version=2, from=LegacyData)]`.
-    /// - You **must** define the interoperability between the two versions with implement `From<LegacyData> for Data` and `From<Data> for LegacyData` or implement `TryFrom<LegacyData> for Data` and `TryFrom<Data> for LegacyData`.
-    /// - You **must** define all models (by calling [`define`](crate::Models::define)) before to call [`migrate`](crate::transaction::RwTransaction::migrate).
-    /// - You **must** call use the most recent/bigger version as the target version when you call [`migrate`](crate::transaction::RwTransaction::migrate): `migration::<Data>()`.
-    ///   That means you can't call `migration::<LegacyData>()` because `LegacyData` has version `1` and `Data` has version `2`.
+    /// - You **must** define the interoperability between the two versions by implementing `From<LegacyData> for Data` and `From<Data> for LegacyData`, or by implementing `TryFrom<LegacyData> for Data` and `TryFrom<Data> for LegacyData`.
+    /// - You **must** define all models (by calling [`define`](crate::Models::define)) before calling [`migrate`](crate::transaction::RwTransaction::migrate).
+    /// - You **must** use the most recent/latest version as the target version when you call [`migrate`](crate::transaction::RwTransaction::migrate): `migration::<Data>()`.
+    ///   This means you can't call `migration::<LegacyData>()` because `LegacyData` has version `1` and `Data` has version `2`.
     ///
-    /// After call `migration::<Data>()` all data of the model `LegacyData` will be migrated to the model `Data`.
+    /// After calling `migration::<Data>()`, all data of the model `LegacyData` will be migrated to the model `Data`.
     ///
     /// Under the hood, when you call [`migrate`](crate::transaction::RwTransaction::migrate) `native_model` is used to convert the data from the old model to the new model
     /// using the `From` or `TryFrom` implementation for each to target the version defined when you call [`migrate::<LastVersion>()`](crate::transaction::RwTransaction::migrate).
     ///
-    /// It's advisable to perform all migrations within a **single transaction** to ensure that all migrations are successfully completed.
+    /// It is advisable to perform all migrations within a **single transaction** to ensure that all migrations are successfully completed.
     ///
     /// # Example
     /// ```rust
@@ -541,8 +541,8 @@ impl RwTransaction<'_> {
         self.internal.migrate::<T>()
     }
 
-    /// Refresh the data for the given model. Is used generally when during an database upgrade,
-    /// using the method [crate::Database::upgrading_from_version] (more details/example). Check release notes to know
+    /// Refresh the data for the given model. This is generally used during a database upgrade,
+    /// using the method [crate::Database::upgrading_from_version] (see more details/example). Check release notes to know
     /// when to use this method.
     pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
         self.internal.refresh::<T>()

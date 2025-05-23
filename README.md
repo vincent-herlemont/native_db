@@ -11,20 +11,20 @@
 [![Documentation](https://docs.rs/native_db/badge.svg)](https://docs.rs/native_db)
 [![License](https://img.shields.io/crates/l/native_db)](LICENSE)
 
-Here's a drop-in, fast, embedded database for multi-platform apps (server, desktop, mobile). Sync Rust types effortlessly. Enjoy! 😌🍃.
+A drop-in, fast, embedded database for multi-platform apps (server, desktop, mobile). Sync Rust types effortlessly. Enjoy! 😌🍃
 
 # Features
 
-- Simple API 🦀.
+- Simple API 🦀
 - Support for **multiple indexes** (primary, secondary, unique, non-unique, optional).
-- Fast, see [`sqlite` vs `redb` vs `native_db`](./benches/README.md) benchmarks.
-- Transparent serialization/deserialization using [native_model](https://github.com/vincent-herlemont/native_model). You can use any serialization library you want (`bincode`, `postcard`, your own etc.).
-- Ensure query **type safety** to prevent unexpected results caused by selecting with an incorrect type.
-- **Automatic model migration** 🌟.
-- **Thread-safe** and fully **ACID-compliant** transactions provided by [redb](https://github.com/cberner/redb).
-- **Real-time** subscription with filters for `insert`, `update` and `delete` operations.
-- Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
-- **Hot snapshots**.
+- Fast; see [`sqlite` vs `redb` vs `native_db`](./benches/README.md) benchmarks.
+- Transparent serialization/deserialization using [native_model](https://github.com/vincent-herlemont/native_model). You can use any serialization library you want (`bincode`, `postcard`, your own, etc.).
+- Ensures query **type safety** to prevent unexpected results caused by selecting with an incorrect type.
+- **Automatic model migration** 🌟
+- **Thread-safe** and fully **ACID-compliant** transactions provided by [Redb](https://github.com/cberner/redb).
+- **Real-time** subscription with filters for `insert`, `update`, and `delete` operations.
+- Compatible with all Rust types (`enum`, `struct`, `tuple`, etc.).
+- **Hot snapshots**
 
 # Installation
 
@@ -37,7 +37,7 @@ native_model = "0.4.20"
 
 # Status
 
-Active development. The API is not stable yet and may change in the future.
+Active development. The API is not yet stable and may change in the future.
 
 # How to use?
 
@@ -50,7 +50,7 @@ Active development. The API is not stable yet and may change in the future.
 - [polly-scheduler](https://github.com/dongbin86/polly-scheduler)
 - [Oku](https://okubrowser.github.io)
 
-If you want to propose your project or company that uses Native DB, please open a PR.
+If you want to add your project or company that uses `Native DB`, please open a PR.
 
 # Example
 
@@ -71,8 +71,8 @@ struct Item {
 }
 
 // Define the models
-// The lifetime of the models needs to be longer or equal to the lifetime of the database.
-// In many cases, it is simpler to use a static variable but it is not mandatory.
+// The lifetime of the models needs to be longer than or equal to the lifetime of the database.
+// In many cases, it is simpler to use a static variable, but it is not mandatory.
 static MODELS: Lazy<Models> = Lazy::new(|| {
     let mut models = Models::new();
     models.define::<Item>().unwrap();
@@ -95,7 +95,7 @@ fn main() -> Result<(), db_type::Error> {
     // Retrieve data with id=3 
     let retrieve_data: Item = r.get().primary(3_u32)?.unwrap();
     println!("data id='3': {:?}", retrieve_data);
-    // Iterate items with name starting with "red"
+    // Iterate over items with names starting with "red"
     for item in r.scan().secondary::<Item>(ItemKey::name)?.start_with("red")? {
         println!("data name=\"red\": {:?}", item);
     }

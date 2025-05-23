@@ -20,10 +20,10 @@ impl Key {
     }
 }
 
-/// Allow to use a type as a key in the database.
+/// Allows a type to be used as a key in the database.
 ///
 /// In the below example, we define a struct `City` and implement the `ToKey` trait for it.
-/// It can be use for primary or/and secondary key, and any other type that require `City` as a key.
+/// It can be used for primary and/or secondary keys, and any other type that requires `City` as a key.
 ///
 /// ## Example
 /// ```rust
@@ -62,10 +62,10 @@ impl Key {
 ///     // Open a read transaction
 ///     let r = db.r_transaction()?;
 ///     
-///     // Get contry by the capital city (primary key)
+///     // Get country by the capital city (primary key)
 ///     let _us: Option<Contry> = r.get().primary(City("Washington, D.C.".to_string()))?;
 ///
-///     // Get contry by the bigest city (secondary key)
+///     // Get country by the biggest city (secondary key)
 ///     let _us: Option<Contry> = r.get().secondary(ContryKey::bigest_city, City("New York".to_string()))?;
 ///     Ok(())
 /// }
@@ -73,7 +73,7 @@ impl Key {
 ///
 /// ## Example with `Uuid`
 ///
-/// You can use [uuid](https://crates.io/crates/uuid) crate to generate a `Uuid` key.
+/// You can use the [uuid](https://crates.io/crates/uuid) crate to generate a `Uuid` key.
 ///
 /// ```rust
 /// use native_db::*;
@@ -120,7 +120,7 @@ impl Key {
 ///
 /// ## Example with `chrono`
 ///
-/// You can use [chrono](https://crates.io/crates/chrono) crate to generate a `chrono::DateTime` key.
+/// You can use the [chrono](https://crates.io/crates/chrono) crate to generate a `chrono::DateTime` key.
 ///
 /// ```rust
 /// use native_db::*;

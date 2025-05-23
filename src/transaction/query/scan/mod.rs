@@ -15,7 +15,7 @@ pub struct RScan<'db, 'txn> {
 }
 
 impl RScan<'_, '_> {
-    /// Get a values from the database by primary key.
+    /// Get values from the database by primary key.
     ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
@@ -30,7 +30,7 @@ impl RScan<'_, '_> {
     }
 
     #[allow(clippy::type_complexity)]
-    /// Get a values from the database by secondary key.
+    /// Get values from the database by secondary key.
     ///
     /// - [`all`](crate::transaction::query::SecondaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::SecondaryScan::start_with) - Scan items with a secondary key starting with a key.
@@ -62,7 +62,7 @@ impl<'db, 'txn> RwScan<'db, 'txn>
 where
     'txn: 'db,
 {
-    /// Get a values from the database by primary key.
+    /// Get values from the database by primary key.
     ///
     /// - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::PrimaryScan::start_with) - Scan items with a primary key starting with a key.
@@ -77,7 +77,7 @@ where
     }
 
     #[allow(clippy::type_complexity)]
-    /// Get a values from the database by secondary key.
+    /// Get values from the database by secondary key.
     ///
     /// - [`all`](crate::transaction::query::SecondaryScan::all) - Scan all items.
     /// - [`start_with`](crate::transaction::query::SecondaryScan::start_with) - Scan items with a secondary key starting with a key.

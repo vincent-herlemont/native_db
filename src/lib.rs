@@ -1,6 +1,6 @@
-//! Native DB is a Rust library that provides a simple, fast, and embedded database solution,
+//! Native DB is a Rust library that provides a simple, fast, embedded database solution,
 //! focusing on maintaining coherence between Rust types and stored data with minimal boilerplate.
-//! It supports multiple indexes, real-time watch with filters, model migration, hot snapshot, and more.
+//! It supports multiple indexes, real-time watch with filters, model migration, hot snapshots, and more.
 //!
 //! # Summary
 //! - [Api](#api)
@@ -28,17 +28,17 @@
 //!    - [`compact`](crate::Database::compact) - Compact the database.
 //!    - [`check_integrity`](crate::Database::check_integrity) - Check the integrity of the database.
 //!    - [`rw_transaction`](crate::Database::rw_transaction) - Create a read-write transaction.
-//!       - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item, fail if the item already exists.
-//!       - [`upsert`](crate::transaction::RwTransaction::upsert) - Upsert a item, update if the item already exists.
-//!       - [`update`](crate::transaction::RwTransaction::update) - Update a item, replace an existing item.
-//!       - [`remove`](crate::transaction::RwTransaction::remove) - Remove a item, remove an existing item.
-//!       - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affect all items.
+//!       - [`insert`](crate::transaction::RwTransaction::insert) - Insert an item; fails if the item already exists.
+//!       - [`upsert`](crate::transaction::RwTransaction::upsert) - Upsert an item; updates if the item already exists.
+//!       - [`update`](crate::transaction::RwTransaction::update) - Update an item; replaces an existing item.
+//!       - [`remove`](crate::transaction::RwTransaction::remove) - Remove an item; removes an existing item.
+//!       - [`migrate`](crate::transaction::RwTransaction::migrate) - Migrate a model, affecting all items.
 //!       - [`commit`](crate::transaction::RwTransaction::commit) - Commit the transaction.
 //!       - [`abort`](crate::transaction::RwTransaction::abort) - Abort the transaction.
 //!   - [`r_transaction`](crate::Database::r_transaction) - Create a read-only transaction.
-//!       - [`get`](crate::transaction::RTransaction::get) - Get a item.
-//!          - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
-//!          - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
+//!       - [`get`](crate::transaction::RTransaction::get) - Get an item.
+//!          - [`primary`](crate::transaction::query::RGet::primary) - Get an item by primary key.
+//!          - [`secondary`](crate::transaction::query::RGet::secondary) - Get an item by secondary key.
 //!       - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
 //!          - [`primary`](crate::transaction::query::RScan::primary) - Scan items by primary key.
 //!             - [`all`](crate::transaction::query::PrimaryScan::all) - Scan all items.
@@ -51,10 +51,10 @@
 //!       - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
 //!          - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
 //!          - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.    
-//!   - [`watch`](crate::Database::watch) - Watch items in real-time.  Works via [std channel](https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html) based or [tokio channel](https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.unbounded_channel.html) based depending on the feature `tokio`.
-//!       - [`get`](crate::watch::query::Watch::get) - Watch a item.
-//!          - [`primary`](crate::watch::query::WatchGet::primary) - Watch a item by primary key.
-//!          - [`secondary`](crate::watch::query::WatchGet::secondary) - Watch a item by secondary key.
+//!   - [`watch`](crate::Database::watch) - Watch items in real-time.  Works via [std channel](https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html) based or [tokio channel](https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.unbounded_channel.html) based depending on whether the `tokio` feature is enabled.
+//!       - [`get`](crate::watch::query::Watch::get) - Watch an item.
+//!          - [`primary`](crate::watch::query::WatchGet::primary) - Watch an item by primary key.
+//!          - [`secondary`](crate::watch::query::WatchGet::secondary) - Watch an item by secondary key.
 //!       - [`scan`](crate::watch::query::Watch::scan) - Watch items.
 //!          - [`primary`](crate::watch::query::WatchScan::primary) - Watch items by primary key.
 //!             - [`all`](crate::watch::query::WatchScanPrimary::all) - Watch all items.
@@ -74,11 +74,11 @@
 //!
 //! > 👉 Unlike the usual database where there is a difference between *schema* and *model*, here, as we can directly use Rust types that are serialized in the database, we do not have the concept of *schema*, only that of the *model*.
 //!
-//! In this section, we will create a simple model. I have chosen a particular organization using Rust modules, which I find to be a best practice. However, it is not mandatory; you can do it as you prefer. (see [`define`](crate::Models::define) for more information)
+//! In this section, we will create a simple model. I have chosen a particular organization using Rust modules, which I find to be good practice. However, this is not mandatory; you can organize it as you prefer. (see [`define`](crate::Models::define) for more information)
 //!
 //! In this example:
 //! - We create a module `data` which contains **all versions of all models**.
-//! - We create a module `v1` which contains the **first version of your data**, we will put other versions later.
+//! - We create a module `v1` which contains the **first version of your data**; we will add other versions later.
 //! - We create a type alias `Person` to the latest version `v1::Person`, which allows us to use the **latest version** of the model in the application.
 //!
 //! ```rust
@@ -110,7 +110,7 @@
 //!
 //! After creating the model in the previous step, we can now create the database with the model.
 //!
-//! Note good practices: [`define`](crate::Models::define) the [`models`](crate::Models) by **specifying each version**, in our case `data::v1::Person`.
+//! Note good practice: [`define`](crate::Models::define) the [`models`](crate::Models) by **specifying each version**; in our case, `data::v1::Person`.
 //!
 //! ```rust
 //! # pub mod data {
@@ -214,7 +214,7 @@
 //!
 //! We need to add the field `age` to the `Person` model, but data is already stored in the database so we need to migrate it.
 //!
-//! To do this we have to:
+//! To do this, we have to:
 //! - Create a version `v2` of the model `Person` with the new field `age`.
 //! - Implement the `From` (or `TryFrom`) trait for the previous version `v1` to the new version `v2`, so we can migrate the data.
 //!   See [native_model#Data model](https://github.com/vincent-herlemont/native_model?tab=readme-ov-file#data-model) for more information.
@@ -361,13 +361,13 @@
 //! }
 //! ```
 //!
-//! More details [`migrate`](crate::transaction::RwTransaction::migrate) method.
+//! See the [`migrate`](crate::transaction::RwTransaction::migrate) method for more details.
 //!
 mod database;
 mod database_builder;
 mod database_instance;
 
-/// A collection of type used by native_db internally (macro included).
+/// A collection of types used by native_db internally (including macros).
 pub mod db_type;
 mod metadata;
 mod model;
