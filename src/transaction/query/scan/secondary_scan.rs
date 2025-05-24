@@ -263,3 +263,182 @@ where
         }
     }
 }
+
+use std::collections::HashSet;
+
+impl<'a, PrimaryTable, T: ToInput> SecondaryScanIterator<'a, PrimaryTable, T>
+where
+    PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
+{
+    /// Intersect this iterator with another, yielding only elements that
+    /// satisfy both secondary key conditions.
+    ///
+    /// # Example
+    /// ```rust
+    /// use itertools::Itertools;
+    /// use native_db::native_model::{native_model, Model};
+    /// use native_db::*;
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    /// #[native_model(id = 1, version = 1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key]
+    ///     name: String,
+    ///     #[secondary_key]
+    ///     department: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///
+    ///     // Add some rows
+    ///     let rw = db.rw_transaction()?;
+    ///     rw.insert(Data {
+    ///         id: 1,
+    ///         name: "hello".into(),
+    ///         department: "development".into(),
+    ///     })?;
+    ///     rw.insert(Data {
+    ///         id: 2,
+    ///         name: "hello".into(),
+    ///         department: "world".into(),
+    ///     })?;
+    ///     rw.commit()?;
+    ///
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///
+    ///     // Get only values that have the secondary key name starting with "hello"
+    ///     // and department starting with "world".
+    ///     let values: Vec<Data> = r
+    ///         .scan()
+    ///         .secondary(DataKey::name)?
+    ///         .start_with("hello")?
+    ///         .and(
+    ///             r.scan()
+    ///                 .secondary(DataKey::department)?
+    ///                 .start_with("world")?,
+    ///         )
+    ///         .try_collect()?;
+    ///
+    ///     assert_eq!(
+    ///         values,
+    ///         vec![Data {
+    ///             id: 2,
+    ///             name: "hello".into(),
+    ///             department: "world".into(),
+    ///         }],
+    ///     );
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn and(mut self, other: SecondaryScanIterator<'_, PrimaryTable, T>) -> Self {
+        let other_keys = other
+            .primary_keys
+            .map(|key| key.value())
+            .collect::<HashSet<_>>();
+
+        self.primary_keys = self
+            .primary_keys
+            .filter(|key| other_keys.contains(&key.value()))
+            .collect::<Vec<_>>()
+            .into_iter();
+        self
+    }
+
+    /// Union this iterator with another, yielding elements that satisfy either
+    /// secondary key conditions.
+    ///
+    /// # Example
+    /// ```rust
+    /// use itertools::Itertools;
+    /// use native_db::native_model::{native_model, Model};
+    /// use native_db::*;
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    /// #[native_model(id = 1, version = 1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key]
+    ///     name: String,
+    ///     #[secondary_key]
+    ///     department: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///
+    ///     // Add some rows
+    ///     let rw = db.rw_transaction()?;
+    ///     rw.insert(Data {
+    ///         id: 1,
+    ///         name: "squidward".into(),
+    ///         department: "development".into(),
+    ///     })?;
+    ///     rw.insert(Data {
+    ///         id: 2,
+    ///         name: "hello".into(),
+    ///         department: "world".into(),
+    ///     })?;
+    ///     rw.commit()?;
+    ///
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///
+    ///     // Get values that have the secondary key name starting with "hello"
+    ///     // or department starting with "development".
+    ///     let values: Vec<Data> = r
+    ///         .scan()
+    ///         .secondary(DataKey::name)?
+    ///         .start_with("hello")?
+    ///         .or(r
+    ///             .scan()
+    ///             .secondary(DataKey::department)?
+    ///             .start_with("development")?)
+    ///         .try_collect()?;
+    ///
+    ///     assert_eq!(
+    ///         values,
+    ///         vec![
+    ///             Data {
+    ///                 id: 2,
+    ///                 name: "hello".into(),
+    ///                 department: "world".into(),
+    ///             },
+    ///             Data {
+    ///                 id: 1,
+    ///                 name: "squidward".into(),
+    ///                 department: "development".into(),
+    ///             },
+    ///         ],
+    ///     );
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn or(mut self, other: SecondaryScanIterator<'a, PrimaryTable, T>) -> Self {
+        let mut other_keys = other.primary_keys.collect::<Vec<_>>();
+
+        let mut combined_keys = Vec::with_capacity(other_keys.len() + self.primary_keys.len());
+        for key in self.primary_keys {
+            if let Some(i) = other_keys.iter().position(|k| k.value() == key.value()) {
+                other_keys.swap_remove(i);
+            }
+            combined_keys.push(key);
+        }
+        combined_keys.extend(other_keys);
+
+        self.primary_keys = combined_keys.into_iter();
+        self
+    }
+}
