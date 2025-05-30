@@ -250,8 +250,8 @@ fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
                     let native_db = native_db.r_transaction().unwrap();
                     for _ in 0..iters {
                         let (from_sk, to_sk) = if cfg.random {
-                            let from_sk: i64 = rand::thread_rng().gen_range(FROM_SK_MIN..FROM_SK_MAX);
-                            let to_sk: i64 = rand::thread_rng().gen_range(TO_SK_MIN..TO_SK_MAX);
+                            let from_sk: i64 = rand::rng().random_range(FROM_SK_MIN..FROM_SK_MAX);
+                            let to_sk: i64 = rand::rng().random_range(TO_SK_MIN..TO_SK_MAX);
                             (from_sk, to_sk)
                         } else {
                             (FROM_SK_MIN, TO_SK_MIN)
@@ -294,8 +294,8 @@ fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
                 let start = std::time::Instant::now();
                 for _ in 0..iters {
                     let (from_sk, to_sk) = if cfg.random {
-                        let from_sk: i64 = rand::thread_rng().gen_range(FROM_SK_MIN..FROM_SK_MAX);
-                        let to_sk: i64 = rand::thread_rng().gen_range(TO_SK_MIN..TO_SK_MAX);
+                        let from_sk: i64 = rand::rng().random_range(FROM_SK_MIN..FROM_SK_MAX);
+                        let to_sk: i64 = rand::rng().random_range(TO_SK_MIN..TO_SK_MAX);
                         (from_sk, to_sk)
                     } else {
                         (FROM_SK_MIN, TO_SK_MIN)
@@ -352,7 +352,7 @@ fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(
                     let start = std::time::Instant::now();
                     let r = native_db.r_transaction().unwrap();
                     for _ in 0..iters {
-                        let pk = rand::thread_rng().gen_range(0..NUMBER_OF_ITEMS as i64);
+                        let pk = rand::rng().random_range(0..NUMBER_OF_ITEMS as i64);
                         let _item: T = r.get().primary(pk).unwrap().unwrap();
                     }
                     start.elapsed()
@@ -373,7 +373,7 @@ fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(
                     let start = std::time::Instant::now();
                     let read_txn = redb.begin_read().unwrap();
                     for _ in 0..iters {
-                        let pk = rand::thread_rng().gen_range(0..NUMBER_OF_ITEMS as i64);
+                        let pk = rand::rng().random_range(0..NUMBER_OF_ITEMS as i64);
                         let table = read_txn.open_table(REDB_TABLE).unwrap();
                         let item = table.get(&pk).unwrap();
                         let _item: T = item
@@ -403,7 +403,7 @@ fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(
                     .transaction_with_behavior(TransactionBehavior::Immediate)
                     .unwrap();
                 for _ in 0..iters {
-                    let pk = rand::thread_rng().gen_range(0..NUMBER_OF_ITEMS as i64);
+                    let pk = rand::rng().random_range(0..NUMBER_OF_ITEMS as i64);
                     let sql = T::generate_select_by_pk();
                     let mut stmt = transaction.prepare(&sql).unwrap();
                     let mut rows = stmt.query(&[(":pk", &pk)]).unwrap();
