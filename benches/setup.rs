@@ -41,8 +41,8 @@ macro_rules! define_item_struct {
 
             fn update_sk_with_random(&mut self) {
                 $(
-                    let mut rng = rand::thread_rng();
-                    self.$secondary_key = rng.gen_range(0..100);
+                    let mut rng = rand::rng();
+                    self.$secondary_key = rng.random_range(0..100);
                 )*
             }
 
