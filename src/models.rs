@@ -9,7 +9,7 @@ use crate::{db_type::Result, table_definition::NativeModelOptions, ModelBuilder,
 /// of defining and manipulating them within your application.
 ///
 /// # Note
-/// Usually, there is little point in creating models at runtime. In some cases, it is necessary to define them with a `'static` lifetime, for example, to address compatibility issues with certain asynchronous libraries such as [Axum](https://github.com/tokio-rs/axum).
+/// Usually, there is little point in creating models at runtime. In some cases, it is necessary to define them with a `'static` lifetime—for example, to address compatibility issues with certain asynchronous libraries such as [Axum](https://github.com/tokio-rs/axum).
 /// There are multiple ways to achieve this, including the [`once_cell::sync::Lazy`](https://docs.rs/once_cell/1.19.0/once_cell/sync/struct.Lazy.html) crate,
 /// or the [`LazyLock`](https://doc.rust-lang.org/std/sync/struct.LazyLock.html) from the standard library, which is available when the relevant Rust feature is enabled.
 ///
@@ -72,8 +72,8 @@ impl Models {
     ///
     /// # Global Options
     ///
-    /// `export_keys`: You can export the keys enum using the `export_keys` option, example: `#[native_db(export_keys = true)]`.
-    /// This option makes the keys enum visible outside of the crate with `pub` visibility, default value is `false` with visibility limited to `pub(crate)`.
+    /// `export_keys`: You can export the keys enum using the `export_keys` option. For example: `#[native_db(export_keys = true)]`.
+    /// This option makes the keys enum visible outside the crate with `pub` visibility. The default value is `false`, with visibility limited to `pub(crate)`.
     ///
     /// # Keys and Models
     ///
@@ -231,10 +231,10 @@ impl Models {
     /// This means that an instance of the model can have a value for the secondary key or not.
     /// When `optional` is set, the value **must** be an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html).
     /// If the value is not an [`Option`](https://doc.rust-lang.org/std/option/enum.Option.html), the compiler will return
-    /// an error: `error[E0282]: type annotations needed: cannot infer type`.
+    /// an error like: `error[E0282]: type annotations needed cannot infer type`.
     ///
-    /// Under the hood, the secondary key is stored in a separate `redb` table. So if the secondary key is optional,
-    /// the value will be stored in the table only if the value is not `None`.
+    /// Under the hood, the secondary key is stored in a separate `redb` table. Therefore, if the secondary key is optional,
+    /// the value will be stored in the table only if it is not `None`.
     ///
     /// ### Defining a Model with a Custom Optional Secondary Key
     ///
@@ -277,7 +277,7 @@ impl Models {
     /// # Defining Multiple Models
     ///
     /// To define multiple models, you **must** use different `id` values for each model. If you use the same `id` for two models,
-    /// the program will panic with the message: `The table <table_name> has the same native model version as the table <table_name> and it's not allowed`.
+    /// the program will panic with the message: `The table <table_name> has the same native model version as the table <table_name>, and it's not allowed`.
     ///
     /// Example:
     ///
@@ -310,9 +310,8 @@ impl Models {
     /// ```
     ///
     /// In the above example, we have:
-    /// - We have two models, `Animal` and `Vegetable`.
-    /// - Both have:
-    ///   - **One primary key** named `name` of type `String`, defined on the field.
+    /// - Two models, `Animal` and `Vegetable`.
+    /// - Both have one primary key named `name` of type `String`, defined on the field.
     /// - Each model has a unique `id` (`id=1` for `Animal`, `id=2` for `Vegetable`), which is necessary to avoid conflicts.
     pub fn define<T: ToInput>(&mut self) -> Result<()> {
         let mut new_model_builder = ModelBuilder {
@@ -346,7 +345,7 @@ impl Models {
                 }
                 Ordering::Equal => {
                     panic!(
-                        "The table {} has the same native model version as the table {} and it's not allowed",
+                        "The table {} has the same native model version as the table {}, which is not allowed.",
                         model.model.primary_key.unique_table_name,
                         new_model_builder.model.primary_key.unique_table_name
                     )

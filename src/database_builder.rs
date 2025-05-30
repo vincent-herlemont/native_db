@@ -33,7 +33,7 @@ impl Configuration {
         redb_builder
     }
 }
-/// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create) or [`open`](Self::open) etc.
+/// Builder that allows you to create a [`Database`](crate::Database) instance via [`create`](Self::create), [`open`](Self::open), etc.
 #[derive(Debug)]
 pub struct Builder {
     database_configuration: Configuration,
@@ -72,7 +72,7 @@ impl Default for Builder {
 }
 
 impl Builder {
-    /// Construct a new [Builder] with sensible defaults.
+    /// Constructs a new [Builder] with sensible defaults.
     pub fn new() -> Self {
         Self {
             database_configuration: Configuration {
@@ -87,7 +87,7 @@ impl Builder {
         self
     }
 
-    /// Creates a new `Db` instance using the given path.
+    /// Creates a new `Database` instance using the given path.
     ///
     /// Similar to [redb::Builder.create(...)](https://docs.rs/redb/latest/redb/struct.Builder.html#method.create)
     pub fn create<'a>(&self, models: &'a Models, path: impl AsRef<Path>) -> Result<Database<'a>> {

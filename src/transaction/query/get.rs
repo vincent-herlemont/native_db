@@ -54,10 +54,10 @@ impl RGet<'_, '_> {
 
     /// Get a value from the database by secondary key.
     ///
-    /// /!\ The secondary key **must** be [`unique`](crate::models::Models#unique) else this method will return an error [`SecondaryKeyConstraintMismatch`](crate::db_type::Error::SecondaryKeyConstraintMismatch).
+    /// /!\ The secondary key **must** be [`unique`](crate::models::Models#unique); otherwise, this method will return an error [`SecondaryKeyConstraintMismatch`](crate::db_type::Error::SecondaryKeyConstraintMismatch).
     ///     If the secondary key is not unique, use [`scan()`](crate::transaction::RTransaction::scan) instead.
     ///
-    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
+    /// The anatomy of a secondary key is an `enum` with the following structure: `<table_name>Key::<name>`.
     ///
     /// # Example
     /// ```rust
