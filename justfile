@@ -97,3 +97,8 @@ format:
 
 fmt_check:
     cargo fmt --all -- --check
+
+clippy_check:
+    rustc --version; \
+    cargo clippy --version; \
+    cargo clippy -- -D warnings
