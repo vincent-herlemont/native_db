@@ -280,13 +280,13 @@ pub trait BenchDatabase {
 pub enum Mode {
     Default,
     TwoPhaseCommit,
-    QuickRepair
+    QuickRepair,
 }
 
 pub struct NativeDBBenchDatabase {
     _tmp: TmpFs,
     db: Database<'static>,
-    mode: &'static Mode
+    mode: &'static Mode,
 }
 
 static MODELS: Lazy<Models> = Lazy::new(|| {
@@ -308,7 +308,11 @@ impl BenchDatabase for NativeDBBenchDatabase {
             .set_cache_size(500 * 1024 * 1024)
             .create(&MODELS, db_path.clone())
             .unwrap();
-        Self { _tmp: tmp, db,  mode: &Mode::Default}
+        Self {
+            _tmp: tmp,
+            db,
+            mode: &Mode::Default,
+        }
     }
 
     fn insert_bulk<T: native_db::ToInput + Item + Debug + Clone>(&self, items: Vec<T>) -> Vec<T> {
@@ -369,8 +373,7 @@ impl BenchDatabase for NativeDBBenchDatabase {
         let mut rw = self.db.rw_transaction().unwrap();
         if !matches!(self.mode, Mode::TwoPhaseCommit) {
             rw.set_two_phase_commit(true);
-        }
-        else if !matches!(self.mode, Mode::QuickRepair) {
+        } else if !matches!(self.mode, Mode::QuickRepair) {
             rw.set_quick_repair(true);
         }
         rw.insert(item).unwrap();
@@ -379,8 +382,7 @@ impl BenchDatabase for NativeDBBenchDatabase {
 }
 
 impl NativeDBBenchDatabase {
-    pub fn set_mode(&mut self, mode: &'static Mode)
-    {
+    pub fn set_mode(&mut self, mode: &'static Mode) {
         self.mode = mode;
     }
 }

@@ -17,7 +17,10 @@ where
     type RedbPrimaryTable = redb::ReadOnlyTable<Key, &'static [u8]>;
     type RedbSecondaryTable = redb::ReadOnlyMultimapTable<Key, Key>;
 
-    type RedbTransaction<'db_bis> = redb::ReadTransaction where Self: 'db_bis;
+    type RedbTransaction<'db_bis>
+        = redb::ReadTransaction
+    where
+        Self: 'db_bis;
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
         self.table_definitions

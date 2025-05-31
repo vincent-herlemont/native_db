@@ -23,7 +23,10 @@ where
     type RedbPrimaryTable = redb::Table<'txn, Key, &'static [u8]>;
     type RedbSecondaryTable = redb::MultimapTable<'txn, Key, Key>;
 
-    type RedbTransaction<'db_bis> = redb::WriteTransaction where Self: 'db_bis;
+    type RedbTransaction<'db_bis>
+        = redb::WriteTransaction
+    where
+        Self: 'db_bis;
 
     fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
         self.primary_table_definitions

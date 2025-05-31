@@ -28,7 +28,7 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
     let name_to_mode = [
         (DB_NAME_NATIVE_DB, &Mode::Default),
         (DB_NAME_NATIVE_DB_TWO_PHASE_COMMIT, &Mode::TwoPhaseCommit),
-        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair)
+        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair),
     ];
 
     for (name, mode) in name_to_mode {
@@ -221,7 +221,7 @@ fn bench_select_range<T: Default + Item + native_db::ToInput + Clone + Debug>(
     let name_to_mode = [
         (DB_NAME_NATIVE_DB, &Mode::Default),
         (DB_NAME_NATIVE_DB_TWO_PHASE_COMMIT, &Mode::TwoPhaseCommit),
-        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair)
+        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair),
     ];
 
     for (name, mode) in name_to_mode {
@@ -336,29 +336,26 @@ fn bench_get<T: Default + Item + native_db::ToInput + Clone + Debug>(
     let name_to_mode = [
         (DB_NAME_NATIVE_DB, &Mode::Default),
         (DB_NAME_NATIVE_DB_TWO_PHASE_COMMIT, &Mode::TwoPhaseCommit),
-        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair)
+        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair),
     ];
 
     for (name, mode) in name_to_mode {
-        group.bench_function(
-            BenchmarkId::new(name, bench_display.display_read()),
-            |b| {
-                b.iter_custom(|iters| {
-                    let mut native_db = NativeDBBenchDatabase::setup();
-                    native_db.set_mode(mode);
-                    native_db.insert_bulk_inc::<T>(0, NUMBER_OF_ITEMS);
+        group.bench_function(BenchmarkId::new(name, bench_display.display_read()), |b| {
+            b.iter_custom(|iters| {
+                let mut native_db = NativeDBBenchDatabase::setup();
+                native_db.set_mode(mode);
+                native_db.insert_bulk_inc::<T>(0, NUMBER_OF_ITEMS);
 
-                    let native_db = native_db.db();
-                    let start = std::time::Instant::now();
-                    let r = native_db.r_transaction().unwrap();
-                    for _ in 0..iters {
-                        let pk = rand::rng().random_range(0..NUMBER_OF_ITEMS as i64);
-                        let _item: T = r.get().primary(pk).unwrap().unwrap();
-                    }
-                    start.elapsed()
-                })
-            },
-        );
+                let native_db = native_db.db();
+                let start = std::time::Instant::now();
+                let r = native_db.r_transaction().unwrap();
+                for _ in 0..iters {
+                    let pk = rand::rng().random_range(0..NUMBER_OF_ITEMS as i64);
+                    let _item: T = r.get().primary(pk).unwrap().unwrap();
+                }
+                start.elapsed()
+            })
+        });
     }
 
     if bench_display == BenchDisplay::SK_1 {
@@ -434,7 +431,7 @@ fn bench_delete<T: Default + Item + native_db::ToInput + Clone + Debug>(
     let name_to_mode = [
         (DB_NAME_NATIVE_DB, &Mode::Default),
         (DB_NAME_NATIVE_DB_TWO_PHASE_COMMIT, &Mode::TwoPhaseCommit),
-        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair)
+        (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair),
     ];
 
     for (name, mode) in name_to_mode.clone() {
