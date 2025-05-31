@@ -94,3 +94,6 @@ expand_clean:
 format:
     cargo clippy; \
     cargo fmt --all
+
+fmt_check:
+    cargo fmt --all -- --check
