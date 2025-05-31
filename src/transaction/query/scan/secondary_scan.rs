@@ -245,8 +245,7 @@ where
     }
 }
 
-impl<PrimaryTable, T: ToInput> DoubleEndedIterator
-    for SecondaryScanIterator<'_, PrimaryTable, T>
+impl<PrimaryTable, T: ToInput> DoubleEndedIterator for SecondaryScanIterator<'_, PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
