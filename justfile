@@ -102,3 +102,8 @@ clippy_check:
     rustc --version; \
     cargo clippy --version; \
     cargo clippy -- -D warnings
+
+# Format check
+fc:
+    just fmt_check; \
+    just clippy_check
