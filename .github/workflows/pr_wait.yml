@@ -1,0 +1,22 @@
+name: wait-for-workflows (PR)
+
+on:
+  pull_request_target:       # secrets are available
+    branches: [ main, next ]
+
+permissions:
+  checks: read
+  actions: read              # read-only is enough
+
+jobs:
+  wait-for-workflows:        # <-- job name becomes the required check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: int128/wait-for-workflows-action@v1.41.0
+        with:
+          # PAT inside your repo, fallback to the read-only token if missing
+          github-token: ${{ secrets.PAT_GLOBAL || github.token }}
+          filter-workflow-events: pull_request
+          # the commit we’re validating is the HEAD of the PR
+          sha: ${{ github.event.pull_request.head.sha }}
