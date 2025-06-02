@@ -4,21 +4,21 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Redb error")]
-    Redb(#[from] redb::Error),
+    Redb(#[from] Box<redb::Error>),
 
     #[error("Redb database error")]
-    RedbDatabaseError(#[from] redb::DatabaseError),
+    RedbDatabaseError(#[from] Box<redb::DatabaseError>),
 
     #[cfg(feature = "redb1")]
     #[error("Legacy redb1 database error")]
-    LegacyRedb1DatabaseError(#[from] redb1::DatabaseError),
+    LegacyRedb1DatabaseError(#[from] Box<redb1::DatabaseError>),
 
     #[error("Redb transaction error")]
-    RedbTransactionError(#[from] redb::TransactionError),
+    RedbTransactionError(#[from] Box<redb::TransactionError>),
 
     #[cfg(feature = "redb1")]
     #[error("Redb redb1 transaction error")]
-    Redb1TransactionError(#[from] redb1::TransactionError),
+    Redb1TransactionError(#[from] Box<redb1::TransactionError>),
 
     #[error("Redb storage error")]
     RedbStorageError(#[from] redb::StorageError),
@@ -90,11 +90,49 @@ pub enum Error {
     MigrateLegacyModel(String),
 
     #[error("Model error")]
-    ModelError(#[from] native_model::Error),
+    ModelError(#[from] Box<native_model::Error>),
 
     #[error("Fail to remove secondary key: {0}")]
     RemoveSecondaryKeyError(String),
 
     #[error("Inccorect input data it does not match the model")]
     IncorrectInputData { value: Vec<u8> },
+}
+
+impl From<redb::Error> for Error {
+    fn from(e: redb::Error) -> Self {
+        Error::Redb(Box::new(e))
+    }
+}
+
+impl From<redb::DatabaseError> for Error {
+    fn from(e: redb::DatabaseError) -> Self {
+        Error::RedbDatabaseError(Box::new(e))
+    }
+}
+
+impl From<redb::TransactionError> for Error {
+    fn from(e: redb::TransactionError) -> Self {
+        Error::RedbTransactionError(Box::new(e))
+    }
+}
+
+impl From<native_model::Error> for Error {
+    fn from(e: native_model::Error) -> Self {
+        Error::ModelError(Box::new(e))
+    }
+}
+
+#[cfg(feature = "redb1")]
+impl From<redb1::DatabaseError> for Error {
+    fn from(e: redb1::DatabaseError) -> Self {
+        Error::LegacyRedb1DatabaseError(Box::new(e))
+    }
+}
+
+#[cfg(feature = "redb1")]
+impl From<redb1::TransactionError> for Error {
+    fn from(e: redb1::TransactionError) -> Self {
+        Error::Redb1TransactionError(Box::new(e))
+    }
 }
