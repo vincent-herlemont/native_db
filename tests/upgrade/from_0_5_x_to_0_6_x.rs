@@ -38,9 +38,8 @@ fn try_to_open_legacy_database_without_upgrade_feature() {
     assert!(db_error.is_err());
     assert!(matches!(
         db_error,
-        Result::Err(db_type::Error::RedbDatabaseError(
-            redb::DatabaseError::UpgradeRequired(1)
-        ))
+        Result::Err(db_type::Error::RedbDatabaseError(boxed_error))
+            if matches!(*boxed_error, redb::DatabaseError::UpgradeRequired(1))
     ));
 }
 

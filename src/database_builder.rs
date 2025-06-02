@@ -101,8 +101,16 @@ impl Builder {
     pub fn open<'a>(&self, models: &'a Models, path: impl AsRef<Path>) -> Result<Database<'a>> {
         let builder = self.database_configuration.new_rdb_builder();
         let database_instance = match DatabaseInstance::open_on_disk(builder, &path) {
-            Err(Error::RedbDatabaseError(redb::DatabaseError::UpgradeRequired(_))) => {
-                upgrade::upgrade_redb(&self.database_configuration, &path, &models.models_builder)
+            Err(Error::RedbDatabaseError(boxed_error)) => {
+                if let redb::DatabaseError::UpgradeRequired(_) = *boxed_error {
+                    upgrade::upgrade_redb(
+                        &self.database_configuration,
+                        &path,
+                        &models.models_builder,
+                    )
+                } else {
+                    Err(Error::RedbDatabaseError(boxed_error))
+                }
             }
             Err(error) => return Err(error),
             Ok(database_instance) => Ok(database_instance),
