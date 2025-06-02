@@ -1,11 +1,13 @@
-name: Release Automatic
+name: Release
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main, next ]
+    branches: [ main ]       # only after merge
 
+permissions:
+  contents: write            # release step will need this
+  checks: read
+  actions: read
 
 jobs:
   wait-for-workflows:
@@ -17,6 +19,8 @@ jobs:
       - uses: int128/wait-for-workflows-action@v1.41.0
         with:
           token: ${{ secrets.PAT_GLOBAL }}
+          filter-workflow-events: push
+          sha: ${{ github.sha }}
   release:
     name: Release
     runs-on: ubuntu-latest
