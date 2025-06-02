@@ -122,11 +122,7 @@ impl ModelNativeDB {
             None => false,
         };
 
-        let visibility = if do_export {
-            ""
-        } else {
-            "(crate)"
-        };
+        let visibility = if do_export { "" } else { "(crate)" };
 
         format!("pub{}", visibility).parse().unwrap()
     }

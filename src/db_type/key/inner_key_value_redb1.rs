@@ -229,7 +229,10 @@ impl_inner_key_value_for_primitive!(f64);
 
 impl Value for DatabaseInnerKeyValue {
     type SelfType<'a> = DatabaseInnerKeyValue;
-    type AsBytes<'a> = &'a [u8] where Self: 'a;
+    type AsBytes<'a>
+        = &'a [u8]
+    where
+        Self: 'a;
 
     fn fixed_width() -> Option<usize> {
         None

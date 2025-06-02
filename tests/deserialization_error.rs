@@ -36,6 +36,7 @@ fn create_local_database_for_tests() {
     let result: Result<Vec<Item1>> = r.scan().primary().unwrap().all().unwrap().try_collect();
     assert!(matches!(
         result,
-        Err(Error::ModelError(ModelError::DecodeBodyError(_)))
+        Err(Error::ModelError(boxed_error))
+            if matches!(*boxed_error, ModelError::DecodeBodyError(_))
     ));
 }

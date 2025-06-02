@@ -436,7 +436,10 @@ impl ToKey for bool {
 
 impl RedbValue for Key {
     type SelfType<'a> = Key;
-    type AsBytes<'a> = &'a [u8] where Self: 'a;
+    type AsBytes<'a>
+        = &'a [u8]
+    where
+        Self: 'a;
 
     fn fixed_width() -> Option<usize> {
         None
