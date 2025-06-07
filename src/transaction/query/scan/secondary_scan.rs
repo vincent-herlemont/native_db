@@ -212,6 +212,73 @@ where
             _marker: PhantomData,
         })
     }
+
+    /// Iterate over all values by secondary key equal to the given value.
+    ///
+    /// Anatomy of a secondary key it is a `enum` with the following structure:
+    /// `<table_name>Key::<name>`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use itertools::Itertools;
+    /// use native_db::native_model::{native_model, Model};
+    /// use native_db::*;
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    /// #[native_model(id = 1, version = 1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: u64,
+    ///     #[secondary_key]
+    ///     name: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///
+    ///     // Add some rows
+    ///     let rw = db.rw_transaction()?;
+    ///     rw.insert(Data {
+    ///         id: 1,
+    ///         name: "C".into(),
+    ///     })?;
+    ///     rw.insert(Data {
+    ///         id: 2,
+    ///         name: "CC".into(),
+    ///     })?;
+    ///     rw.insert(Data {
+    ///         id: 3,
+    ///         name: "CCC".into(),
+    ///     })?;
+    ///     rw.commit()?;
+    ///
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///
+    ///     // Get only values that have the secondary key name equal to "CC"
+    ///     let values: Vec<Data> = r
+    ///         .scan()
+    ///         .secondary(DataKey::name)?
+    ///         .equal("CC")?
+    ///         .try_collect()?;
+    ///
+    ///     assert_eq!(
+    ///         values,
+    ///         vec![Data {
+    ///             id: 2,
+    ///             name: "CC".into()
+    ///         }]
+    ///     );
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn equal(&self, key: impl ToKey + Clone) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+        self.range(key.clone()..=key)
+    }
 }
 
 use std::vec::IntoIter;
