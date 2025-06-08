@@ -48,6 +48,7 @@
 //!             - [`all`](crate::transaction::query::SecondaryScan::all) - Scan items with a given secondary key.
 //!             - [`start_with`](crate::transaction::query::SecondaryScan::start_with) - Scan items with a secondary key starting with a key.
 //!             - [`range`](crate::transaction::query::SecondaryScan::range) - Scan items with a secondary key in a given range.
+//!             - [`equal`](crate::transaction::query::SecondaryScan::range) - Scan items with a secondary key equal to a given value.
 //!       - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
 //!          - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
 //!          - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.    
