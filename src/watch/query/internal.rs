@@ -1,6 +1,7 @@
-use crate::db_type::{Error, KeyOptions, Result, ToInput, ToKey, ToKeyDefinition};
+use crate::db_type::{Error, KeyOptions, KeyRange, Result, ToInput, ToKey, ToKeyDefinition};
 use crate::watch;
 use crate::watch::{MpscReceiver, TableFilter};
+use std::ops::RangeBounds;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Mutex, RwLock};
 
@@ -99,6 +100,20 @@ impl InternalWatch<'_> {
             table_name.unique_table_name.clone(),
             key_def,
             start_with,
+        );
+        self.watch_generic(table_filter)
+    }
+
+    pub(crate) fn watch_secondary_range<T: ToInput, R: RangeBounds<impl ToKey>>(
+        &self,
+        key_def: &impl ToKeyDefinition<KeyOptions>,
+        range: R,
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
+        let table_name = T::native_db_model().primary_key;
+        let table_filter = TableFilter::new_secondary_range(
+            table_name.unique_table_name.clone(),
+            key_def,
+            KeyRange::new(range),
         );
         self.watch_generic(table_filter)
     }

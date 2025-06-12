@@ -2,7 +2,7 @@ use redb::{Key as RedbKey, TypeName, Value as RedbValue};
 use std::fmt::Debug;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive, RangeTo, RangeToInclusive};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
 pub struct Key(Vec<u8>);
 
 impl Key {
@@ -471,6 +471,7 @@ impl RedbKey for Key {
     }
 }
 
+#[derive(Clone, PartialEq, Eq)]
 pub enum KeyRange {
     Range(Range<Key>),
     RangeInclusive(RangeInclusive<Key>),

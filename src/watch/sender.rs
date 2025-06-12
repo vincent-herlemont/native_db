@@ -3,6 +3,7 @@ use crate::watch::filter::{KeyFilter, TableFilter};
 use crate::watch::request::WatcherRequest;
 use crate::watch::{Event, MpscSender};
 use std::collections::HashMap;
+use std::ops::RangeBounds;
 use std::sync::{Arc, Mutex};
 
 #[allow(clippy::type_complexity)]
@@ -95,6 +96,29 @@ impl Watchers {
                                     if let Some(value) = value {
                                         if key_def == request_secondary_key_def
                                             && value.as_slice().starts_with(key_prefix.as_slice())
+                                        {
+                                            event_senders.push((*id, Arc::clone(event_sender)));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    KeyFilter::SecondaryRange(key_def, range) => {
+                        for (request_secondary_key_def, request_secondary_key) in
+                            &request.secondary_keys_value
+                        {
+                            match request_secondary_key {
+                                KeyEntry::Default(value) => {
+                                    if key_def == request_secondary_key_def && range.contains(value)
+                                    {
+                                        event_senders.push((*id, Arc::clone(event_sender)));
+                                    }
+                                }
+                                KeyEntry::Optional(value) => {
+                                    if let Some(value) = value {
+                                        if key_def == request_secondary_key_def
+                                            && range.contains(value)
                                         {
                                             event_senders.push((*id, Arc::clone(event_sender)));
                                         }

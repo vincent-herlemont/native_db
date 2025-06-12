@@ -455,6 +455,54 @@ fn watch_start_with_by_key() {
 }
 
 #[test]
+fn watch_range_by_key() {
+    let tf = TmpFs::new().unwrap();
+
+    let mut models = Models::new();
+    models.define::<ItemA1K>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
+
+    let item_a_1_k = ItemA1K {
+        id: 1,
+        name: "a_1".to_string(),
+    };
+    let item_a_2_k = ItemA1K {
+        id: 2,
+        name: "a_2".to_string(),
+    };
+    let item_a_3_k = ItemA1K {
+        id: 3,
+        name: "b_1".to_string(),
+    };
+
+    let (recv, _) = db
+        .watch()
+        .scan()
+        .secondary(ItemA1KKey::name)
+        .range::<ItemA1K, _>("a".."b")
+        .unwrap();
+
+    let rw = db.rw_transaction().unwrap();
+    rw.insert(item_a_1_k.clone()).unwrap();
+    rw.insert(item_a_2_k.clone()).unwrap();
+    rw.insert(item_a_3_k.clone()).unwrap();
+    rw.commit().unwrap();
+
+    for _ in 0..2 {
+        let inner_event: ItemA1K = if let Event::Insert(event) = recv.recv_timeout(TIMEOUT).unwrap()
+        {
+            event.inner().unwrap()
+        } else {
+            panic!("wrong event")
+        };
+        assert!(inner_event == item_a_1_k || inner_event == item_a_2_k);
+    }
+    assert!(recv.try_recv().is_err());
+}
+
+#[test]
 fn watch_all_delete() {
     let tf = TmpFs::new().unwrap();
 

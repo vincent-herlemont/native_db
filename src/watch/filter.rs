@@ -1,4 +1,4 @@
-use crate::db_type::{Key, KeyDefinition, KeyOptions, ToKeyDefinition};
+use crate::db_type::{Key, KeyDefinition, KeyOptions, KeyRange, ToKeyDefinition};
 
 #[derive(Eq, PartialEq, Clone)]
 pub(crate) struct TableFilter {
@@ -12,6 +12,7 @@ pub(crate) enum KeyFilter {
     PrimaryStartWith(Key),
     Secondary(KeyDefinition<KeyOptions>, Option<Key>),
     SecondaryStartWith(KeyDefinition<KeyOptions>, Key),
+    SecondaryRange(KeyDefinition<KeyOptions>, KeyRange),
 }
 
 impl TableFilter {
@@ -48,6 +49,17 @@ impl TableFilter {
         Self {
             table_name,
             key_filter: KeyFilter::SecondaryStartWith(key.key_definition(), key_prefix.to_owned()),
+        }
+    }
+
+    pub(crate) fn new_secondary_range<K: ToKeyDefinition<KeyOptions>>(
+        table_name: String,
+        key_def: &K,
+        range: KeyRange,
+    ) -> TableFilter {
+        Self {
+            table_name,
+            key_filter: KeyFilter::SecondaryRange(key_def.key_definition(), range),
         }
     }
 }
