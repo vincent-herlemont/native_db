@@ -53,6 +53,11 @@ impl Watchers {
                             event_senders.push((*id, Arc::clone(event_sender)));
                         }
                     }
+                    KeyFilter::PrimaryRange(range) => {
+                        if range.contains(&request.primary_key) {
+                            event_senders.push((*id, Arc::clone(event_sender)));
+                        }
+                    }
                     KeyFilter::Secondary(key_def, key) => {
                         for (request_secondary_key_def, request_secondary_key) in
                             &request.secondary_keys_value
