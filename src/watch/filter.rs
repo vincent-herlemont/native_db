@@ -10,6 +10,7 @@ pub(crate) struct TableFilter {
 pub(crate) enum KeyFilter {
     Primary(Option<Key>),
     PrimaryStartWith(Key),
+    PrimaryRange(KeyRange),
     Secondary(KeyDefinition<KeyOptions>, Option<Key>),
     SecondaryStartWith(KeyDefinition<KeyOptions>, Key),
     SecondaryRange(KeyDefinition<KeyOptions>, KeyRange),
@@ -27,6 +28,13 @@ impl TableFilter {
         Self {
             table_name,
             key_filter: KeyFilter::PrimaryStartWith(key_prefix.to_owned()),
+        }
+    }
+
+    pub(crate) fn new_primary_range(table_name: String, range: KeyRange) -> TableFilter {
+        Self {
+            table_name,
+            key_filter: KeyFilter::PrimaryRange(range),
         }
     }
 

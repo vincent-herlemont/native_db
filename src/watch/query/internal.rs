@@ -67,6 +67,18 @@ impl InternalWatch<'_> {
         self.watch_generic(table_filter)
     }
 
+    pub(crate) fn watch_primary_range<T: ToInput, R: RangeBounds<impl ToKey>>(
+        &self,
+        range: R,
+    ) -> Result<(MpscReceiver<watch::Event>, u64)> {
+        let table_name = T::native_db_model().primary_key;
+        let table_filter = TableFilter::new_primary_range(
+            table_name.unique_table_name.clone(),
+            KeyRange::new(range),
+        );
+        self.watch_generic(table_filter)
+    }
+
     pub(crate) fn watch_secondary<T: ToInput>(
         &self,
         key_def: &impl ToKeyDefinition<KeyOptions>,

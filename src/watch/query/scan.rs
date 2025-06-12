@@ -1,5 +1,5 @@
 use crate::db_type::{
-    check_key_type, check_key_type_from_key_definition,
+    check_key_type, check_key_type_from_key_definition, check_range_key_range_bounds,
     check_range_key_range_bounds_from_key_definition, KeyDefinition, KeyOptions, Result, ToInput,
     ToKey, ToKeyDefinition,
 };
@@ -78,12 +78,46 @@ impl WatchScanPrimary<'_, '_> {
         self.internal.watch_primary_all::<T>()
     }
 
-    /// **TODO: needs to be implemented**
-    pub fn range<'a>(
+    /// Watch all values within a given range.
+    ///
+    /// # Example
+    /// ```rust
+    /// use native_db::*;
+    /// use native_db::native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// #[native_model(id=1, version=1)]
+    /// #[native_db]
+    /// struct Data {
+    ///     #[primary_key]
+    ///     id: i32,
+    ///     #[secondary_key]
+    ///     name: String,
+    ///     #[secondary_key]
+    ///     age: i32,
+    /// }
+    ///
+    /// fn main() -> Result<(), db_type::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Data>()?;
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///     
+    ///     // Open a read transaction
+    ///     let r = db.r_transaction()?;
+    ///     
+    ///     // Watch all values by primary key between 1 and 10
+    ///     let (_recv, _id) = db.watch().scan().primary().range::<Data, _>(1..=10)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn range<T: ToInput, R: RangeBounds<impl ToKey>>(
         &self,
-        _range: impl RangeBounds<&'a [u8]> + 'a,
+        range: R,
     ) -> Result<(MpscReceiver<watch::Event>, u64)> {
-        todo!()
+        let model = T::native_db_model();
+        check_range_key_range_bounds(&model, &range)?;
+        self.internal.watch_primary_range::<T, R>(range)
     }
 
     /// Watch all values starting with the given key.
