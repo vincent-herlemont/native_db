@@ -62,7 +62,7 @@ jobs:
       - run: just --version
       - uses: hustcer/setup-nu@v3.19
         with:
-          version: '0.85'
+          version: '0.105.1'
         env:
             GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
       # End install utilities
