@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: int128/wait-for-workflows-action@v1.41.0
+      - uses: int128/wait-for-workflows-action@v1.43.0
         with:
           # PAT inside your repo, fallback to the read-only token if missing
           github-token: ${{ secrets.PAT_GLOBAL || github.token }}
