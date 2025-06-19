@@ -372,7 +372,7 @@ mod database_instance;
 pub mod db_type;
 mod metadata;
 mod model;
-mod serialization;
+pub mod serialization;
 mod snapshot;
 mod stats;
 mod table_definition;

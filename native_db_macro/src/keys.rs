@@ -1,10 +1,14 @@
 use crate::struct_name::StructName;
-use crate::ToTokenStream;
 use quote::quote;
 use quote::ToTokens;
 use std::hash::Hash;
+use syn::Path;
 use syn::PathArguments;
 use syn::{parse_str, Ident, Type};
+
+pub(crate) trait ToTokenStream {
+    fn new_to_token_stream_with_crate(&self, native_db_path: &Path) -> proc_macro2::TokenStream;
+}
 
 #[derive(Clone, Debug)]
 pub(crate) struct KeyDefinition<O: ToTokenStream> {
@@ -30,8 +34,8 @@ impl<O: ToTokenStream> Hash for KeyDefinition<O> {
 }
 
 impl<O: ToTokenStream> ToTokenStream for KeyDefinition<O> {
-    fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
-        let options = self.options.new_to_token_stream();
+    fn new_to_token_stream_with_crate(&self, native_db_path: &Path) -> proc_macro2::TokenStream {
+        let options = self.options.new_to_token_stream_with_crate(native_db_path);
         let struct_name = self.struct_name.ident();
         let key_name = self.name();
         let rust_type_name = self
@@ -64,7 +68,7 @@ impl<O: ToTokenStream> ToTokenStream for KeyDefinition<O> {
         let parsed_type_token_stream = parsed_type.to_token_stream();
 
         quote! {
-            native_db::db_type::KeyDefinition::new(
+            #native_db_path::db_type::KeyDefinition::new(
                 #struct_name::native_model_id(),
                 #struct_name::native_model_version(),
                 #key_name,
@@ -82,11 +86,11 @@ pub(crate) struct KeyOptions {
 }
 
 impl ToTokenStream for KeyOptions {
-    fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
+    fn new_to_token_stream_with_crate(&self, native_db_path: &Path) -> proc_macro2::TokenStream {
         let unique = self.unique;
         let optional = self.optional;
         quote! {
-            native_db::db_type::KeyOptions {
+            #native_db_path::db_type::KeyOptions {
                 unique: #unique,
                 optional: #optional,
             }
@@ -95,7 +99,7 @@ impl ToTokenStream for KeyOptions {
 }
 
 impl ToTokenStream for () {
-    fn new_to_token_stream(&self) -> proc_macro2::TokenStream {
+    fn new_to_token_stream_with_crate(&self, _native_db_path: &Path) -> proc_macro2::TokenStream {
         quote! {()}
     }
 }

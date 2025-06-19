@@ -73,15 +73,23 @@ fn test_multi_version_compatibility() -> Result<(), Box<dyn std::error::Error>> 
     // - Insert data using v8.0 model
     // - Read data using v8.1 model
     // - Verify data consistency
-    Ok(())
-}
-
-#[test]
-fn test_version_specific_features() -> Result<(), Box<dyn std::error::Error>> {
-    // TODO: Test version-specific functionality
-    // - Test features only available in v8.1
-    // - Verify proper feature isolation
-    // - Test version-specific optimizations
+    // NOTE: Testing this feature requires aliasing the crate in Cargo.toml,
+    // which is problematic for integration tests within the same crate.
+    // A dedicated test crate would be needed to test this properly.
+    // Example with aliased dependencies:
+    //
+    // In Cargo.toml:
+    // [dev-dependencies]
+    // native_db_v1 = { package = "native_db", path = "." }
+    //
+    // In the test:
+    // extern crate native_db_v1;
+    // use native_db_v1::native_db_macro as native_db_macro_v1;
+    //
+    // #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+    // #[native_model(id = 2, version = 1)]
+    // #[native_db(native_db = native_db_v1, native_db_macro = native_db_v1::native_db_macro)]
+    // struct ModelV1 { ... }
     Ok(())
 }
 

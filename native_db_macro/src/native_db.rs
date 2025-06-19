@@ -1,3 +1,4 @@
+use crate::crate_paths::CratePaths;
 use crate::model_attributes::ModelAttributes;
 use crate::model_native_db::ModelNativeDB;
 use crate::struct_name::StructName;
@@ -14,6 +15,8 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         primary_key: None,
         secondary_keys: Default::default(),
         do_export_keys: None,
+        native_db_crate: None,
+        native_db_macro_crate: None,
     };
     let model_attributes_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(args with model_attributes_parser);
@@ -28,7 +31,9 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
 
-    let model_native_db = ModelNativeDB::new(struct_name.clone(), attrs.clone());
+    let crate_paths = CratePaths::new(attrs.native_db_crate_path());
+    let model_native_db =
+        ModelNativeDB::new(struct_name.clone(), attrs.clone(), crate_paths.clone());
 
     let native_db_pk = model_native_db.native_db_primary_key();
     let native_db_gks = model_native_db.native_db_secondary_key();
@@ -40,17 +45,23 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
     let keys_enum_database_key = model_native_db.keys_enum_database_key();
 
     let struct_name = struct_name.ident();
+    let key_attributes_derive = crate_paths.key_attributes_derive();
+    let to_input_trait = crate_paths.to_input_trait();
+    let bincode_encode_to_vec_fn = crate_paths.bincode_encode_to_vec_fn();
+    let bincode_decode_from_slice_fn = crate_paths.bincode_decode_from_slice_fn();
+    let native_db_path = &crate_paths.native_db;
+
     let gen = quote! {
-        #[derive(native_db::KeyAttributes)]
+        #[derive(#key_attributes_derive)]
         #ast
 
-        impl native_db::db_type::ToInput for #struct_name {
-            fn native_db_bincode_encode_to_vec(&self) -> native_db::db_type::Result<Vec<u8>> {
-                native_db::bincode_encode_to_vec(self)
+        impl #to_input_trait for #struct_name {
+            fn native_db_bincode_encode_to_vec(&self) -> #native_db_path::db_type::Result<Vec<u8>> {
+                #bincode_encode_to_vec_fn(self)
             }
 
-            fn native_db_bincode_decode_from_slice(slice: &[u8]) -> native_db::db_type::Result<Self> {
-                Ok(native_db::bincode_decode_from_slice(slice)?.0)
+            fn native_db_bincode_decode_from_slice(slice: &[u8]) -> #native_db_path::db_type::Result<Self> {
+                Ok(#bincode_decode_from_slice_fn(slice)?.0)
             }
 
             #native_db_model
@@ -63,7 +74,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
             #(#keys_enum),*
         }
 
-        impl native_db::db_type::ToKeyDefinition<native_db::db_type::KeyOptions> for #keys_enum_name {
+        impl #native_db_path::db_type::ToKeyDefinition<#native_db_path::db_type::KeyOptions> for #keys_enum_name {
             #keys_enum_database_key
         }
     };

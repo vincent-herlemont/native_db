@@ -13,9 +13,24 @@ pub(crate) struct ModelAttributes {
     pub(crate) primary_key: Option<KeyDefinition<()>>,
     pub(crate) secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
     pub(crate) do_export_keys: Option<LitBool>,
+    pub(crate) native_db_crate: Option<syn::Path>,
+    pub(crate) native_db_macro_crate: Option<syn::Path>,
 }
 
 impl ModelAttributes {
+    pub(crate) fn native_db_crate_path(&self) -> syn::Path {
+        self.native_db_crate
+            .clone()
+            .unwrap_or_else(|| syn::parse_quote!(native_db))
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn native_db_macro_crate_path(&self) -> syn::Path {
+        self.native_db_macro_crate
+            .clone()
+            .unwrap_or_else(|| syn::parse_quote!(native_db_macro))
+    }
+
     pub(crate) fn primary_key(&self) -> KeyDefinition<()> {
         self.primary_key.clone().expect("Primary key is not set")
     }
@@ -76,6 +91,10 @@ impl ModelAttributes {
             self.secondary_keys.insert(key);
         } else if meta.path.is_ident("export_keys") {
             self.do_export_keys = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("native_db") {
+            self.native_db_crate = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("native_db_macro") {
+            self.native_db_macro_crate = Some(meta.value()?.parse()?);
         } else {
             panic!(
                 "Unknown attribute: {}",
