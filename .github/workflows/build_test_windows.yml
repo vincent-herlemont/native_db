@@ -21,15 +21,15 @@ jobs:
         os: [windows-latest]
         toolchain: [stable]
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
-      - uses: extractions/setup-just@v2
-      - uses: hustcer/setup-nu@v3.13
+      - uses: extractions/setup-just@v3
+      - uses: hustcer/setup-nu@v3.19
         with:
-          version: '0.85'
+          version: '0.105.1'
         env:
             GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
       - name: Just version

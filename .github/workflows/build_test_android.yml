@@ -25,7 +25,7 @@ jobs:
           - target: aarch64-linux-android
             image: "system-images;android-34;google_apis;x86_64"
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -60,9 +60,9 @@ jobs:
       - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.6.8 cargo-dinghy; fi
       - run: if ! command -v just &> /dev/null; then cargo install --version 1.25.2 just; fi
       - run: just --version
-      - uses: hustcer/setup-nu@v3.13
+      - uses: hustcer/setup-nu@v3.19
         with:
-          version: '0.85'
+          version: '0.105.1'
         env:
             GITHUB_TOKEN: ${{ secrets.PAT_GLOBAL }}
       # End install utilities
