@@ -19,7 +19,7 @@ redb1 = { version = "=1.5.1", package = "redb", optional = true }
 native_db_macro = { version = "0.8.1", path = "native_db_macro" }
 thiserror = "2.0.0"
 serde = { version = "1.0" }
-native_model = { version = "0.6.1" }
+native_model = { version = "0.6.2" }
 semver = "1"
 
 # Optional tokio support
