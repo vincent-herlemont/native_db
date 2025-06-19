@@ -1,12 +1,9 @@
 use std::path::PathBuf;
 
-// TODO: Once implemented, these will be actual version-specific imports
-// use native_db_8_1 as native_db_v81;
-// use native_db_8_0 as native_db_v80;
-
 // Current version imports
-use native_db::*;
+use native_db::{Builder, Models, ToKey};
 use native_db_macro::native_db;
+use native_db_v0_8_1::{Builder as Builder_v0_8_1, Models as Models_v0_8_1};
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 
@@ -20,26 +17,14 @@ struct SimpleModel {
     name: String,
 }
 
-// Example of how multi-version models will look (commented for now)
-/*
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-#[native_model(id = 1, version = 1)]
-#[native_db(native_db = native_db_v81)]
-struct ModelV81 {
-    #[primary_key]
-    id: u32,
-    name: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-#[native_model(id = 1, version = 1)]
-#[native_db(native_db = native_db_v80)]
-struct ModelV80 {
-    #[primary_key]
-    id: u32,
-    name: String,
-}
-*/
+// #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+// #[native_model(id = 1, version = 1)]
+// #[native_db(native_db = v0_8_1)]
+// struct ModelV0_8_1 {
+//     #[primary_key]
+//     id: u32,
+//     name: String,
+// }
 
 #[test]
 fn test_current_version() -> Result<(), Box<dyn std::error::Error>> {
