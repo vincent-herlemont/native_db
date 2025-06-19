@@ -47,7 +47,7 @@ paste = "1.0.15"
 cc = "1.2.27"
 rusqlite = { version = "0.36.0", features = ["bundled"] }
 concat-idents = "1.1.5"
-native_db_v0_8_1 = { package = "native_db", version = "0.8.1" }
+native_db_v0_8_1 = { package = "native_db", path = "." }
 
 
 [features]

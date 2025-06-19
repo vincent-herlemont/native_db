@@ -17,14 +17,14 @@ struct SimpleModel {
     name: String,
 }
 
-// #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-// #[native_model(id = 1, version = 1)]
-// #[native_db(native_db = v0_8_1)]
-// struct ModelV0_8_1 {
-//     #[primary_key]
-//     id: u32,
-//     name: String,
-// }
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[native_model(id = 1, version = 1)]
+#[native_db(native_db = v0_8_1)]
+struct ModelV0_8_1 {
+    #[primary_key]
+    id: u32,
+    name: String,
+}
 
 #[test]
 fn test_current_version() -> Result<(), Box<dyn std::error::Error>> {

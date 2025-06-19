@@ -17,6 +17,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         do_export_keys: None,
         native_db_crate: None,
         native_db_macro_crate: None,
+        native_db_version: None,
     };
     let model_attributes_parser = syn::meta::parser(|meta| attrs.parse(meta));
     parse_macro_input!(args with model_attributes_parser);
