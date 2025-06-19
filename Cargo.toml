@@ -15,12 +15,12 @@ categories = ["database-implementations", "concurrency", "data-structures", "cac
 members = ["native_db_macro"]
 
 [dependencies]
-redb = "2.1.4"
+redb = "=2.1.4"
 redb1 = { version = "=1.5.1", package = "redb", optional = true }
 native_db_macro = { version = "0.8.1", path = "native_db_macro" }
 thiserror = "1.0"
-serde = { version = "1.0" }
-native_model = { version = "0.4.20" }
+serde = { version = "=1.0" }
+native_model = { version = "=0.4.20" }
 semver = "1"
 
 # Optional tokio support
@@ -35,7 +35,7 @@ serial_test = { version = "3.1.1", features = ["file_locks"] }
 shortcut_assert_fs = { version = "0.1.0" }
 skeptic = "0.13.7"
 tokio = { version = "1.40.0", features = ["test-util","macros"] }
-bincode = { version = "2.0.0-rc.3", features = ["serde"] }
+bincode = { version = "=2.0.0-rc.3", features = ["serde"] }
 criterion = { version = "0.5.1" }
 doc-comment = "0.3.3"
 uuid = { version = "1.10.0", features = ["serde", "v4"] }

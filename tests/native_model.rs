@@ -1,25 +1,25 @@
-use bincode::{config, Decode, Encode};
 use native_db::*;
 use native_db_macro::native_db;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 
 pub struct Bincode;
-impl<T: bincode::Encode> native_model::Encode<T> for Bincode {
+impl<T: serde::Serialize> native_model::Encode<T> for Bincode {
     type Error = bincode::error::EncodeError;
     fn encode(obj: &T) -> std::result::Result<Vec<u8>, bincode::error::EncodeError> {
-        bincode::encode_to_vec(obj, config::standard())
+        bincode::serde::encode_to_vec(obj, bincode::config::standard())
     }
 }
 
-impl<T: bincode::Decode> native_model::Decode<T> for Bincode {
+impl<T: serde::de::DeserializeOwned> native_model::Decode<T> for Bincode {
     type Error = bincode::error::DecodeError;
     fn decode(data: Vec<u8>) -> std::result::Result<T, bincode::error::DecodeError> {
-        bincode::decode_from_slice(&data, config::standard()).map(|(result, _)| result)
+        bincode::serde::decode_from_slice(&data, bincode::config::standard())
+            .map(|(result, _)| result)
     }
 }
 
-#[derive(Serialize, Deserialize, Encode, Decode, Eq, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1, with = Bincode)]
 #[native_db(primary_key(compute_primary_key -> Vec<u8>))]
 struct ItemV1 {
