@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[workspace]
+
 [dependencies]
 # Current version (from local path)
 native_db_current = { package = "native_db", path = ".." }

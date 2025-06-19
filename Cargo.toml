@@ -11,7 +11,7 @@ keywords = ["embedded-database", "database", "multi-platform", "android", "ios"]
 categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
 [workspace]
-members = ["native_db_macro", "multi_version_tests"]
+members = ["native_db_macro"]
 
 [dependencies]
 redb = "=2.5.0"
