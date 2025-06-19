@@ -108,7 +108,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "bash version_update.sh ${nextRelease.version}",
+        "successCmd": "bash version_update.sh ${nextRelease.version}",
         "publishCmd": "bash cargo_publish.sh"
       }
     ],
