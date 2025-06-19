@@ -11,3 +11,5 @@ Cargo.lock
 tests/data/db_x_x_x
 
 .DS_Store
+# IDE specific
+.cursor/
