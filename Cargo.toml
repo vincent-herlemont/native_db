@@ -11,7 +11,7 @@ keywords = ["embedded-database", "database", "multi-platform", "android", "ios"]
 categories = ["database-implementations", "concurrency", "data-structures", "caching", "algorithms"]
 
 [workspace]
-members = ["native_db_macro"]
+members = ["native_db_macro", "multi_version_tests"]
 
 [dependencies]
 redb = "=2.5.0"
@@ -19,7 +19,7 @@ redb1 = { version = "=1.5.1", package = "redb", optional = true }
 native_db_macro = { version = "0.8.1", path = "native_db_macro" }
 thiserror = "2.0.0"
 serde = { version = "1.0" }
-native_model = { version = "0.6.2" }
+native_model = { version = "=0.6.2" }
 semver = "1"
 
 # Optional tokio support
@@ -47,7 +47,6 @@ paste = "1.0.15"
 cc = "1.2.27"
 rusqlite = { version = "0.36.0", features = ["bundled"] }
 concat-idents = "1.1.5"
-native_db_v0_8_1 = { package = "native_db", path = "." }
 
 
 [features]
