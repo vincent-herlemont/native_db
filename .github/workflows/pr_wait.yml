@@ -2,7 +2,7 @@ name: wait-for-workflows (PR)
 
 on:
   pull_request_target:       # secrets are available
-    branches: [ main, next ]
+    branches: [ main, next, 0.8.x ]
 
 permissions:
   checks: read
@@ -18,5 +18,5 @@ jobs:
           # PAT inside your repo, fallback to the read-only token if missing
           github-token: ${{ secrets.PAT_GLOBAL || github.token }}
           filter-workflow-events: pull_request
-          # the commit we’re validating is the HEAD of the PR
+          # the commit we're validating is the HEAD of the PR
           sha: ${{ github.event.pull_request.head.sha }}

@@ -2,9 +2,9 @@ name: macOS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 0.8.x ]
   pull_request:
-    branches: [ main, next ]
+    branches: [ main, next, 0.8.x ]
   schedule:
     # At 23:00 on Thursday.
     - cron:  '0 23 * * 4'
