@@ -1,6 +1,7 @@
+use crate::crate_paths::CratePaths;
+use crate::keys::ToTokenStream;
 use crate::model_attributes::ModelAttributes;
 use crate::struct_name::StructName;
-use crate::ToTokenStream;
 use proc_macro::Span;
 use quote::quote;
 use syn::Ident;
@@ -8,43 +9,49 @@ use syn::Ident;
 pub(crate) struct ModelNativeDB {
     struct_name: StructName,
     attrs: ModelAttributes,
+    crate_paths: CratePaths,
 }
 
 impl ModelNativeDB {
-    pub fn new(struct_name: StructName, attrs: ModelAttributes) -> Self {
-        Self { struct_name, attrs }
+    pub fn new(struct_name: StructName, attrs: ModelAttributes, crate_paths: CratePaths) -> Self {
+        Self {
+            struct_name,
+            attrs,
+            crate_paths,
+        }
     }
 
     pub(crate) fn native_db_secondary_key(&self) -> proc_macro2::TokenStream {
+        let native_db_path = &self.crate_paths.native_db;
         let tokens = self
             .attrs
             .secondary_keys
             .iter()
             .map(|key| {
                 let key_ident = key.ident();
-                let new_secondary_key = key.new_to_token_stream();
+                let new_secondary_key = key.new_to_token_stream_with_crate(native_db_path);
                 let out = if key.is_field() {
                     if key.options.optional {
                         quote! {
-                            let value: Option<native_db::db_type::Key>  = self.#key_ident.as_ref().map(|v|(&v).to_key());
-                            let value = native_db::db_type::KeyEntry::Optional(value);
+                            let value: Option<#native_db_path::db_type::Key>  = self.#key_ident.as_ref().map(|v|(&v).to_key());
+                            let value = #native_db_path::db_type::KeyEntry::Optional(value);
                         }
                     } else {
                         quote! {
-                            let value: native_db::db_type::Key  = (&self.#key_ident).to_key();
-                            let value = native_db::db_type::KeyEntry::Default(value);
+                            let value: #native_db_path::db_type::Key  = (&self.#key_ident).to_key();
+                            let value = #native_db_path::db_type::KeyEntry::Default(value);
                         }
                     }
                 } else if key.is_function() {
                     if key.options.optional {
                         quote! {
-                            let value: Option<native_db::db_type::Key> = self.#key_ident().map(|v|(&v).to_key());
-                            let value = native_db::db_type::KeyEntry::Optional(value);
+                            let value: Option<#native_db_path::db_type::Key> = self.#key_ident().map(|v|(&v).to_key());
+                            let value = #native_db_path::db_type::KeyEntry::Optional(value);
                         }
                     } else {
                         quote! {
-                            let value: native_db::db_type::Key = (&self.#key_ident()).to_key();
-                            let value = native_db::db_type::KeyEntry::Default(value);
+                            let value: #native_db_path::db_type::Key = (&self.#key_ident()).to_key();
+                            let value = #native_db_path::db_type::KeyEntry::Default(value);
                         }
                     }
                 } else {
@@ -59,7 +66,7 @@ impl ModelNativeDB {
             .collect::<Vec<_>>();
 
         quote! {
-            fn native_db_secondary_keys(&self) -> std::collections::HashMap<native_db::db_type::KeyDefinition<native_db::db_type::KeyOptions>, native_db::db_type::KeyEntry> {
+            fn native_db_secondary_keys(&self) -> std::collections::HashMap<#native_db_path::db_type::KeyDefinition<#native_db_path::db_type::KeyOptions>, #native_db_path::db_type::KeyEntry> {
                 let mut secondary_tables_name = std::collections::HashMap::new();
                 #(#tokens)*
                 secondary_tables_name
@@ -68,17 +75,18 @@ impl ModelNativeDB {
     }
 
     pub(crate) fn native_db_primary_key(&self) -> proc_macro2::TokenStream {
+        let native_db_path = &self.crate_paths.native_db;
         let primary_key = self.attrs.primary_key();
         let ident = primary_key.ident();
         if primary_key.is_function() {
             quote! {
-                fn native_db_primary_key(&self) -> native_db::db_type::Key {
+                fn native_db_primary_key(&self) -> #native_db_path::db_type::Key {
                     (&self.#ident()).to_key()
                 }
             }
         } else {
             quote! {
-                fn native_db_primary_key(&self) -> native_db::db_type::Key {
+                fn native_db_primary_key(&self) -> #native_db_path::db_type::Key {
                     (&self.#ident).to_key()
                 }
             }
@@ -86,13 +94,17 @@ impl ModelNativeDB {
     }
 
     pub(crate) fn native_db_model(&self) -> proc_macro2::TokenStream {
-        let primary_key = self.attrs.primary_key().new_to_token_stream();
+        let native_db_path = &self.crate_paths.native_db;
+        let primary_key = self
+            .attrs
+            .primary_key()
+            .new_to_token_stream_with_crate(native_db_path);
         let secondary_keys = self
             .attrs
             .secondary_keys
             .iter()
             .map(|key| {
-                let new_key = key.new_to_token_stream();
+                let new_key = key.new_to_token_stream_with_crate(native_db_path);
                 quote! {
                     secondary_tables_name.insert(#new_key);
                 }
@@ -100,10 +112,10 @@ impl ModelNativeDB {
             .collect::<Vec<_>>();
 
         quote! {
-            fn native_db_model() -> native_db::Model {
+            fn native_db_model() -> #native_db_path::Model {
                 let mut secondary_tables_name = std::collections::HashSet::new();
                 #(#secondary_keys)*
-                native_db::Model {
+                #native_db_path::Model {
                     primary_key: #primary_key,
                     secondary_keys: secondary_tables_name,
                 }
@@ -143,17 +155,18 @@ impl ModelNativeDB {
 
     pub(crate) fn keys_enum_database_key(&self) -> proc_macro2::TokenStream {
         let keys_enum_name_token = self.keys_enum_name();
+        let native_db_path = &self.crate_paths.native_db;
 
         let insert_secondary_key_def = self.attrs.secondary_keys.iter().map(|key| {
             let name = key.ident();
-            let new_key = key.new_to_token_stream();
+            let new_key = key.new_to_token_stream_with_crate(native_db_path);
             quote! {
                 #keys_enum_name_token::#name => #new_key,
             }
         });
 
         quote! {
-            fn key_definition(&self) -> native_db::db_type::KeyDefinition<native_db::db_type::KeyOptions> {
+            fn key_definition(&self) -> #native_db_path::db_type::KeyDefinition<#native_db_path::db_type::KeyOptions> {
                 match self {
                     #(#insert_secondary_key_def)*
                     _ => panic!("Unknown key"),
