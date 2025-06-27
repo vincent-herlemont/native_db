@@ -1,88 +1,106 @@
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-// Import both versions with different aliases
-use native_db_current::{Builder as CurrentBuilder, Models as CurrentModels, ToKey};
-use native_db_v0_8_1::{Builder as V081Builder, Models as V081Models};
+mod current_version_tests {
+    use super::*;
 
-use native_model::{native_model, Model};
-use serde::{Deserialize, Serialize};
+    // Import current version as native_db for macro expansion
+    use native_db_current as native_db;
+    use native_db_current::{Builder, Models, ToKey};
 
-// Model for current version
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-#[native_model(id = 1, version = 1)]
-#[native_db_current::native_db]
-struct CurrentModel {
-    #[primary_key]
-    id: u32,
-    name: String,
+    // Import native_model macro version matched with the current version native_db for macro expansion.
+    use native_model_current as native_model;
+    use native_model_current::{native_model, Model};
+
+    // Model for current version
+    #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+    #[native_model(id = 1, version = 1)]
+    #[native_db_current::native_db]
+    pub struct CurrentModel {
+        #[primary_key]
+        pub id: u32,
+        pub name: String,
+    }
+
+    #[test]
+    pub fn test_current_version_operations() -> Result<(), Box<dyn std::error::Error>> {
+        let db_path = PathBuf::from("test_current_multi.db");
+        let _ = std::fs::remove_file(&db_path); // Cleanup any previous test db
+
+        // Initialize database with current version
+        let mut models = Models::new();
+        models.define::<CurrentModel>()?;
+        let db = Builder::new().create(&models, &db_path)?;
+
+        // Basic operations to ensure compilation and functionality
+        let tx = db.rw_transaction()?;
+        tx.insert(CurrentModel {
+            id: 1,
+            name: "Current Version Test".to_string(),
+        })?;
+        tx.commit()?;
+
+        // Verify data can be read back
+        let tx = db.r_transaction()?;
+        let retrieved: Option<CurrentModel> = tx.get().primary(1u32)?;
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().name, "Current Version Test");
+
+        // Cleanup
+        let _ = std::fs::remove_file(&db_path);
+        Ok(())
+    }
 }
 
-// Model for v0.8.1
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-#[native_model(id = 1, version = 1)]
-#[native_db_v0_8_1::native_db]
-struct V081Model {
-    #[primary_key]
-    id: u32,
-    name: String,
-}
+mod v081_tests {
+    use super::*;
 
-#[test]
-fn test_current_version_operations() -> Result<(), Box<dyn std::error::Error>> {
-    let db_path = PathBuf::from("test_current_multi.db");
-    let _ = std::fs::remove_file(&db_path); // Cleanup any previous test db
+    // Import v0.8.1 version as native_db for macro expansion
+    use native_db_v0_8_x as native_db;
+    use native_db_v0_8_x::{Builder, Models, ToKey};
 
-    // Initialize database with current version
-    let mut models = CurrentModels::new();
-    models.define::<CurrentModel>()?;
-    let db = CurrentBuilder::new().create(&models, &db_path)?;
+    // Import native_model macro version matched with the v0.8.1 version native_db for macro expansion.
+    use native_model_v0_4_x as native_model;
+    use native_model_v0_4_x::{native_model, Model};
 
-    // Basic operations to ensure compilation and functionality
-    let tx = db.rw_transaction()?;
-    tx.insert(CurrentModel {
-        id: 1,
-        name: "Current Version Test".to_string(),
-    })?;
-    tx.commit()?;
+    // Model for v0.8.1
+    #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+    #[native_model(id = 1, version = 1)]
+    #[native_db_v0_8_x::native_db]
+    pub struct V081Model {
+        #[primary_key]
+        pub id: u32,
+        pub name: String,
+    }
 
-    // Verify data can be read back
-    let tx = db.r_transaction()?;
-    let retrieved: Option<CurrentModel> = tx.get().primary(1u32)?;
-    assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().name, "Current Version Test");
+    #[test]
+    pub fn test_v081_operations() -> Result<(), Box<dyn std::error::Error>> {
+        let db_path = PathBuf::from("test_v081_multi.db");
+        let _ = std::fs::remove_file(&db_path); // Cleanup any previous test db
 
-    // Cleanup
-    let _ = std::fs::remove_file(&db_path);
-    Ok(())
-}
+        // Initialize database with v0.8.1
+        let mut models = Models::new();
+        models.define::<V081Model>()?;
+        let db = Builder::new().create(&models, &db_path)?;
 
-#[test]
-fn test_v081_operations() -> Result<(), Box<dyn std::error::Error>> {
-    let db_path = PathBuf::from("test_v081_multi.db");
-    let _ = std::fs::remove_file(&db_path); // Cleanup any previous test db
+        // Basic operations to ensure compilation and functionality
+        let tx = db.rw_transaction()?;
+        tx.insert(V081Model {
+            id: 1,
+            name: "V0.8.1 Test".to_string(),
+        })?;
+        tx.commit()?;
 
-    // Initialize database with v0.8.1
-    let mut models = V081Models::new();
-    models.define::<V081Model>()?;
-    let db = V081Builder::new().create(&models, &db_path)?;
+        // Verify data can be read back
+        let tx = db.r_transaction()?;
+        let retrieved: Option<V081Model> = tx.get().primary(1u32)?;
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().name, "V0.8.1 Test");
 
-    // Basic operations to ensure compilation and functionality
-    let tx = db.rw_transaction()?;
-    tx.insert(V081Model {
-        id: 1,
-        name: "V0.8.1 Test".to_string(),
-    })?;
-    tx.commit()?;
-
-    // Verify data can be read back
-    let tx = db.r_transaction()?;
-    let retrieved: Option<V081Model> = tx.get().primary(1u32)?;
-    assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().name, "V0.8.1 Test");
-
-    // Cleanup
-    let _ = std::fs::remove_file(&db_path);
-    Ok(())
+        // Cleanup
+        let _ = std::fs::remove_file(&db_path);
+        Ok(())
+    }
 }
 
 #[test]
@@ -96,40 +114,54 @@ fn test_version_isolation() -> Result<(), Box<dyn std::error::Error>> {
     let _ = std::fs::remove_file(&v081_db_path);
 
     // Set up current version database
-    let mut current_models = CurrentModels::new();
-    current_models.define::<CurrentModel>()?;
-    let current_db = CurrentBuilder::new().create(&current_models, &current_db_path)?;
+    {
+        use current_version_tests::CurrentModel;
+        use native_db_current as native_db;
+        use native_db_current::{Builder, Models};
+
+        let mut current_models = Models::new();
+        current_models.define::<CurrentModel>()?;
+        let current_db = Builder::new().create(&current_models, &current_db_path)?;
+
+        // Perform operations with current version
+        let current_tx = current_db.rw_transaction()?;
+        current_tx.insert(CurrentModel {
+            id: 1,
+            name: "Current Isolation Test".to_string(),
+        })?;
+        current_tx.commit()?;
+
+        // Verify current version data
+        let current_read_tx = current_db.r_transaction()?;
+        let current_data: Option<CurrentModel> = current_read_tx.get().primary(1u32)?;
+        assert!(current_data.is_some());
+        assert_eq!(current_data.unwrap().name, "Current Isolation Test");
+    }
 
     // Set up v0.8.1 database
-    let mut v081_models = V081Models::new();
-    v081_models.define::<V081Model>()?;
-    let v081_db = V081Builder::new().create(&v081_models, &v081_db_path)?;
+    {
+        use native_db_v0_8_x as native_db;
+        use native_db_v0_8_x::{Builder, Models};
+        use v081_tests::V081Model;
 
-    // Perform operations with both versions simultaneously
-    let current_tx = current_db.rw_transaction()?;
-    current_tx.insert(CurrentModel {
-        id: 1,
-        name: "Current Isolation Test".to_string(),
-    })?;
-    current_tx.commit()?;
+        let mut v081_models = Models::new();
+        v081_models.define::<V081Model>()?;
+        let v081_db = Builder::new().create(&v081_models, &v081_db_path)?;
 
-    let v081_tx = v081_db.rw_transaction()?;
-    v081_tx.insert(V081Model {
-        id: 1,
-        name: "V0.8.1 Isolation Test".to_string(),
-    })?;
-    v081_tx.commit()?;
+        // Perform operations with v0.8.1
+        let v081_tx = v081_db.rw_transaction()?;
+        v081_tx.insert(V081Model {
+            id: 1,
+            name: "V0.8.1 Isolation Test".to_string(),
+        })?;
+        v081_tx.commit()?;
 
-    // Verify both databases are independent and functional
-    let current_read_tx = current_db.r_transaction()?;
-    let current_data: Option<CurrentModel> = current_read_tx.get().primary(1u32)?;
-    assert!(current_data.is_some());
-    assert_eq!(current_data.unwrap().name, "Current Isolation Test");
-
-    let v081_read_tx = v081_db.r_transaction()?;
-    let v081_data: Option<V081Model> = v081_read_tx.get().primary(1u32)?;
-    assert!(v081_data.is_some());
-    assert_eq!(v081_data.unwrap().name, "V0.8.1 Isolation Test");
+        // Verify v0.8.1 data
+        let v081_read_tx = v081_db.r_transaction()?;
+        let v081_data: Option<V081Model> = v081_read_tx.get().primary(1u32)?;
+        assert!(v081_data.is_some());
+        assert_eq!(v081_data.unwrap().name, "V0.8.1 Isolation Test");
+    }
 
     // Cleanup
     let _ = std::fs::remove_file(&current_db_path);

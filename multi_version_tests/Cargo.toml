@@ -8,14 +8,16 @@ publish = false
 
 [dependencies]
 # Current version (from local path)
+native_model_current = { package = "native_model", version = "0.6.2" }
 native_db_current = { package = "native_db", path = ".." }
 
 # Previous version (from external path)
-native_db_v0_8_1 = { package = "native_db", path = "../../native_db_0_8_x" }
+native_model_v0_4_x= { package = "native_model", version = "0.4.20" }
+native_db_v0_8_x = { package = "native_db", path = "../../native_db_0_8_x" }
 
 # Common dependencies for testing
 serde = { version = "1.0", features = ["derive"] }
-native_model = { version = "0.6.2" }
+
 tokio = { version = "1.45.0", features = ["test-util", "macros"] }
 
 [[test]]
