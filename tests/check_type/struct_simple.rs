@@ -49,7 +49,7 @@ fn test_get_primary_key_custom_pk() {
     let result_item: Result<Option<ItemCustomPk>> = r.get().primary(non_expected_id);
     assert!(matches!(
         result_item.unwrap_err(),
-        db_type::Error::MissmatchedKeyType { .. }
+        db_type::Error::MismatchedKeyType { .. }
     ));
     drop(r);
 
@@ -62,7 +62,7 @@ fn test_get_primary_key_custom_pk() {
     let result_item: Result<Option<ItemCustomPk>> = rw.get().primary(non_expected_id);
     assert!(matches!(
         result_item.unwrap_err(),
-        db_type::Error::MissmatchedKeyType { .. }
+        db_type::Error::MismatchedKeyType { .. }
     ));
     drop(rw);
 
@@ -80,7 +80,7 @@ fn test_get_primary_key_custom_pk() {
         r.get().secondary(ItemCustomPkKey::sk_u, non_expected_id);
     assert!(matches!(
         result_item.unwrap_err(),
-        db_type::Error::MissmatchedKeyType { .. }
+        db_type::Error::MismatchedKeyType { .. }
     ));
     drop(r);
 
@@ -98,7 +98,7 @@ fn test_get_primary_key_custom_pk() {
         rw.get().secondary(ItemCustomPkKey::sk_u, non_expected_id);
     assert!(matches!(
         result_item.unwrap_err(),
-        db_type::Error::MissmatchedKeyType { .. }
+        db_type::Error::MismatchedKeyType { .. }
     ));
     drop(rw);
 
@@ -124,7 +124,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -153,7 +153,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -182,7 +182,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -211,7 +211,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -240,7 +240,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -269,7 +269,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -298,7 +298,7 @@ fn test_get_primary_key_custom_pk() {
     {
         assert!(matches!(
             result_item,
-            db_type::Error::MissmatchedKeyType { .. }
+            db_type::Error::MismatchedKeyType { .. }
         ));
     } else {
         panic!("Expected error");
@@ -312,7 +312,7 @@ fn test_get_primary_key_custom_pk() {
     assert!(result.is_ok());
     let non_expected_id = vec![3];
     if let Err(result) = db.watch().get().primary::<ItemCustomPk>(non_expected_id) {
-        assert!(matches!(result, db_type::Error::MissmatchedKeyType { .. }));
+        assert!(matches!(result, db_type::Error::MismatchedKeyType { .. }));
     } else {
         panic!("Expected error");
     }
@@ -332,7 +332,7 @@ fn test_get_primary_key_custom_pk() {
         .get()
         .secondary::<ItemCustomPk>(ItemCustomPkKey::sk_u, non_expected_id)
     {
-        assert!(matches!(result, db_type::Error::MissmatchedKeyType { .. }));
+        assert!(matches!(result, db_type::Error::MismatchedKeyType { .. }));
     } else {
         panic!("Expected error");
     }
@@ -354,7 +354,7 @@ fn test_get_primary_key_custom_pk() {
         .primary()
         .start_with::<ItemCustomPk>(non_expected_id)
     {
-        assert!(matches!(result, db_type::Error::MissmatchedKeyType { .. }));
+        assert!(matches!(result, db_type::Error::MismatchedKeyType { .. }));
     } else {
         panic!("Expected error");
     }
@@ -376,7 +376,7 @@ fn test_get_primary_key_custom_pk() {
         .secondary(ItemCustomPkKey::sk_u)
         .start_with::<ItemCustomPk>(non_expected_id)
     {
-        assert!(matches!(result, db_type::Error::MissmatchedKeyType { .. }));
+        assert!(matches!(result, db_type::Error::MismatchedKeyType { .. }));
     } else {
         panic!("Expected error");
     }
