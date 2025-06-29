@@ -47,7 +47,7 @@ impl Key {
 /// #[derive(Serialize, Deserialize)]
 /// #[native_model(id=1, version=1)]
 /// #[native_db]
-/// struct Contry {
+/// struct Country {
 ///     #[primary_key]
 ///     capital: City,
 ///     #[secondary_key(unique)]
@@ -56,17 +56,17 @@ impl Key {
 ///
 /// fn main() -> Result<(), db_type::Error> {
 ///     let mut models = Models::new();
-///     models.define::<Contry>()?;
+///     models.define::<Country>()?;
 ///     let db = Builder::new().create_in_memory(&models)?;
 ///     
 ///     // Open a read transaction
 ///     let r = db.r_transaction()?;
 ///     
 ///     // Get contry by the capital city (primary key)
-///     let _us: Option<Contry> = r.get().primary(City("Washington, D.C.".to_string()))?;
+///     let _us: Option<Country> = r.get().primary(City("Washington, D.C.".to_string()))?;
 ///
 ///     // Get contry by the bigest city (secondary key)
-///     let _us: Option<Contry> = r.get().secondary(ContryKey::bigest_city, City("New York".to_string()))?;
+///     let _us: Option<Country> = r.get().secondary(CountryKey::bigest_city, City("New York".to_string()))?;
 ///     Ok(())
 /// }
 /// ```

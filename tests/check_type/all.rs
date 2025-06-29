@@ -46,7 +46,7 @@ macro_rules! create_test {
             assert!(result_item.is_err());
             assert!(matches!(
                 result_item.unwrap_err(),
-                db_type::Error::MissmatchedKeyType { .. }
+                db_type::Error::MismatchedKeyType { .. }
             ));
 
             // Get secondary key
@@ -62,7 +62,7 @@ macro_rules! create_test {
             assert!(result_item.is_err());
             assert!(matches!(
                 result_item.unwrap_err(),
-                db_type::Error::MissmatchedKeyType { .. }
+                db_type::Error::MismatchedKeyType { .. }
             ));
 
             // Scan primary key range
@@ -77,7 +77,7 @@ macro_rules! create_test {
                 if let Err(result_item) = r.scan().primary::<$struct_name>().unwrap().range(non_expected_id..) {
                     assert!(matches!(
                         result_item,
-                        db_type::Error::MissmatchedKeyType { .. }
+                        db_type::Error::MismatchedKeyType { .. }
                     ));
                 } else {
                     panic!("scan primary key range expected error");
@@ -96,7 +96,7 @@ macro_rules! create_test {
                 if let Err(result_item) = r.scan().primary::<$struct_name>().unwrap().start_with(non_expected_id) {
                     assert!(matches!(
                         result_item,
-                        db_type::Error::MissmatchedKeyType { .. }
+                        db_type::Error::MismatchedKeyType { .. }
                     ));
                 } else {
                     panic!("scan primary key start with expected error");
@@ -115,7 +115,7 @@ macro_rules! create_test {
                 if let Err(result_item) = r.scan().secondary::<$struct_name>([<$struct_name Key>]::sk).unwrap().range(non_expected_id..) {
                     assert!(matches!(
                         result_item,
-                        db_type::Error::MissmatchedKeyType { .. }
+                        db_type::Error::MismatchedKeyType { .. }
                     ));
                 } else {
                     panic!("scan secondary key range expected error");
@@ -134,7 +134,7 @@ macro_rules! create_test {
                 if let Err(result_item) = r.scan().secondary::<$struct_name>([<$struct_name Key>]::sk).unwrap().start_with(non_expected_id) {
                     assert!(matches!(
                         result_item,
-                        db_type::Error::MissmatchedKeyType { .. }
+                        db_type::Error::MismatchedKeyType { .. }
                     ));
                 } else {
                     panic!("scan secondary key start with expected error");
