@@ -87,6 +87,8 @@ fn _check_key_type_from_key_definition<K: ToKey>(
     if !K::key_names()
         .iter()
         .any(|name| key_definition.rust_types.contains(name))
+        // If passed a generic `Key`, disable type checks as we assume this was intentional
+        && K::key_names() != Key::key_names()
     {
         return Err(Error::MissmatchedKeyType {
             key_name: key_definition.unique_table_name.to_string(),
