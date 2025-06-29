@@ -88,7 +88,7 @@ fn _check_key_type_from_key_definition<K: ToKey>(
         .iter()
         .any(|name| key_definition.rust_types.contains(name))
     {
-        return Err(Error::MissmatchedKeyType {
+        return Err(Error::MismatchedKeyType {
             key_name: key_definition.unique_table_name.to_string(),
             expected_types: key_definition.rust_types.clone(),
             got_types: K::key_names(),
@@ -103,7 +103,7 @@ fn _check_key_type<K: ToKey>(model: &Model) -> Result<()> {
         .iter()
         .any(|name| model.primary_key.rust_types.contains(name))
     {
-        return Err(Error::MissmatchedKeyType {
+        return Err(Error::MismatchedKeyType {
             key_name: model.primary_key.unique_table_name.to_string(),
             expected_types: model.primary_key.rust_types.clone(),
             got_types: K::key_names(),
