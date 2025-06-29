@@ -72,8 +72,8 @@ pub enum Error {
     #[error("Duplicate key for \"{key_name}\"")]
     DuplicateKey { key_name: String },
 
-    #[error("Missmatched key type for \"{key_name}\" expected {expected_types:?} got {got_types:?} during {operation:?}")]
-    MissmatchedKeyType {
+    #[error("Mismatched key type for \"{key_name}\" expected {expected_types:?} got {got_types:?} during {operation:?}")]
+    MismatchedKeyType {
         key_name: String,
         expected_types: Vec<String>,
         got_types: Vec<String>,
