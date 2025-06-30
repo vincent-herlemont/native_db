@@ -348,8 +348,8 @@ where
     fn key_names() -> Vec<String> {
         let mut names = Vec::new();
         for name in T::key_names() {
-            names.push(format!("Vec<{}>", name));
-            names.push(format!("[{}]", name));
+            names.push(format!("Vec<{name}>"));
+            names.push(format!("[{name}]"));
         }
         names
     }
@@ -370,7 +370,7 @@ where
     fn key_names() -> Vec<String> {
         let mut names = Vec::new();
         for name in T::key_names() {
-            names.push(format!("[{}]", name));
+            names.push(format!("[{name}]"));
         }
 
         names
@@ -391,7 +391,7 @@ where
     fn key_names() -> Vec<String> {
         let mut names = Vec::new();
         for name in T::key_names() {
-            names.push(format!("Option<{}>", name));
+            names.push(format!("Option<{name}>"));
         }
         names
     }

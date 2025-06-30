@@ -27,7 +27,7 @@ impl<O> KeyDefinition<O> {
         rust_types: Vec<String>,
         options: O,
     ) -> Self {
-        let table_name = format!("{}_{}_{}", model_id, model_version, name);
+        let table_name = format!("{model_id}_{model_version}_{name}");
         Self {
             options,
             rust_types,

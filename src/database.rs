@@ -186,7 +186,7 @@ impl<'a> Database<'a> {
         use semver::VersionReq;
         let metadata = self.metadata();
         let comparator = VersionReq::parse(selector)
-            .unwrap_or_else(|_| panic!("Invalid version selector: {}", selector));
+            .unwrap_or_else(|_| panic!("Invalid version selector: {selector}"));
 
         let previous_version = if let Some(previous_version) = metadata.previous_version() {
             previous_version
@@ -195,7 +195,7 @@ impl<'a> Database<'a> {
         };
 
         let previous_version = Version::parse(previous_version)
-            .unwrap_or_else(|_| panic!("Invalid previous version: {}", previous_version));
+            .unwrap_or_else(|_| panic!("Invalid previous version: {previous_version}"));
         let current_version = Version::parse(metadata.current_version())
             .unwrap_or_else(|_| panic!("Invalid current version: {}", metadata.current_version()));
 
