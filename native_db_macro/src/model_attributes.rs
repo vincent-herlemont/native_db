@@ -13,9 +13,36 @@ pub(crate) struct ModelAttributes {
     pub(crate) primary_key: Option<KeyDefinition<()>>,
     pub(crate) secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
     pub(crate) do_export_keys: Option<LitBool>,
+    pub(crate) native_db_crate: Option<syn::Path>,
+    pub(crate) native_db_macro_crate: Option<syn::Path>,
+    pub(crate) native_db_version: Option<String>,
 }
 
 impl ModelAttributes {
+    pub(crate) fn native_db_crate_path(&self) -> syn::Path {
+        // First check if a version suffix is provided
+        if let Some(version) = &self.native_db_version {
+            let crate_name = format!("native_db_{}", version);
+            syn::parse_str(&crate_name).unwrap_or_else(|_| syn::parse_quote!(native_db))
+        } else {
+            // Fall back to explicit crate path or default
+            self.native_db_crate
+                .clone()
+                .unwrap_or_else(|| syn::parse_quote!(native_db))
+        }
+    }
+
+    pub(crate) fn is_versioned(&self) -> bool {
+        self.native_db_version.is_some()
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn native_db_macro_crate_path(&self) -> syn::Path {
+        self.native_db_macro_crate
+            .clone()
+            .unwrap_or_else(|| syn::parse_quote!(native_db_macro))
+    }
+
     pub(crate) fn primary_key(&self) -> KeyDefinition<()> {
         self.primary_key.clone().expect("Primary key is not set")
     }
@@ -76,6 +103,28 @@ impl ModelAttributes {
             self.secondary_keys.insert(key);
         } else if meta.path.is_ident("export_keys") {
             self.do_export_keys = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("native_db") {
+            // Check if this is a version suffix (identifier) or a path
+            let value = meta.value()?;
+            if let Ok(version_suffix) = value.parse::<syn::Ident>() {
+                let version_str = version_suffix.to_string();
+                // Validate version suffix length
+                if version_str.len() <= 1 {
+                    return Err(syn::Error::new_spanned(
+                        version_suffix,
+                        format!(
+                            "Version suffix must be more than 1 character, got: '{}'",
+                            version_str
+                        ),
+                    ));
+                }
+                self.native_db_version = Some(version_str);
+            } else {
+                // Fall back to parsing as a path
+                self.native_db_crate = Some(value.parse()?);
+            }
+        } else if meta.path.is_ident("native_db_macro") {
+            self.native_db_macro_crate = Some(meta.value()?.parse()?);
         } else {
             panic!(
                 "Unknown attribute: {}",

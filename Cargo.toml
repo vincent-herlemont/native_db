@@ -14,12 +14,12 @@ categories = ["database-implementations", "concurrency", "data-structures", "cac
 members = ["native_db_macro"]
 
 [dependencies]
-redb = "=2.5.0"
+redb = "2.5.0"
 redb1 = { version = "=1.5.1", package = "redb", optional = true }
 native_db_macro = { version = "0.8.1", path = "native_db_macro" }
 thiserror = "2.0.0"
 serde = { version = "1.0" }
-native_model = { version = "0.6.2" }
+native_model = { version = "=0.6.2" }
 semver = "1"
 
 # Optional tokio support
