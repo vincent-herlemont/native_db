@@ -65,12 +65,21 @@ mod v081_tests {
 
     // Model for v0.8.1
     #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-    #[native_model(id = 1, version = 1)]
+    #[native_model(id = 1, version = 2)]
     #[native_db_v0_8_x::native_db]
     pub struct V081Model {
         #[primary_key]
         pub id: u32,
         pub name: String,
+    }
+
+    impl From<current_version_tests::CurrentModel> for V081Model {
+        fn from(current_model: current_version_tests::CurrentModel) -> Self {
+            Self {
+                id: current_model.id,
+                name: current_model.name,
+            }
+        }
     }
 
     #[test]
@@ -104,6 +113,11 @@ mod v081_tests {
 }
 
 #[test]
+fn test_migration() -> Result<(), Box<dyn std::error::Error>> {
+    Ok(())
+}
+
+#[test]
 fn test_version_isolation() -> Result<(), Box<dyn std::error::Error>> {
     // Test that both versions can coexist and operate independently
     let current_db_path = PathBuf::from("test_current_isolation.db");
@@ -116,7 +130,7 @@ fn test_version_isolation() -> Result<(), Box<dyn std::error::Error>> {
     // Set up current version database
     {
         use current_version_tests::CurrentModel;
-        use native_db_current as native_db;
+        // use native_db_current as native_db;
         use native_db_current::{Builder, Models};
 
         let mut current_models = Models::new();
