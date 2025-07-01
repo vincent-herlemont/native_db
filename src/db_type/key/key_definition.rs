@@ -84,9 +84,10 @@ pub fn composite_key(secondary_key: &Key, primary_key: &Key) -> Key {
 fn _check_key_type_from_key_definition<K: ToKey>(
     key_definition: &KeyDefinition<KeyOptions>,
 ) -> Result<()> {
-    if !K::key_names()
-        .iter()
-        .any(|name| key_definition.rust_types.contains(name))
+    if K::check_type()
+        && !K::key_names()
+            .iter()
+            .any(|name| key_definition.rust_types.contains(name))
     {
         return Err(Error::MismatchedKeyType {
             key_name: key_definition.unique_table_name.to_string(),
@@ -96,6 +97,73 @@ fn _check_key_type_from_key_definition<K: ToKey>(
         });
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod test_check_key_type_from_key_definition {
+    use super::_check_key_type_from_key_definition;
+    use crate::db_type::KeyDefinition;
+    use crate::ToKey;
+
+    #[test]
+    fn same_key_never_fails() {
+        assert!(
+            _check_key_type_from_key_definition::<String>(&KeyDefinition {
+                unique_table_name: "test".to_string(),
+                rust_types: vec!["String".to_string()],
+                options: Default::default(),
+            })
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn generic_key_never_fails() {
+        assert!(
+            _check_key_type_from_key_definition::<crate::db_type::key::Key>(&KeyDefinition {
+                unique_table_name: "test".to_string(),
+                rust_types: vec!["String".to_string()],
+                options: Default::default(),
+            })
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn wrong_key_does_fail() {
+        assert!(_check_key_type_from_key_definition::<i32>(&KeyDefinition {
+            unique_table_name: "test".to_string(),
+            rust_types: vec!["String".to_string()],
+            options: Default::default(),
+        })
+        .is_err());
+    }
+
+    /// A custom user-provided key that happens to be named the same as `crate::db_type::key::Key`.
+    #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
+    pub struct Key(Vec<u8>);
+
+    impl ToKey for Key {
+        fn to_key(&self) -> crate::db_type::key::Key {
+            crate::db_type::key::Key::new(self.0.clone())
+        }
+
+        fn key_names() -> Vec<String> {
+            vec!["Key".to_string()]
+        }
+    }
+
+    /// Test that type checking still works if a user supplies a custom `Key`
+    /// called "Key".
+    #[test]
+    fn key_name_collision_does_fail() {
+        assert!(_check_key_type_from_key_definition::<Key>(&KeyDefinition {
+            unique_table_name: "test".to_string(),
+            rust_types: vec!["String".to_string()],
+            options: Default::default(),
+        })
+        .is_err());
+    }
 }
 
 fn _check_key_type<K: ToKey>(model: &Model) -> Result<()> {
