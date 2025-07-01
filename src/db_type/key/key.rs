@@ -177,6 +177,11 @@ impl Key {
 pub trait ToKey: Debug {
     fn to_key(&self) -> Key;
     fn key_names() -> Vec<String>;
+
+    /// Whether the key's type will be checked at runtime.
+    fn check_type() -> bool {
+        true
+    }
 }
 
 // Implement for char
@@ -218,6 +223,12 @@ impl ToKey for Key {
 
     fn key_names() -> Vec<String> {
         vec!["Key".to_string()]
+    }
+
+    fn check_type() -> bool {
+        // Disable type checking for generic key because otherwise you can't query
+        // with a `Key` for a key whose type is not `Key`.
+        false
     }
 }
 
