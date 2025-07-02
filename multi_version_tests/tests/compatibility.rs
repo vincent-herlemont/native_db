@@ -13,7 +13,7 @@ mod current_version_tests {
     use native_model_current::{native_model, Model};
 
     // Model for current version
-    #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+    #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
     // We no need to add the `from` attribute here, we manually implement
     // conversion between the two models using `.into()` method.
     // Maybe we could  reset the version number too. And set it to 1.
@@ -87,7 +87,7 @@ mod v081_tests {
     use native_model_v0_4_x::{native_model, Model};
 
     // Model for v0.8.1
-    #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+    #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
     #[native_model(id = 1, version = 1)]
     #[native_db_v0_8_x::native_db]
     pub struct V081Model {
@@ -159,6 +159,87 @@ fn test_migration_with_native_model_only() -> Result<(), Box<dyn std::error::Err
         current_model
     };
 
+    // Verify the transformation worked
+    assert_eq!(current_model.name, "Old Model");
+    println!("Successfully transformed: {:?}", current_model);
+
+    Ok(())
+}
+
+#[test]
+fn test_migration_with_native_model_and_native_db() -> Result<(), Box<dyn std::error::Error>> {
+    let old_db_path = PathBuf::from("test_migration_old.db");
+    let new_db_path = PathBuf::from("test_migration_new.db");
+
+    // Cleanup any previous test dbs
+    let _ = std::fs::remove_file(&old_db_path);
+    let _ = std::fs::remove_file(&new_db_path);
+
+    // Step 1: Create and populate database with old version (v0.8.1)
+    let old_model = {
+        use crate::v081_tests::V081Model;
+        use native_db_v0_8_x::{Builder, Models};
+
+        // Initialize database with v0.8.1
+        let mut models = Models::new();
+        models.define::<V081Model>()?;
+        let db = Builder::new().create(&models, &old_db_path)?;
+
+        // Store old model in database
+        let old_model = V081Model {
+            id: 1,
+            name: "Migration Test Data".to_string(),
+        };
+
+        let tx = db.rw_transaction()?;
+        tx.insert(old_model.clone())?;
+        tx.commit()?;
+
+        // Read back from old database to verify storage
+        let tx = db.r_transaction()?;
+        let retrieved: Option<V081Model> = tx.get().primary(1u32)?;
+        assert!(retrieved.is_some());
+
+        println!("Old model from database: {:?}", retrieved);
+        retrieved.unwrap()
+    };
+
+    // Step 2: Transform old model to current model
+    let current_model = {
+        use crate::current_version_tests::CurrentModel;
+        let current_model: CurrentModel = old_model.into();
+        println!("Transformed to current model: {:?}", current_model);
+        current_model
+    };
+
+    // Step 3: Store transformed model in new database with current version
+    {
+        use crate::current_version_tests::CurrentModel;
+        use native_db_current::{Builder, Models};
+
+        // Initialize database with current version
+        let mut models = Models::new();
+        models.define::<CurrentModel>()?;
+        let db = Builder::new().create(&models, &new_db_path)?;
+
+        // Store current model in new database
+        let tx = db.rw_transaction()?;
+        tx.insert(current_model)?;
+        tx.commit()?;
+
+        // Verify the migrated data in new database
+        let tx = db.r_transaction()?;
+        let retrieved: Option<CurrentModel> = tx.get().primary(1u32)?;
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.clone().unwrap().name, "Migration Test Data");
+
+        println!("Current model from new database: {:?}", retrieved);
+    }
+
+    // Cleanup
+    let _ = std::fs::remove_file(&old_db_path);
+    let _ = std::fs::remove_file(&new_db_path);
+
     Ok(())
 }
 
@@ -199,7 +280,6 @@ fn test_version_isolation() -> Result<(), Box<dyn std::error::Error>> {
 
     // Set up v0.8.1 database
     {
-        use native_db_v0_8_x as native_db;
         use native_db_v0_8_x::{Builder, Models};
         use v081_tests::V081Model;
 
