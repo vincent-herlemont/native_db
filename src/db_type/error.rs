@@ -97,6 +97,12 @@ pub enum Error {
 
     #[error("Inccorect input data it does not match the model")]
     IncorrectInputData { value: Vec<u8> },
+
+    #[error("Migration failed: {message}")]
+    MigrationFailed { message: String },
+
+    #[error("Migration was rolled back due to failure")]
+    MigrationRolledBack,
 }
 
 impl From<redb::Error> for Error {

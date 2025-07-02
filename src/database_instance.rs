@@ -43,6 +43,10 @@ impl DatabaseInstance {
     pub(crate) fn redb_database_mut(&mut self) -> Result<&mut redb::Database> {
         self.kind.redb_database_mut()
     }
+
+    pub(crate) fn path(&self) -> Option<&Path> {
+        self.kind.path()
+    }
 }
 
 enum DatabaseInstanceKind {
@@ -68,6 +72,13 @@ impl DatabaseInstanceKind {
         match self {
             DatabaseInstanceKind::InMemory { redb_database } => Ok(redb_database),
             DatabaseInstanceKind::OnDisk { redb_database, .. } => Ok(redb_database),
+        }
+    }
+
+    pub(crate) fn path(&self) -> Option<&Path> {
+        match self {
+            DatabaseInstanceKind::InMemory { .. } => None,
+            DatabaseInstanceKind::OnDisk { path, .. } => Some(path),
         }
     }
 }

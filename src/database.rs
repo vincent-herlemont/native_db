@@ -1,6 +1,6 @@
 use crate::database_builder::ModelBuilder;
 use crate::database_instance::DatabaseInstance;
-use crate::db_type::Result;
+use crate::db_type::{Result, ToInput, Error};
 use crate::stats::{Stats, StatsTable};
 use crate::table_definition::PrimaryTableDefinition;
 use crate::transaction::internal::r_transaction::InternalRTransaction;
@@ -205,6 +205,125 @@ impl<'a> Database<'a> {
         }
 
         Ok(comparator.matches(&previous_version))
+    }
+
+    /// Enhanced version upgrade with closure support and automatic backup/rollback.
+    ///
+    /// This method extends `upgrading_from_version` to provide:
+    /// - Automatic backup creation before migration
+    /// - Rollback on migration failure  
+    /// - User-defined migration logic via closure
+    ///
+    /// The closure receives a reference to the database and should perform the migration logic.
+    /// If the closure returns an error, the database is automatically rolled back to the backup.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// db.upgrading_from_version_with("<0.9.0", |db| {
+    ///     // Migrate user models from v0.8.1 to current
+    ///     db.migrate_model::<v081::User, current::User, _>(|old_user| {
+    ///         current::User {
+    ///             id: old_user.id,
+    ///             username: old_user.name,  // Field renamed
+    ///             email: old_user.email,
+    ///             created_at: Utc::now(),   // New field
+    ///         }
+    ///     })
+    /// })?;
+    /// ```
+    pub fn upgrading_from_version_with<F>(&self, selector: &str, migration_fn: F) -> Result<()>
+    where
+        F: FnOnce(&Self) -> Result<()>,
+    {
+        if self.upgrading_from_version(selector)? {
+            // Only backup for on-disk databases
+            let backup_path = if let Some(path) = self.instance.path() {
+                let backup_path = path.with_extension("backup");
+                std::fs::copy(path, &backup_path).map_err(|e| Error::Io(e))?;
+                Some(backup_path)
+            } else {
+                None
+            };
+
+            match migration_fn(self) {
+                Ok(()) => {
+                    // Migration successful, remove backup
+                    if let Some(backup_path) = backup_path {
+                        let _ = std::fs::remove_file(backup_path); // Ignore errors on cleanup
+                    }
+                    Ok(())
+                }
+                Err(e) => {
+                    // Migration failed, rollback if we have a backup
+                    if let (Some(backup_path), Some(db_path)) = (backup_path, self.instance.path()) {
+                        if let Err(rollback_err) = std::fs::rename(&backup_path, db_path) {
+                            // If rollback fails, keep the backup and return both errors
+                            return Err(Error::MigrationFailed { 
+                                message: format!("Migration failed: {}. Rollback also failed: {}. Backup available at: {}", 
+                                    e, rollback_err, backup_path.display())
+                            });
+                        }
+                        Err(Error::MigrationRolledBack)
+                    } else {
+                        // In-memory database or no backup created
+                        Err(e)
+                    }
+                }
+            }
+        } else {
+            // No migration needed
+            Ok(())
+        }
+    }
+
+    /// Helper method to migrate all records of one model type to another.
+    ///
+    /// This method:
+    /// 1. Reads all records of the old model type
+    /// 2. Applies the transformation function to each record
+    /// 3. Removes old records and inserts new ones
+    /// 4. Commits the transaction
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// db.migrate_model::<v081::User, current::User, _>(|old_user| {
+    ///     current::User {
+    ///         id: old_user.id,
+    ///         username: old_user.name,
+    ///         email: old_user.email,
+    ///         created_at: Utc::now(),
+    ///     }
+    /// })?;
+    /// ```
+    pub fn migrate_model<OldModel, NewModel, F>(&self, migration_fn: F) -> Result<()>
+    where
+        OldModel: ToInput + Clone,
+        NewModel: ToInput + Clone,
+        F: Fn(OldModel) -> NewModel,
+    {
+        let tx = self.rw_transaction()?;
+        
+        // Read all old models
+        let old_records: std::result::Result<Vec<OldModel>, Error> = tx
+            .scan()
+            .primary::<OldModel>()?
+            .all()?
+            .collect();
+        let old_records = old_records?;
+        
+        // Transform and replace records
+        for old_record in old_records {
+            let new_record = migration_fn(old_record.clone());
+            
+            // Remove old record first to avoid potential key conflicts
+            tx.remove(old_record)?;
+            
+            // Insert new record
+            tx.insert(new_record)?;
+        }
+        
+        tx.commit()?;
+        Ok(())
     }
 
     pub fn redb_stats(&self) -> Result<Stats> {
