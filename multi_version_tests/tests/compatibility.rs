@@ -14,12 +14,35 @@ mod current_version_tests {
 
     // Model for current version
     #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+    // We no need to add the `from` attribute here, we manually implement
+    // conversion between the two models using `.into()` method.
+    // Maybe we could  reset the version number too. And set it to 1.
     #[native_model(id = 1, version = 1)]
     #[native_db_current::native_db]
     pub struct CurrentModel {
         #[primary_key]
         pub id: u32,
         pub name: String,
+    }
+
+    // Upgrade from v0.8.1 to current version
+    impl From<crate::v081_tests::V081Model> for CurrentModel {
+        fn from(v081_model: crate::v081_tests::V081Model) -> Self {
+            Self {
+                id: v081_model.id,
+                name: v081_model.name,
+            }
+        }
+    }
+
+    // Downgrade from current version to v0.8.1
+    impl From<CurrentModel> for crate::v081_tests::V081Model {
+        fn from(current_model: CurrentModel) -> Self {
+            Self {
+                id: current_model.id,
+                name: current_model.name,
+            }
+        }
     }
 
     #[test]
@@ -104,6 +127,42 @@ mod v081_tests {
 }
 
 #[test]
+fn test_migration_with_native_model_only() -> Result<(), Box<dyn std::error::Error>> {
+    // Encore with old version
+    let binary_old = {
+        // Create old model
+        use crate::v081_tests::V081Model;
+        let old_model = V081Model {
+            id: 1,
+            name: "Old Model".to_string(),
+        };
+
+        // Encode using only native_model old version
+        use native_model_v0_4_x as native_model;
+        let encoded = native_model::encode(&old_model)?;
+        println!("Encoded: {:?}", encoded);
+        encoded
+    };
+
+    // Use the old model to decode binary_old
+    let old_model = {
+        use crate::v081_tests::V081Model;
+        use native_model_v0_4_x as native_model;
+        let old_model: (V081Model, _) = native_model::decode(binary_old)?;
+        old_model.0
+    };
+
+    // Transform old model to current model
+    let current_model = {
+        use crate::current_version_tests::CurrentModel;
+        let current_model: CurrentModel = old_model.into();
+        current_model
+    };
+
+    Ok(())
+}
+
+#[test]
 fn test_version_isolation() -> Result<(), Box<dyn std::error::Error>> {
     // Test that both versions can coexist and operate independently
     let current_db_path = PathBuf::from("test_current_isolation.db");
@@ -116,7 +175,7 @@ fn test_version_isolation() -> Result<(), Box<dyn std::error::Error>> {
     // Set up current version database
     {
         use current_version_tests::CurrentModel;
-        use native_db_current as native_db;
+        // use native_db_current as native_db;
         use native_db_current::{Builder, Models};
 
         let mut current_models = Models::new();
