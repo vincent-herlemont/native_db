@@ -33,6 +33,32 @@ macro_rules! seed_db {
     }};
 }
 
+#[test]
+fn secondary_key_range_negative() -> Result<(), db_type::Error> {
+    let db = seed_db!(
+        Data { id: 1, a: -8, b: 0 },
+        Data { id: 2, a: 0, b: 1 },
+        Data { id: 3, a: 10, b: 2 },
+    );
+    let r = db.r_transaction()?;
+
+    let values: Vec<Data> = r
+        .scan()
+        .secondary(DataKey::a)?
+        .range(-10..=10)?
+        .try_collect()?;
+
+    assert_eq!(
+        values,
+        vec![
+            Data { id: 1, a: -8, b: 0 },
+            Data { id: 2, a: 0, b: 1 },
+            Data { id: 3, a: 10, b: 2 },
+        ]
+    );
+    Ok(())
+}
+
 /// Test basic `and` behavior.
 mod core_and {
     use super::*;
