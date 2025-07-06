@@ -427,11 +427,55 @@ impl_inner_key_value_for_primitive!(u16);
 impl_inner_key_value_for_primitive!(u32);
 impl_inner_key_value_for_primitive!(u64);
 impl_inner_key_value_for_primitive!(u128);
-impl_inner_key_value_for_primitive!(i8);
-impl_inner_key_value_for_primitive!(i16);
-impl_inner_key_value_for_primitive!(i32);
-impl_inner_key_value_for_primitive!(i64);
-impl_inner_key_value_for_primitive!(i128);
+// Implement ToKey for signed integers with order-preserving encoding
+impl ToKey for i8 {
+    fn to_key(&self) -> Key {
+        Key::new(((*self as u8) ^ 0x80).to_be_bytes().to_vec())
+    }
+    fn key_names() -> Vec<String> {
+        vec!["i8".to_string()]
+    }
+}
+
+impl ToKey for i16 {
+    fn to_key(&self) -> Key {
+        Key::new(((*self as u16) ^ 0x8000).to_be_bytes().to_vec())
+    }
+    fn key_names() -> Vec<String> {
+        vec!["i16".to_string()]
+    }
+}
+
+impl ToKey for i32 {
+    fn to_key(&self) -> Key {
+        Key::new(((*self as u32) ^ 0x80000000).to_be_bytes().to_vec())
+    }
+    fn key_names() -> Vec<String> {
+        vec!["i32".to_string()]
+    }
+}
+
+impl ToKey for i64 {
+    fn to_key(&self) -> Key {
+        Key::new(((*self as u64) ^ 0x8000000000000000).to_be_bytes().to_vec())
+    }
+    fn key_names() -> Vec<String> {
+        vec!["i64".to_string()]
+    }
+}
+
+impl ToKey for i128 {
+    fn to_key(&self) -> Key {
+        Key::new(
+            ((*self as u128) ^ 0x80000000000000000000000000000000)
+                .to_be_bytes()
+                .to_vec(),
+        )
+    }
+    fn key_names() -> Vec<String> {
+        vec!["i128".to_string()]
+    }
+}
 impl_inner_key_value_for_primitive!(f32);
 impl_inner_key_value_for_primitive!(f64);
 
@@ -573,15 +617,15 @@ mod tests {
         let write_txn = db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(TABLE).unwrap();
-            table.insert(0u32.to_key(), &123).unwrap();
+            table.insert(0i32.to_key(), &123).unwrap();
         }
         write_txn.commit().unwrap();
 
         let read_txn = db.begin_read().unwrap();
         let table = read_txn.open_table(TABLE).unwrap();
-        assert_eq!(table.get(0u32.to_key()).unwrap().unwrap().value(), 123);
+        assert_eq!(table.get(0i32.to_key()).unwrap().unwrap().value(), 123);
 
-        let range = range(0..2);
+        let range = range(0i32..2i32);
         let iter = table.range::<Key>(range).unwrap();
         let result: Vec<_> = iter.collect();
         assert_eq!(result.len(), 1);
