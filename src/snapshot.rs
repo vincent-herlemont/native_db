@@ -5,6 +5,78 @@ use redb::ReadableTable;
 use std::path::Path;
 
 impl Database<'_> {
+    /// Creates a point-in-time copy (snapshot) of the database to the specified file path.
+    ///
+    /// This method is useful for creating backups or for working with a stable version of the
+    /// database while new transactions are being committed to the original database.
+    ///
+    /// # Arguments
+    ///
+    /// * `models`: A reference to the `Models` instance that defines the database schema.
+    /// * `path`: The `Path` where the snapshot file will be created.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the new `Database` instance representing the snapshot,
+    /// or an error if the snapshot creation fails.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use native_db::*;
+    /// use native_model::{native_model, Model};
+    /// use serde::{Deserialize, Serialize};
+    /// use std::path::Path;
+    /// use tempfile::NamedTempFile;
+    ///
+    /// #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+    /// #[native_model(id = 1, version = 1)]
+    /// #[native_db]
+    /// struct Item {
+    ///     #[primary_key]
+    ///     id: u32,
+    ///     name: String,
+    /// }
+    ///
+    /// fn main() -> Result<(), native_db::Error> {
+    ///     let mut models = Models::new();
+    ///     models.define::<Item>()?;
+    ///
+    ///     // 1. Create an in-memory database
+    ///     let db = Builder::new().create_in_memory(&models)?;
+    ///
+    ///     // 2. Insert an item
+    ///     let rw = db.rw_transaction()?;
+    ///     rw.insert(Item {
+    ///         id: 1,
+    ///         name: "test_item".to_string(),
+    ///     })?;
+    ///     rw.commit()?;
+    ///
+    ///     // 3. Create a temporary file path for the snapshot
+    ///     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    ///     let snapshot_path = temp_file.path();
+    ///
+    ///     // 4. Call the snapshot method to save the database to the file
+    ///     let db_snapshot_creator = db.snapshot(&models, snapshot_path)?;
+    ///     // Note: db_snapshot_creator is a new Database instance.
+    ///     // If you only need to ensure the snapshot is written to disk and then open it later,
+    ///     // you might not need to use `db_snapshot_creator` immediately,
+    ///     // or you can let it go out of scope if the file handle within it is not critical.
+    ///     // For this example, we proceed to open it as a new instance.
+    ///
+    ///     // 5. Open the created snapshot file as a new Database instance
+    ///     let snapshot_db = Builder::new().open(&models, snapshot_path)?;
+    ///
+    ///     // 6. Read the inserted Item from the snapshot to verify its contents
+    ///     let r = snapshot_db.r_transaction()?;
+    ///     let retrieved_item: Item = r.get().primary(1u32)?.unwrap();
+    ///     assert_eq!(retrieved_item.name, "test_item");
+    ///     println!("Retrieved item: {:?}", retrieved_item);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn snapshot<'a>(&self, models: &'a Models, path: &Path) -> Result<Database<'a>> {
         let new_db = Builder::new().create(models, path)?;
         let r = self.instance.redb_database()?.begin_read()?;

@@ -24,7 +24,7 @@ Here's a drop-in, fast, embedded database for multi-platform apps (server, deskt
 - **Thread-safe** and fully **ACID-compliant** transactions provided by [redb](https://github.com/cberner/redb).
 - **Real-time** subscription with filters for `insert`, `update` and `delete` operations.
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
-- **Hot snapshots**.
+- **[Hot snapshots](https://docs.rs/native_db/latest/native_db/struct.Database.html#method.snapshot)**.
 
 # Installation
 
