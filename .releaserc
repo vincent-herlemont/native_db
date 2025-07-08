@@ -1,11 +1,6 @@
 {
   "branches": [
-    "main",
-    {
-      "name": "0.8.x",
-      "range": "0.8.x",
-      "prerelease": false
-    }
+    "main"
   ],
   "tagFormat": "${version}",
   "plugins": [
