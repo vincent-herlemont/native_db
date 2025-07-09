@@ -159,54 +159,6 @@ impl<'a> Database<'a> {
         Ok(true)
     }
 
-    /// Returns true if the database is upgrading from the given version selector.
-    ///
-    /// - If the database is the old version, not matching the selector the function will return `false.
-    /// - If the database is not upgrading, the function will return always `false`.
-    ///
-    /// Generally used with the method [refresh](crate::transaction::RwTransaction::refresh),
-    /// to refresh the data for the given model.
-    ///
-    /// Check [release notes](https://github.com/vincent-herlemont/native_db/releases) to know when to use this method.
-    ///
-    /// # Example
-    /// ```rust,ignore
-    /// if db.upgrading_from_version("<0.8.0") {
-    ///     // Do something that runs only when the database is upgrading from version <0.8.0.
-    ///     // If the database is already at version 0.8.0, the function will return false and
-    ///     // the code will not be executed.
-    ///     let rw = db.rw_transaction().unwrap();
-    ///     rw.refresh::<Item1>().unwrap();
-    ///     rw.refresh::<Item2>().unwrap();
-    ///     rw.commit().unwrap();
-    /// }
-    /// ```
-    pub fn upgrading_from_version(&self, selector: &str) -> Result<bool> {
-        use semver::Version;
-        use semver::VersionReq;
-        let metadata = self.metadata();
-        let comparator = VersionReq::parse(selector)
-            .unwrap_or_else(|_| panic!("Invalid version selector: {selector}"));
-
-        let previous_version = if let Some(previous_version) = metadata.previous_version() {
-            previous_version
-        } else {
-            return Ok(true);
-        };
-
-        let previous_version = Version::parse(previous_version)
-            .unwrap_or_else(|_| panic!("Invalid previous version: {previous_version}"));
-        let current_version = Version::parse(metadata.current_version())
-            .unwrap_or_else(|_| panic!("Invalid current version: {}", metadata.current_version()));
-
-        // If the previous version is the same as the current version, the database is not upgrading
-        if previous_version == current_version {
-            return Ok(false);
-        }
-
-        Ok(comparator.matches(&previous_version))
-    }
-
     pub fn redb_stats(&self) -> Result<Stats> {
         let rx = self.instance.redb_database()?.begin_read()?;
         let mut stats_primary_tables = vec![];

@@ -15,7 +15,6 @@ members = ["native_db_macro"]
 
 [dependencies]
 redb = "=2.5.0"
-redb1 = { version = "=1.5.1", package = "redb", optional = true }
 native_db_macro = { version = "0.8.1", path = "native_db_macro" }
 thiserror = "2.0.0"
 serde = { version = "1.0" }
@@ -50,9 +49,7 @@ concat-idents = "1.1.5"
 
 
 [features]
-default = [ "upgrade_0_5_x", "upgrade_0_7_x" ]
-upgrade_0_5_x = [ "redb1" ]
-upgrade_0_7_x = [ ]
+default = [ ]
 
 [[bench]]
 name = "all"

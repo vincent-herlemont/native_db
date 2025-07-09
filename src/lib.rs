@@ -376,12 +376,13 @@ mod serialization;
 mod snapshot;
 mod stats;
 mod table_definition;
-pub mod upgrade;
 
 mod models;
 
 /// Database interactions here.
 pub mod transaction;
+/// Utilities for database upgrade migrations.
+pub mod upgrade;
 /// Watch data in real-time.
 pub mod watch;
 

@@ -13,10 +13,14 @@ build_default *args:
 build_with_optional *args:
     cargo build -F tokio {{args}}
 
+build_examples *args:
+    cd {{justfile_directory()}}/examples/major_upgrade; cargo build {{args}}
+
 build_all *args:
     just build_no_default {{args}};
     just build_default {{args}};
-    just build_with_optional {{args}}
+    just build_with_optional {{args}};
+    just build_examples {{args}};
 
 test_no_default *args:
     cargo test --no-default-features {{args}} -- --nocapture
@@ -27,10 +31,14 @@ test_default *args:
 test_with_optional *args:
     cargo test -F tokio {{args}} -- --nocapture
 
+test_examples *args:
+    cd {{justfile_directory()}}/examples/major_upgrade; cargo test {{args}} -- --nocapture
+
 test_all *args:
     just test_no_default {{args}};
     just test_default {{args}};
-    just test_with_optional {{args}}
+    just test_with_optional {{args}};
+    just test_examples {{args}};
 
 
 # List all available devices
@@ -91,17 +99,29 @@ expand test_file_name="util":
 expand_clean:
     rm -f src/*_expanded.rs
 
+format_examples:
+    cd {{justfile_directory()}}/examples/major_upgrade; cargo fmt
+
 format:
     cargo clippy; \
-    cargo fmt --all
+    cargo fmt --all; \
+    just format_examples
+
+fmt_check_examples:
+    cd {{justfile_directory()}}/examples/major_upgrade; cargo fmt -- --check
 
 fmt_check:
-    cargo fmt --all -- --check
+    cargo fmt --all -- --check; \
+    just fmt_check_examples
+
+clippy_check_examples:
+    cd {{justfile_directory()}}/examples/major_upgrade; cargo clippy -- -D warnings
 
 clippy_check:
     rustc --version; \
     cargo clippy --version; \
-    cargo clippy -- -D warnings
+    cargo clippy -- -D warnings; \
+    just clippy_check_examples
 
 # Format check
 fc:

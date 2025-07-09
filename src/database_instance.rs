@@ -1,4 +1,4 @@
-use crate::db_type::Result;
+use crate::db_type::{Result, UpgradeRequiredError};
 use redb::Builder;
 use std::path::Path;
 use std::path::PathBuf;
@@ -19,13 +19,21 @@ impl DatabaseInstance {
     }
 
     pub(crate) fn open_on_disk(builder: Builder, path: impl AsRef<Path>) -> Result<Self> {
-        let db = builder.open(path.as_ref())?;
-        Ok(Self {
-            kind: DatabaseInstanceKind::OnDisk {
-                redb_database: db,
-                path: path.as_ref().to_path_buf(),
-            },
-        })
+        match builder.open(path.as_ref()) {
+            Ok(db) => Ok(Self {
+                kind: DatabaseInstanceKind::OnDisk {
+                    redb_database: db,
+                    path: path.as_ref().to_path_buf(),
+                },
+            }),
+            Err(redb::DatabaseError::UpgradeRequired(version)) => Err(Box::new(
+                UpgradeRequiredError::new().with_redb_version(version),
+            )
+            .build()
+            .unwrap_err()
+            .into()),
+            Err(e) => Err(e.into()),
+        }
     }
 
     pub(crate) fn create_in_memory(builder: Builder) -> Result<Self> {
