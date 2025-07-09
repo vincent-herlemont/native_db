@@ -10,15 +10,12 @@ pub struct Metadata {
 }
 
 impl Metadata {
-    pub(crate) fn new(previous_version: String, previous_native_model_version: String) -> Self {
-        let current_version = Version::parse(CURRENT_VERSION).unwrap();
-        let current_native_model_version = Version::parse(CURRENT_NATIVE_MODEL_VERSION).unwrap();
-
+    pub(crate) fn from_stored(stored_version: String, stored_native_model_version: String) -> Self {
         Self {
-            current_version: current_version.to_string(),
-            current_native_model_version: current_native_model_version.to_string(),
-            previous_version: Some(previous_version.to_string()),
-            previous_native_model_version: Some(previous_native_model_version.to_string()),
+            current_version: stored_version,
+            current_native_model_version: stored_native_model_version,
+            previous_version: None,
+            previous_native_model_version: None,
         }
     }
 

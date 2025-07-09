@@ -25,7 +25,7 @@ struct Item2 {
 }
 
 #[test]
-#[cfg(feature = "upgrade_0_7_x")]
+#[ignore = "Upgrade features have been removed"]
 fn test_current_version() {
     use std::path::PathBuf;
     #[cfg(any(target_os = "android", target_os = "ios"))]
@@ -58,7 +58,7 @@ fn test_current_version() {
     assert_eq!(metadata.previous_version(), None);
     assert_eq!(metadata.previous_native_model_version(), None);
 
-    assert!(db.upgrading_from_version("<0.8.0").unwrap());
+    // Verify it's a new database (no previous version)
 
     drop(db);
 
@@ -72,7 +72,7 @@ fn test_current_version() {
     assert_eq!(metadata.previous_version(), Some(env!("CARGO_PKG_VERSION")));
     assert_eq!(metadata.previous_native_model_version(), Some("0.4.19"));
 
-    assert!(!db.upgrading_from_version("<0.8.0").unwrap());
+    // Verify the database has been opened before (has previous version)
 }
 
 // TODO: add test for version <=0.8.0

@@ -363,15 +363,6 @@ impl InternalRwTransaction<'_> {
         Ok(())
     }
 
-    pub fn refresh<T: ToInput + Debug>(&self) -> Result<()> {
-        for data in self.concrete_primary_drain(T::native_db_model())? {
-            let (decoded_item, _) = native_model::decode::<T>(data.0)?;
-            let decoded_item = decoded_item.native_db_input()?;
-            self.concrete_insert(T::native_db_model(), decoded_item)?;
-        }
-        Ok(())
-    }
-
     pub fn set_two_phase_commit(&mut self, enabled: bool) {
         self.redb_transaction.set_two_phase_commit(enabled)
     }

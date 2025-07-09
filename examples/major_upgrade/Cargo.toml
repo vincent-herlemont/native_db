@@ -1,0 +1,18 @@
+[package]
+name = "major_upgrade"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+# Current version (from local path)
+native_model_current = { package = "native_model", version = "0.6.2" }
+native_db_current = { package = "native_db", path = "../.." }
+
+# Previous version (from external path)
+native_model_v0_4_x = { package = "native_model", version = "0.4.20" }
+native_db_v0_8_x = { package = "native_db", version = "0.8.2" }
+
+# Common dependencies
+serde = { version = "1.0", features = ["derive"] }

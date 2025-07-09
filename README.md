@@ -43,6 +43,7 @@ Active development. The API is not stable yet and may change in the future.
 
 - [Documentation API](https://docs.rs/native_db/latest/native_db/#api)
 - [Quick Start](https://docs.rs/native_db/latest/native_db/#quick_start)
+- [Major Version Upgrade Guide](./examples/major_upgrade/README.md)
 - Full example with Tauri: [native_db_tauri_vanilla](https://github.com/vincent-herlemont/native_db_tauri_vanilla)
 
 # Projects using Native DB

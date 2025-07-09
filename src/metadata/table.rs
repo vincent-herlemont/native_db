@@ -1,4 +1,3 @@
-use super::Metadata;
 use crate::db_type::Result;
 use redb::TableDefinition;
 
@@ -9,7 +8,10 @@ use crate::database_instance::DatabaseInstance;
 
 const TABLE: TableDefinition<&str, &str> = TableDefinition::new("metadata");
 
-pub fn save_metadata(database_instance: &DatabaseInstance, configuration: &Metadata) -> Result<()> {
+pub fn save_metadata(
+    database_instance: &DatabaseInstance,
+    configuration: &super::Metadata,
+) -> Result<()> {
     let table = database_instance.redb_database()?;
     let write_thx = table.begin_write()?;
     {
@@ -25,7 +27,7 @@ pub fn save_metadata(database_instance: &DatabaseInstance, configuration: &Metad
     Ok(())
 }
 
-pub fn load_or_create_metadata(database_instance: &DatabaseInstance) -> Result<Metadata> {
+pub fn load_or_create_metadata(database_instance: &DatabaseInstance) -> Result<super::Metadata> {
     let database = database_instance.redb_database()?;
     let read_thx = database.begin_read()?;
 
@@ -36,13 +38,15 @@ pub fn load_or_create_metadata(database_instance: &DatabaseInstance) -> Result<M
         let current_native_model_version = table
             .get(VERSION_NATIVE_MODEL_NAME)?
             .expect("Fatal error: current_native_model_version not found");
-        Ok(Metadata::new(
+        // Create metadata with the loaded versions as current versions
+        // This preserves the actual database versions for comparison
+        Ok(super::Metadata::from_stored(
             current_version.value().to_string(),
             current_native_model_version.value().to_string(),
         ))
     } else {
         // Create the metadata table if it does not exist
-        let metadata = Metadata::default();
+        let metadata = super::Metadata::default();
         save_metadata(database_instance, &metadata)?;
         Ok(metadata)
     }
