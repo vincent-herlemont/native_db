@@ -27,7 +27,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
       - uses: extractions/setup-just@v3
-      - uses: hustcer/setup-nu@v3.19
+      - uses: hustcer/setup-nu@v3.20
         with:
           version: '0.105.1'
         env:
@@ -50,7 +50,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
       - uses: extractions/setup-just@v3
-      - uses: hustcer/setup-nu@v3.19
+      - uses: hustcer/setup-nu@v3.20
         with:
           version: '0.105.1'
         env:
