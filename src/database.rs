@@ -89,6 +89,11 @@ impl Database<'_> {
 impl Database<'_> {
     /// Watch queries.
     ///
+    /// **Warning**: Active watchers consume memory until explicitly removed with [`unwatch()`](Self::unwatch).
+    /// When using the `tokio` feature, watchers use unbounded channels which can accumulate memory
+    /// if events are not consumed. Always call `unwatch()` when done or ensure events are consumed
+    /// to prevent memory accumulation.
+    ///
     /// - [`get`](crate::watch::query::Watch::get) - Watch a item.
     /// - [`scan`](crate::watch::query::Watch::scan) - Watch items.
     pub fn watch(&self) -> Watch {
@@ -101,6 +106,11 @@ impl Database<'_> {
     }
 
     /// Unwatch the given `id`.
+    /// 
+    /// **Important**: Always call this method when you're done watching to free memory.
+    /// Failing to unwatch can lead to memory accumulation as watchers and their channels
+    /// are kept in memory indefinitely.
+    ///
     /// You can get the `id` from the return value of [`watch`](Self::watch).
     /// If the `id` is not valid anymore, this function will do nothing and return `false`.
     /// If the `id` is valid, the corresponding watcher will be removed and return `true`.
