@@ -236,6 +236,13 @@ impl Models {
     /// Under the hood, the secondary key is stored in a separate `redb` table. So if the secondary key is optional,
     /// the value will be stored in the table only if the value is not `None`.
     ///
+    /// **Important limitation:** Items with `None` values in optional secondary keys cannot be queried using
+    /// range syntax (e.g., `range(None..=None)`). This is because `None` values are not indexed in the secondary
+    /// key table. To find items with `None` values, you must either:
+    /// - Query all items and filter in application code
+    /// - Use a different indexing strategy (e.g., use a sentinel value instead of `None`)
+    /// - Add a separate boolean field to track presence/absence
+    ///
     /// ### Defining a Model with a Custom Optional Secondary Key
     ///
     /// ```rust

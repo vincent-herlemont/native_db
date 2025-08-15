@@ -17,6 +17,7 @@ Here's a drop-in, fast, embedded database for multi-platform apps (server, deskt
 
 - Simple API 🦀.
 - Support for **multiple indexes** (primary, secondary, unique, non-unique, optional).
+  - Note: Optional secondary keys with `None` values cannot be queried using range syntax. See [documentation](https://docs.rs/native_db) for details.
 - Fast, see [`sqlite` vs `redb` vs `native_db`](./benches/README.md) benchmarks.
 - Transparent serialization/deserialization using [native_model](https://github.com/vincent-herlemont/native_model). You can use any serialization library you want (`bincode`, `postcard`, your own etc.).
 - Ensure query **type safety** to prevent unexpected results caused by selecting with an incorrect type.

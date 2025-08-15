@@ -891,3 +891,512 @@ fn test_low_level_scan_range() {
     // And detect colision, use the return value of https://docs.rs/redb/latest/redb/struct.Table.html#method.insert
     // and re-insert the item if the return value is not null, recompute the primary key hash with a timestamp.
 }
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
+#[native_model(id = 10, version = 1)]
+#[native_db]
+struct ItemOptionalSecondaryKeyRangeTest {
+    #[primary_key]
+    id: u32,
+    #[secondary_key(optional)]
+    optional_string_key: Option<String>,
+    #[secondary_key(optional)]
+    optional_u32_key: Option<u32>,
+}
+
+/// Test that demonstrates the expected behavior when querying for None values
+/// in optional secondary keys using range syntax.
+///
+/// IMPORTANT: Native DB does NOT support querying for None/NULL values in
+/// optional secondary indexes using range syntax. This is expected behavior.
+///
+/// When an optional secondary key has a None value, it is not indexed in the
+/// secondary index table, making it impossible to query for these entries
+/// using range queries like `None..=None`.
+///
+/// To find items with None values in optional secondary keys, you must:
+/// 1. Query all items and filter in application code
+/// 2. Use a different indexing strategy (e.g., use a sentinel value instead of None)
+/// 3. Add a separate boolean field to track presence/absence
+///
+/// ## Sentinel Value Approach (Option 2)
+///
+/// A sentinel value is a special marker value that represents "no data" or "null"
+/// while still being a valid, indexable value. Instead of using `Option<T>` with
+/// potential `None` values that won't be indexed, you use a regular type with a
+/// reserved value to indicate absence.
+///
+/// ### Example:
+/// ```rust
+/// // Instead of Option<String> with None values that can't be queried:
+/// #[secondary_key(optional)]
+/// name: Option<String>,  // None values are NOT indexed
+///
+/// // Use a sentinel value that CAN be queried:
+/// #[secondary_key]
+/// name: String,  // Empty string "" acts as sentinel for "no name"
+/// ```
+///
+/// ### Common Sentinel Values:
+/// - For `String`: Empty string `""`
+/// - For unsigned integers: `u32::MAX`, `u64::MAX`
+/// - For signed integers: `-1`, `i32::MIN`
+/// - For custom types: Define a special "NULL" variant
+///
+/// ### Benefits:
+/// - All values are indexed and queryable (including "null" sentinels)
+/// - Can use efficient range queries to find "null" values
+/// - No Option wrapper overhead
+///
+/// ### Trade-offs:
+/// - Must reserve sentinel values (can't use them as real data)
+/// - Less type-safe than Option<T>
+/// - Requires documentation of which values are sentinels
+///
+/// See `test_sentinel_value_approach()` below for a complete working example.
+#[test]
+fn test_optional_secondary_key_none_range() {
+    let tf = TmpFs::new().unwrap();
+
+    let mut models = Models::new();
+    models
+        .define::<ItemOptionalSecondaryKeyRangeTest>()
+        .unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
+
+    // Insert test data with mix of None and Some values
+    let rw = db.rw_transaction().unwrap();
+
+    // Items with None values
+    rw.insert(ItemOptionalSecondaryKeyRangeTest {
+        id: 1,
+        optional_string_key: None,
+        optional_u32_key: None,
+    })
+    .unwrap();
+
+    rw.insert(ItemOptionalSecondaryKeyRangeTest {
+        id: 2,
+        optional_string_key: None,
+        optional_u32_key: Some(100),
+    })
+    .unwrap();
+
+    // Items with Some values
+    rw.insert(ItemOptionalSecondaryKeyRangeTest {
+        id: 3,
+        optional_string_key: Some("apple".to_string()),
+        optional_u32_key: Some(50),
+    })
+    .unwrap();
+
+    rw.insert(ItemOptionalSecondaryKeyRangeTest {
+        id: 4,
+        optional_string_key: Some("banana".to_string()),
+        optional_u32_key: None,
+    })
+    .unwrap();
+
+    rw.insert(ItemOptionalSecondaryKeyRangeTest {
+        id: 5,
+        optional_string_key: Some("cherry".to_string()),
+        optional_u32_key: Some(200),
+    })
+    .unwrap();
+
+    rw.commit().unwrap();
+
+    let r = db.r_transaction().unwrap();
+
+    // Test 1: Query for exactly None values using None..=None range
+    // EXPECTED: This will return 0 items because None values are not indexed
+    println!(
+        "Testing range query for None values: Option::<String>::None..=Option::<String>::None"
+    );
+    let result: Result<Vec<ItemOptionalSecondaryKeyRangeTest>, _> = r
+        .scan()
+        .secondary(ItemOptionalSecondaryKeyRangeTestKey::optional_string_key)
+        .unwrap()
+        .range(Option::<String>::None..=Option::<String>::None)
+        .unwrap()
+        .try_collect();
+
+    match result {
+        Ok(items) => {
+            println!(
+                "Successfully queried None range, found {} items",
+                items.len()
+            );
+            let ids: Vec<u32> = items.iter().map(|item| item.id).collect();
+            println!("IDs of items with None optional_string_key: {:?}", ids);
+            // EXPECTED BEHAVIOR: Will find 0 items because None values are not indexed
+            // in optional secondary keys. Items with id 1 and 2 have None values
+            // but cannot be queried this way.
+            assert_eq!(
+                ids.len(),
+                0,
+                "Expected 0 items: None values are not indexed in optional secondary keys"
+            );
+        }
+        Err(e) => {
+            println!("Error querying None range: {:?}", e);
+            panic!("Range query for None values failed: {:?}", e);
+        }
+    }
+
+    // Test 2: Query for None using different syntax with u32 type
+    // EXPECTED: This will also return 0 items
+    println!("Testing range query for None values using None..=None");
+    let result: Result<Vec<ItemOptionalSecondaryKeyRangeTest>, _> = r
+        .scan()
+        .secondary(ItemOptionalSecondaryKeyRangeTestKey::optional_u32_key)
+        .unwrap()
+        .range(Option::<u32>::None..=Option::<u32>::None)
+        .unwrap()
+        .try_collect();
+
+    match result {
+        Ok(items) => {
+            println!(
+                "Successfully queried None range for u32, found {} items",
+                items.len()
+            );
+            let ids: Vec<u32> = items.iter().map(|item| item.id).collect();
+            println!("IDs of items with None optional_u32_key: {:?}", ids);
+            // EXPECTED BEHAVIOR: Will find 0 items because None values are not indexed
+            // Items with id 1 and 4 have None values but cannot be queried this way
+            assert_eq!(
+                ids.len(),
+                0,
+                "Expected 0 items: None values are not indexed in optional secondary keys"
+            );
+        }
+        Err(e) => {
+            println!("Error querying None range for u32: {:?}", e);
+            panic!("Range query for None values failed: {:?}", e);
+        }
+    }
+
+    // Test 3: Query range from None to Some value
+    // EXPECTED: This will only return items with Some values in the range, not None values
+    println!("Testing range query from None to Some value");
+    let result: Result<Vec<ItemOptionalSecondaryKeyRangeTest>, _> = r
+        .scan()
+        .secondary(ItemOptionalSecondaryKeyRangeTestKey::optional_u32_key)
+        .unwrap()
+        .range(Option::<u32>::None..=Some(100u32))
+        .unwrap()
+        .try_collect();
+
+    match result {
+        Ok(items) => {
+            println!(
+                "Successfully queried None to Some(100) range, found {} items",
+                items.len()
+            );
+            let ids: Vec<u32> = items.iter().map(|item| item.id).collect();
+            println!("IDs of items in None..=Some(100) range: {:?}", ids);
+            // EXPECTED BEHAVIOR: Will find items with Some values <= 100 (items 2 and 3)
+            // but NOT items with None values (items 1 and 4), even though None
+            // is logically "less than" any Some value
+            assert_eq!(ids.len(), 2, "Expected 2 items with Some values in range");
+            assert!(ids.contains(&2), "Should find item 2 with Some(100)");
+            assert!(ids.contains(&3), "Should find item 3 with Some(50)");
+            assert!(!ids.contains(&1), "Should NOT find item 1 with None");
+            assert!(!ids.contains(&4), "Should NOT find item 4 with None");
+        }
+        Err(e) => {
+            println!("Error querying None to Some range: {:?}", e);
+            panic!("Unexpected error in range query: {:?}", e);
+        }
+    }
+
+    // Test 4: Demonstrate correct way to query items with Some values
+    println!("\nDemonstrating correct way to query optional secondary keys:");
+    let result: Vec<ItemOptionalSecondaryKeyRangeTest> = r
+        .scan()
+        .secondary(ItemOptionalSecondaryKeyRangeTestKey::optional_string_key)
+        .unwrap()
+        .range(Some("apple".to_string())..=Some("cherry".to_string()))
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    println!(
+        "Items with string keys between 'apple' and 'cherry': {} items",
+        result.len()
+    );
+    assert_eq!(
+        result.len(),
+        3,
+        "Should find all items with Some string values"
+    );
+
+    // Test 5: Show that querying all items and filtering is the way to find None values
+    println!("\nDemonstrating how to find items with None values:");
+    let all_items: Vec<ItemOptionalSecondaryKeyRangeTest> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .all()
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    let items_with_none_string: Vec<u32> = all_items
+        .iter()
+        .filter(|item| item.optional_string_key.is_none())
+        .map(|item| item.id)
+        .collect();
+
+    println!(
+        "Items with None optional_string_key (via filtering): {:?}",
+        items_with_none_string
+    );
+    assert_eq!(
+        items_with_none_string.len(),
+        2,
+        "Should find 2 items with None string keys"
+    );
+    assert!(items_with_none_string.contains(&1));
+    assert!(items_with_none_string.contains(&2));
+}
+
+/// Model using sentinel values instead of Option types
+/// This allows all values (including "null" sentinels) to be indexed and queryable
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
+#[native_model(id = 11, version = 1)]
+#[native_db]
+struct ItemWithSentinelValues {
+    #[primary_key]
+    id: u32,
+    #[secondary_key]
+    name: String, // Uses "" as sentinel for "no name"
+    #[secondary_key]
+    priority: u32, // Uses u32::MAX as sentinel for "no priority"
+    #[secondary_key]
+    score: i32, // Uses -1 as sentinel for "no score"
+}
+
+/// Constants defining our sentinel values
+const SENTINEL_NAME: &str = ""; // Empty string represents "no name"
+const SENTINEL_PRIORITY: u32 = u32::MAX; // MAX value represents "no priority"
+const SENTINEL_SCORE: i32 = -1; // -1 represents "no score"
+
+/// Test demonstrating the sentinel value approach as an alternative to Option<T>
+/// for handling "null" values in secondary indexes.
+///
+/// This approach allows you to query for "null" values using range syntax,
+/// which is not possible with Option<T> secondary keys.
+#[test]
+fn test_sentinel_value_approach() {
+    let tf = TmpFs::new().unwrap();
+
+    let mut models = Models::new();
+    models.define::<ItemWithSentinelValues>().unwrap();
+    let db = Builder::new()
+        .create(&models, tf.path("test").as_std_path())
+        .unwrap();
+
+    // Insert test data using sentinel values to represent "null"
+    let rw = db.rw_transaction().unwrap();
+
+    // Item with all sentinel values (equivalent to all None)
+    rw.insert(ItemWithSentinelValues {
+        id: 1,
+        name: SENTINEL_NAME.to_string(),
+        priority: SENTINEL_PRIORITY,
+        score: SENTINEL_SCORE,
+    })
+    .unwrap();
+
+    // Item with mixed sentinel and real values
+    rw.insert(ItemWithSentinelValues {
+        id: 2,
+        name: SENTINEL_NAME.to_string(), // No name
+        priority: 100,                   // Has priority
+        score: 85,                       // Has score
+    })
+    .unwrap();
+
+    // Item with all real values
+    rw.insert(ItemWithSentinelValues {
+        id: 3,
+        name: "Alice".to_string(),
+        priority: 50,
+        score: 92,
+    })
+    .unwrap();
+
+    // Another item with different sentinel values
+    rw.insert(ItemWithSentinelValues {
+        id: 4,
+        name: "Bob".to_string(),
+        priority: SENTINEL_PRIORITY, // No priority
+        score: SENTINEL_SCORE,       // No score
+    })
+    .unwrap();
+
+    rw.insert(ItemWithSentinelValues {
+        id: 5,
+        name: "Charlie".to_string(),
+        priority: 75,
+        score: SENTINEL_SCORE, // No score
+    })
+    .unwrap();
+
+    rw.commit().unwrap();
+
+    let r = db.r_transaction().unwrap();
+
+    // Test 1: Query for items with "no name" (sentinel value)
+    // THIS WORKS with sentinel values, unlike Option<String>::None
+    println!("\n=== Sentinel Value Approach Demo ===");
+    println!("Querying for items with no name (empty string sentinel):");
+
+    let items_with_no_name: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .secondary(ItemWithSentinelValuesKey::name)
+        .unwrap()
+        .range(SENTINEL_NAME.to_string()..=SENTINEL_NAME.to_string())
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    println!("Found {} items with no name", items_with_no_name.len());
+    let ids: Vec<u32> = items_with_no_name.iter().map(|item| item.id).collect();
+    println!("IDs of items with no name: {:?}", ids);
+
+    // EXPECTED: Successfully finds items 1 and 2 which have empty string names
+    assert_eq!(
+        items_with_no_name.len(),
+        2,
+        "Should find 2 items with sentinel name"
+    );
+    assert!(ids.contains(&1), "Should find item 1");
+    assert!(ids.contains(&2), "Should find item 2");
+
+    // Test 2: Query for items with "no priority" (u32::MAX sentinel)
+    println!("\nQuerying for items with no priority (u32::MAX sentinel):");
+
+    let items_with_no_priority: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .secondary(ItemWithSentinelValuesKey::priority)
+        .unwrap()
+        .range(SENTINEL_PRIORITY..=SENTINEL_PRIORITY)
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    println!(
+        "Found {} items with no priority",
+        items_with_no_priority.len()
+    );
+    let ids: Vec<u32> = items_with_no_priority.iter().map(|item| item.id).collect();
+    println!("IDs of items with no priority: {:?}", ids);
+
+    assert_eq!(
+        items_with_no_priority.len(),
+        2,
+        "Should find 2 items with sentinel priority"
+    );
+    assert!(ids.contains(&1), "Should find item 1");
+    assert!(ids.contains(&4), "Should find item 4");
+
+    // Test 3: Query for items with "no score" (-1 sentinel)
+    println!("\nQuerying for items with no score (-1 sentinel):");
+
+    let items_with_no_score: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .secondary(ItemWithSentinelValuesKey::score)
+        .unwrap()
+        .range(SENTINEL_SCORE..=SENTINEL_SCORE)
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    println!("Found {} items with no score", items_with_no_score.len());
+    let ids: Vec<u32> = items_with_no_score.iter().map(|item| item.id).collect();
+    println!("IDs of items with no score: {:?}", ids);
+
+    assert_eq!(
+        items_with_no_score.len(),
+        3,
+        "Should find 3 items with sentinel score"
+    );
+    assert!(ids.contains(&1), "Should find item 1");
+    assert!(ids.contains(&4), "Should find item 4");
+    assert!(ids.contains(&5), "Should find item 5");
+
+    // Test 4: Range query including sentinel values
+    // This demonstrates that sentinels participate in normal range queries
+    println!("\nRange query from real value to sentinel:");
+
+    let range_items: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .secondary(ItemWithSentinelValuesKey::priority)
+        .unwrap()
+        .range(60..=SENTINEL_PRIORITY) // From 60 to MAX (includes sentinel)
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    println!(
+        "Found {} items in priority range 60..=MAX",
+        range_items.len()
+    );
+    for item in &range_items {
+        println!("  ID: {}, priority: {}", item.id, item.priority);
+    }
+
+    // Should find items with priority 75, 100, and MAX (sentinel)
+    // Item 3 has priority 50 which is below 60, so not included
+    // Item 1: priority = u32::MAX (sentinel)
+    // Item 2: priority = 100
+    // Item 3: priority = 50 (not in range)
+    // Item 4: priority = u32::MAX (sentinel)
+    // Item 5: priority = 75
+    assert_eq!(
+        range_items.len(),
+        4,
+        "Should find 4 items in range (75, 100, and 2x MAX)"
+    );
+
+    // Test 5: Demonstrate helper functions for cleaner code
+    println!("\n=== Using Helper Functions ===");
+
+    // In practice, you'd typically wrap sentinel checks in helper methods
+    let all_items: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .primary()
+        .unwrap()
+        .all()
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    // Helper closures to check for sentinel values
+    let has_name = |item: &ItemWithSentinelValues| -> bool { item.name != SENTINEL_NAME };
+
+    let has_priority =
+        |item: &ItemWithSentinelValues| -> bool { item.priority != SENTINEL_PRIORITY };
+
+    let has_score = |item: &ItemWithSentinelValues| -> bool { item.score != SENTINEL_SCORE };
+
+    // Count items with real values
+    let items_with_names = all_items.iter().filter(|i| has_name(i)).count();
+    let items_with_priorities = all_items.iter().filter(|i| has_priority(i)).count();
+    let items_with_scores = all_items.iter().filter(|i| has_score(i)).count();
+
+    println!("Items with real names: {}", items_with_names);
+    println!("Items with real priorities: {}", items_with_priorities);
+    println!("Items with real scores: {}", items_with_scores);
+
+    assert_eq!(items_with_names, 3, "3 items have real names");
+    assert_eq!(items_with_priorities, 3, "3 items have real priorities");
+    assert_eq!(items_with_scores, 2, "2 items have real scores");
+
+    println!("\n✅ Sentinel value approach successfully demonstrates queryable 'null' values!");
+}
