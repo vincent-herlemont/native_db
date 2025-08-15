@@ -38,7 +38,7 @@ impl MemoryTracker {
         {
             Self::get_linux_memory()
         }
-        
+
         #[cfg(not(target_os = "linux"))]
         {
             None
@@ -48,11 +48,11 @@ impl MemoryTracker {
     #[cfg(target_os = "linux")]
     fn get_linux_memory() -> Option<MemoryStats> {
         use std::fs;
-        
+
         let status = fs::read_to_string("/proc/self/status").ok()?;
         let mut rss = None;
         let mut vsz = None;
-        
+
         for line in status.lines() {
             if line.starts_with("VmRSS:") {
                 let parts: Vec<&str> = line.split_whitespace().collect();
@@ -66,10 +66,16 @@ impl MemoryTracker {
                 }
             }
         }
-        
+
         match (rss, vsz) {
-            (Some(physical), Some(virtual_mem)) => Some(MemoryStats { physical, virtual_mem }),
-            (Some(physical), None) => Some(MemoryStats { physical, virtual_mem: physical }),
+            (Some(physical), Some(virtual_mem)) => Some(MemoryStats {
+                physical,
+                virtual_mem,
+            }),
+            (Some(physical), None) => Some(MemoryStats {
+                physical,
+                virtual_mem: physical,
+            }),
             _ => None,
         }
     }
@@ -78,14 +84,14 @@ impl MemoryTracker {
     pub fn get_memory_growth(&self) -> Option<(isize, f64)> {
         let initial = self.initial_memory.as_ref()?;
         let current = Self::get_current_memory()?;
-        
+
         let growth = current.physical as isize - initial.physical as isize;
         let percentage = if initial.physical > 0 {
             (growth as f64 / initial.physical as f64) * 100.0
         } else {
             0.0
         };
-        
+
         Some((growth, percentage))
     }
 
@@ -96,9 +102,7 @@ impl MemoryTracker {
                 if growth_percentage > max_growth_percentage {
                     Err(format!(
                         "Memory grew by {:.2}% ({} bytes), exceeding threshold of {:.2}%",
-                        growth_percentage,
-                        growth_bytes,
-                        max_growth_percentage
+                        growth_percentage, growth_bytes, max_growth_percentage
                     ))
                 } else {
                     Ok(())
@@ -134,7 +138,7 @@ impl AllocationTracker {
     pub fn track_allocation(&self, size: usize) {
         self.allocations.fetch_add(1, Ordering::Relaxed);
         let current = self.current_bytes.fetch_add(size, Ordering::Relaxed) + size;
-        
+
         // Update peak if necessary
         let mut peak = self.peak_bytes.load(Ordering::Relaxed);
         while current > peak {
@@ -198,7 +202,7 @@ impl AllocationStats {
                 return format!("{:.2} {}", bytes as f64 / *size as f64, unit);
             }
         }
-        
+
         format!("{} B", bytes)
     }
 }
@@ -210,17 +214,18 @@ mod tests {
     #[test]
     fn test_memory_tracker() {
         let _tracker = MemoryTracker::new();
-        
+
         // Allocate some memory
         let _data: Vec<u8> = vec![0; 10 * 1024 * 1024]; // 10MB
-        
+
         // Check if we can detect memory usage
         if let Some(stats) = MemoryTracker::get_current_memory() {
-            println!("Current memory - Physical: {}, Virtual: {}", 
+            println!(
+                "Current memory - Physical: {}, Virtual: {}",
                 AllocationStats::format_bytes(stats.physical),
                 AllocationStats::format_bytes(stats.virtual_mem)
             );
-            
+
             // Memory should be non-zero
             assert!(stats.physical > 0, "Physical memory should be non-zero");
         } else {
@@ -231,12 +236,12 @@ mod tests {
     #[test]
     fn test_allocation_tracker() {
         let tracker = AllocationTracker::new();
-        
+
         // Simulate allocations
         tracker.track_allocation(1024);
         tracker.track_allocation(2048);
         tracker.track_deallocation(1024);
-        
+
         let stats = tracker.get_stats();
         assert_eq!(stats.allocations, 2);
         assert_eq!(stats.deallocations, 1);
