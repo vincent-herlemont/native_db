@@ -106,7 +106,7 @@ impl Database<'_> {
     }
 
     /// Unwatch the given `id`.
-    /// 
+    ///
     /// **Important**: Always call this method when you're done watching to free memory.
     /// Failing to unwatch can lead to memory accumulation as watchers and their channels
     /// are kept in memory indefinitely.
