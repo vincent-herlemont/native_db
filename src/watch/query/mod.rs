@@ -9,9 +9,9 @@ pub use scan::*;
 /// Watch queries.
 ///
 /// **Memory Warning**: Each active watcher consumes memory until explicitly removed. The watch
-/// system stores all watchers in a HashMap and keeps channel senders alive. With the `tokio` 
+/// system stores all watchers in a HashMap and keeps channel senders alive. With the `tokio`
 /// feature, unbounded channels are used which can accumulate events if not consumed.
-/// 
+///
 /// Best practices:
 /// - Always call [`Database::unwatch()`](crate::Database::unwatch) when done watching
 /// - Consume events promptly to prevent channel backlog
