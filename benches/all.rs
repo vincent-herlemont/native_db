@@ -42,12 +42,10 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
                     let start = std::time::Instant::now();
                     let mut native_db = native_db.rw_transaction().unwrap();
                     native_db.set_two_phase_commit(true);
-                    let mut count = 0;
-                    for _ in 0..iters {
+                    for (count, _) in (0..iters).enumerate() {
                         let mut item = T::default();
-                        item.update_pk(count);
+                        item.update_pk(count as i64);
                         native_db.insert(item).unwrap();
-                        count += 1;
                     }
                     native_db.commit().unwrap();
                     start.elapsed()
@@ -67,13 +65,11 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
                     let rw = redb.begin_write().unwrap();
                     {
                         let mut table = rw.open_table(REDB_TABLE).unwrap();
-                        let mut count = 0;
-                        for _ in 0..iters {
+                        for (count, _) in (0..iters).enumerate() {
                             let mut item = T::default();
-                            item.update_pk(count);
+                            item.update_pk(count as i64);
                             let binary = item.native_model_encode().unwrap();
                             table.insert(item.get_pk(), binary).unwrap();
-                            count += 1;
                         }
                     }
                     rw.commit().unwrap();
@@ -94,15 +90,13 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
                 let transaction = sqlite
                     .transaction_with_behavior(TransactionBehavior::Immediate)
                     .unwrap();
-                let mut count = 0;
-                for _ in 0..iters {
+                for (count, _) in (0..iters).enumerate() {
                     let mut item = T::default();
-                    item.update_pk(count);
+                    item.update_pk(count as i64);
                     let binary = item.native_model_encode().unwrap();
                     transaction
                         .execute(&item.generate_sqlite_insert(), (binary,))
                         .unwrap();
-                    count += 1;
                 }
                 transaction.commit().unwrap();
                 start.elapsed()
@@ -118,12 +112,10 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
                     let mut native_db = NativeDBBenchDatabase::setup();
                     native_db.set_mode(mode);
                     let start = std::time::Instant::now();
-                    let mut count = 0;
-                    for _ in 0..iters {
+                    for (count, _) in (0..iters).enumerate() {
                         let mut item = T::default();
-                        item.update_pk(count);
+                        item.update_pk(count as i64);
                         native_db.insert(item);
-                        count += 1;
                     }
                     start.elapsed()
                 });
@@ -138,12 +130,10 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
                 b.iter_custom(|iters| {
                     let redb = RedbBenchDatabase::setup();
                     let start = std::time::Instant::now();
-                    let mut count = 0;
-                    for _ in 0..iters {
+                    for (count, _) in (0..iters).enumerate() {
                         let mut item = T::default();
-                        item.update_pk(count);
+                        item.update_pk(count as i64);
                         redb.insert(item);
-                        count += 1;
                     }
                     start.elapsed()
                 });
@@ -157,12 +147,10 @@ fn bench_insert<T: Default + Item + native_db::ToInput>(
             b.iter_custom(|iters| {
                 let sqlite = SqliteBenchDatabase::setup();
                 let start = std::time::Instant::now();
-                let mut count = 0;
-                for _ in 0..iters {
+                for (count, _) in (0..iters).enumerate() {
                     let mut item = T::default();
-                    item.update_pk(count);
+                    item.update_pk(count as i64);
                     sqlite.insert(item);
-                    count += 1;
                 }
                 start.elapsed()
             });
@@ -434,7 +422,7 @@ fn bench_delete<T: Default + Item + native_db::ToInput + Clone + Debug>(
         (DB_NAME_NATIVE_DB_QUICK_REPAIR, &Mode::QuickRepair),
     ];
 
-    for (name, mode) in name_to_mode.clone() {
+    for (name, mode) in name_to_mode {
         group.bench_function(
             BenchmarkId::new(name, bench_display.display_n_by_tranaction()),
             |b| {

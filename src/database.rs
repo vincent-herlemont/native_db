@@ -54,7 +54,7 @@ impl Database<'_> {
     ///    - [`get`](crate::transaction::RwTransaction::get) - Get a item.
     ///    - [`scan`](crate::transaction::RwTransaction::scan) - Scan items.
     ///    - [`len`](crate::transaction::RwTransaction::len) - Get the number of items.
-    pub fn rw_transaction(&self) -> Result<RwTransaction> {
+    pub fn rw_transaction(&self) -> Result<RwTransaction<'_>> {
         let rw = self.instance.redb_database()?.begin_write()?;
         let write_txn = RwTransaction {
             watcher: &self.watchers,
@@ -74,7 +74,7 @@ impl Database<'_> {
     ///   - [`get`](crate::transaction::RTransaction::get) - Get a item.
     ///   - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
     ///   - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
-    pub fn r_transaction(&self) -> Result<RTransaction> {
+    pub fn r_transaction(&self) -> Result<RTransaction<'_>> {
         let txn = self.instance.redb_database()?.begin_read()?;
         let read_txn = RTransaction {
             internal: InternalRTransaction {
@@ -96,7 +96,7 @@ impl Database<'_> {
     ///
     /// - [`get`](crate::watch::query::Watch::get) - Watch a item.
     /// - [`scan`](crate::watch::query::Watch::scan) - Watch items.
-    pub fn watch(&self) -> Watch {
+    pub fn watch(&self) -> Watch<'_> {
         Watch {
             internal: InternalWatch {
                 watchers: &self.watchers,

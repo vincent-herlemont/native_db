@@ -74,7 +74,7 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn all(&self) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+    pub fn all(&self) -> Result<SecondaryScanIterator<'_, PrimaryTable, T>> {
         let mut primary_keys = vec![];
         for keys in self.secondary_table.iter()? {
             let (_, l_primary_keys) = keys?;
@@ -128,7 +128,7 @@ where
     pub fn range<R: RangeBounds<impl ToKey>>(
         &self,
         range: R,
-    ) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+    ) -> Result<SecondaryScanIterator<'_, PrimaryTable, T>> {
         check_range_key_range_bounds_from_key_definition(&self.key_def, &range)?;
         let mut primary_keys = vec![];
         let database_inner_key_value_range = KeyRange::new(range);
@@ -187,7 +187,7 @@ where
     pub fn start_with(
         &self,
         start_with: impl ToKey,
-    ) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+    ) -> Result<SecondaryScanIterator<'_, PrimaryTable, T>> {
         check_key_type_from_key_definition(&self.key_def, &start_with)?;
         let start_with = start_with.to_key();
         let mut primary_keys = vec![];
@@ -276,7 +276,10 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn equal(&self, key: impl ToKey + Clone) -> Result<SecondaryScanIterator<PrimaryTable, T>> {
+    pub fn equal(
+        &self,
+        key: impl ToKey + Clone,
+    ) -> Result<SecondaryScanIterator<'_, PrimaryTable, T>> {
         self.range(key.clone()..=key)
     }
 }

@@ -15,7 +15,7 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
     where
         Self: 'db_bis;
 
-    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition>;
+    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition<'_>>;
 
     fn get_primary_table(&'txn self, model: &Model) -> Result<Self::RedbPrimaryTable>;
 

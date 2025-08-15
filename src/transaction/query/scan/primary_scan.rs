@@ -53,7 +53,7 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn all(&self) -> Result<PrimaryScanIterator<T>> {
+    pub fn all(&self) -> Result<PrimaryScanIterator<'_, T>> {
         let range = self.primary_table.range::<Key>(..)?;
         Ok(PrimaryScanIterator {
             range,
@@ -91,7 +91,10 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn range<R: RangeBounds<impl ToKey>>(&self, range: R) -> Result<PrimaryScanIterator<T>> {
+    pub fn range<R: RangeBounds<impl ToKey>>(
+        &self,
+        range: R,
+    ) -> Result<PrimaryScanIterator<'_, T>> {
         let model = T::native_db_model();
         check_range_key_range_bounds(&model, &range)?;
         let database_inner_key_value_range = KeyRange::new(range);
@@ -134,7 +137,10 @@ where
     ///     Ok(())
     /// }
     /// ```
-    pub fn start_with(&self, start_with: impl ToKey) -> Result<PrimaryScanIteratorStartWith<T>> {
+    pub fn start_with(
+        &self,
+        start_with: impl ToKey,
+    ) -> Result<PrimaryScanIteratorStartWith<'_, T>> {
         let model = T::native_db_model();
         check_key_type(&model, &start_with)?;
         let start_with = start_with.to_key();

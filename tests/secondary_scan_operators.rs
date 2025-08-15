@@ -314,7 +314,7 @@ mod edge_cases {
             Data { id: 4, a: 3, b: 8 },
             Data { id: 5, a: 4, b: 9 },
         );
-        let r = db.r_transaction()?;
+        let _r = db.r_transaction()?;
 
         // TODO how to trigger this?
 

@@ -99,6 +99,46 @@ fn _check_key_type_from_key_definition<K: ToKey>(
     Ok(())
 }
 
+fn _check_key_type<K: ToKey>(model: &Model) -> Result<()> {
+    if !K::key_names()
+        .iter()
+        .any(|name| model.primary_key.rust_types.contains(name))
+    {
+        return Err(Error::MismatchedKeyType {
+            key_name: model.primary_key.unique_table_name.to_string(),
+            expected_types: model.primary_key.rust_types.clone(),
+            got_types: K::key_names(),
+            operation: "get".to_string(),
+        });
+    }
+    Ok(())
+}
+
+pub(crate) fn check_key_type<K: ToKey>(model: &Model, _key: &K) -> Result<()> {
+    _check_key_type::<K>(model)
+}
+
+pub(crate) fn check_key_type_from_key_definition<K: ToKey>(
+    key_definition: &KeyDefinition<KeyOptions>,
+    _key: &K,
+) -> Result<()> {
+    _check_key_type_from_key_definition::<K>(key_definition)
+}
+
+pub(crate) fn check_range_key_range_bounds<K: ToKey>(
+    model: &Model,
+    _range: &impl RangeBounds<K>,
+) -> Result<()> {
+    _check_key_type::<K>(model)
+}
+
+pub(crate) fn check_range_key_range_bounds_from_key_definition<K: ToKey>(
+    key_definition: &KeyDefinition<KeyOptions>,
+    _range: &impl RangeBounds<K>,
+) -> Result<()> {
+    _check_key_type_from_key_definition::<K>(key_definition)
+}
+
 #[cfg(test)]
 mod test_check_key_type_from_key_definition {
     use super::_check_key_type_from_key_definition;
@@ -164,44 +204,4 @@ mod test_check_key_type_from_key_definition {
         })
         .is_err());
     }
-}
-
-fn _check_key_type<K: ToKey>(model: &Model) -> Result<()> {
-    if !K::key_names()
-        .iter()
-        .any(|name| model.primary_key.rust_types.contains(name))
-    {
-        return Err(Error::MismatchedKeyType {
-            key_name: model.primary_key.unique_table_name.to_string(),
-            expected_types: model.primary_key.rust_types.clone(),
-            got_types: K::key_names(),
-            operation: "get".to_string(),
-        });
-    }
-    Ok(())
-}
-
-pub(crate) fn check_key_type<K: ToKey>(model: &Model, _key: &K) -> Result<()> {
-    _check_key_type::<K>(model)
-}
-
-pub(crate) fn check_key_type_from_key_definition<K: ToKey>(
-    key_definition: &KeyDefinition<KeyOptions>,
-    _key: &K,
-) -> Result<()> {
-    _check_key_type_from_key_definition::<K>(key_definition)
-}
-
-pub(crate) fn check_range_key_range_bounds<K: ToKey>(
-    model: &Model,
-    _range: &impl RangeBounds<K>,
-) -> Result<()> {
-    _check_key_type::<K>(model)
-}
-
-pub(crate) fn check_range_key_range_bounds_from_key_definition<K: ToKey>(
-    key_definition: &KeyDefinition<KeyOptions>,
-    _range: &impl RangeBounds<K>,
-) -> Result<()> {
-    _check_key_type_from_key_definition::<K>(key_definition)
 }

@@ -20,7 +20,7 @@ impl WatchScan<'_, '_> {
     /// - [`all`](crate::watch::query::WatchScanPrimary::all) - Watch all items.
     /// - [`start_with`](crate::watch::query::WatchScanPrimary::start_with) - Watch items with a primary key starting with a key.
     /// - [`range`](crate::watch::query::WatchScanPrimary::range) - Watch items with a primary key in a given range.
-    pub fn primary(&self) -> WatchScanPrimary {
+    pub fn primary(&self) -> WatchScanPrimary<'_, '_> {
         WatchScanPrimary {
             internal: self.internal,
         }
@@ -31,7 +31,10 @@ impl WatchScan<'_, '_> {
     /// - [`all`](crate::watch::query::WatchScanSecondary::all) - Watch items with a given secondary key.
     /// - [`start_with`](crate::watch::query::WatchScanSecondary::start_with) - Watch items with a secondary key starting with a key.
     /// - [`range`](crate::watch::query::WatchScanSecondary::range) - Watch items with a secondary key in a given range.
-    pub fn secondary(&self, key_def: impl ToKeyDefinition<KeyOptions>) -> WatchScanSecondary {
+    pub fn secondary(
+        &self,
+        key_def: impl ToKeyDefinition<KeyOptions>,
+    ) -> WatchScanSecondary<'_, '_> {
         WatchScanSecondary {
             key_def: key_def.key_definition(),
             internal: self.internal,

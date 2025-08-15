@@ -192,10 +192,7 @@ fn test_lock_file_cleanup_on_error() {
 
         let result = Builder::new().upgrade(&models, &db_path, |_txn| {
             // Force an error during migration
-            Err(db_type::Error::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Test error",
-            )))
+            Err(db_type::Error::Io(std::io::Error::other("Test error")))
         });
 
         assert!(result.is_err());

@@ -28,7 +28,7 @@ where
     where
         Self: 'db_bis;
 
-    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition> {
+    fn table_definitions(&self) -> &HashMap<String, PrimaryTableDefinition<'_>> {
         self.primary_table_definitions
     }
 
