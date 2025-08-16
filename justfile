@@ -63,6 +63,11 @@ test_ios_list_simulators:
 test_ios *args:
     cargo dinghy -d iphone test {{args}}
 
+# Run iOS tests excluding doctests (for CI - avoids cargo-dinghy doctest packaging issues)
+[macos]
+test_ios_lib *args:
+    cargo dinghy -d iphone test --lib {{args}}
+
 # List all available android emulators
 test_android_list_emulators:
     emulator -list-avds
@@ -77,6 +82,10 @@ test_android_list_devices:
 
 test_android *args:
     cargo dinghy -d android test {{args}}
+
+# Run Android tests excluding doctests (for CI - avoids permission and "text file busy" issues)
+test_android_lib *args:
+    cargo dinghy -d android test --lib {{args}}
 
 bench_build:
     cargo bench --no-run

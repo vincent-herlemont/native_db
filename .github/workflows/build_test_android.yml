@@ -79,4 +79,5 @@ jobs:
       # - run: emulator -list-avds
       # - run: avdmanager list
       - run: just test_mobile_all_devices
-      - run: just test_android
+      # Skip doctests on Android due to cargo-dinghy permission issues and "text file busy" errors
+      - run: just test_android_lib
