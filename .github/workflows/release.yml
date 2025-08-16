@@ -17,7 +17,7 @@ jobs:
     if: github.event_name == 'push'  # only wait for workflows on automatic triggers
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: int128/wait-for-workflows-action@v1.45.0
         with:
           token: ${{ secrets.PAT_GLOBAL }}
@@ -34,7 +34,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: main
           fetch-depth: 0
