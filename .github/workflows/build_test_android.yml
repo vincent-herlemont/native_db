@@ -57,7 +57,7 @@ jobs:
           path: |
             ~/.cargo/bin/
           key: cargo-global-${{ matrix.toolchain }}-${{ github.ref }}-${{ hashFiles('**/Cargo.lock') }}
-      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.6.8 cargo-dinghy; fi
+      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.8.1 cargo-dinghy; fi
       - run: if ! command -v just &> /dev/null; then cargo install --version 1.25.2 just; fi
       - run: just --version
       - uses: hustcer/setup-nu@v3.20
