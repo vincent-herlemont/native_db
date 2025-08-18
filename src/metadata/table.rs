@@ -1,5 +1,5 @@
 use crate::db_type::Result;
-use redb::TableDefinition;
+use redb::{ReadableDatabase, TableDefinition};
 
 pub const VERSION_NATIVE_DB_NAME: &str = "version_native_db";
 pub const VERSION_NATIVE_MODEL_NAME: &str = "version_native_model";

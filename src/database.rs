@@ -9,7 +9,7 @@ use crate::transaction::RTransaction;
 use crate::transaction::RwTransaction;
 use crate::watch::query::{InternalWatch, Watch};
 use crate::{watch, Metadata};
-use redb::{MultimapTableHandle, ReadableTableMetadata, TableHandle};
+use redb::{MultimapTableHandle, ReadableDatabase, ReadableTableMetadata, TableHandle};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;

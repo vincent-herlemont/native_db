@@ -1,7 +1,6 @@
 use crate::db_type::Result;
 use crate::{Builder, Database, Models};
-use redb::ReadableMultimapTable;
-use redb::ReadableTable;
+use redb::{ReadableDatabase, ReadableMultimapTable, ReadableTable};
 use std::path::Path;
 
 impl Database<'_> {

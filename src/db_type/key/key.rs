@@ -606,7 +606,7 @@ mod tests {
 
     #[test]
     fn test_range() {
-        use redb::TableDefinition;
+        use redb::{ReadableDatabase, TableDefinition};
 
         const TABLE: TableDefinition<Key, u64> = TableDefinition::new("my_data");
 
