@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - uses: int128/wait-for-workflows-action@v1.45.0
+      - uses: int128/wait-for-workflows-action@v1.46.0
         with:
           token: ${{ secrets.PAT_GLOBAL }}
           filter-workflow-events: push
