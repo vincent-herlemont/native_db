@@ -42,7 +42,7 @@ jobs:
       - name: install npm
         uses: actions/setup-node@v4
         with:
-          node-version: '22.18.0'
+          node-version: '22.19.0'
 
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4
