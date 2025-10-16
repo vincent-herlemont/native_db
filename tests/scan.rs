@@ -1,5 +1,6 @@
 // TODO: refactor and move to query/ folder
 
+use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use native_db::*;
 use native_model::{native_model, Model};
@@ -1164,6 +1165,20 @@ fn test_optional_secondary_key_none_range() {
     assert!(items_with_none_string.contains(&2));
 }
 
+/// Wrapper for DateTime<Utc> to implement ToKey
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
+struct DateTimeWrapper(DateTime<Utc>);
+
+impl native_db::ToKey for DateTimeWrapper {
+    fn to_key(&self) -> native_db::Key {
+        native_db::Key::new(self.0.timestamp_millis().to_be_bytes().to_vec())
+    }
+
+    fn key_names() -> Vec<String> {
+        vec!["DateTime".to_string()]
+    }
+}
+
 /// Model using sentinel values instead of Option types
 /// This allows all values (including "null" sentinels) to be indexed and queryable
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
@@ -1178,12 +1193,23 @@ struct ItemWithSentinelValues {
     priority: u32, // Uses u32::MAX as sentinel for "no priority"
     #[secondary_key]
     score: i32, // Uses -1 as sentinel for "no score"
+    #[secondary_key]
+    date: DateTimeWrapper, // Uses DateTimeWrapper(DateTime::MIN_UTC) as sentinel for "no date"
 }
 
 /// Constants defining our sentinel values
 const SENTINEL_NAME: &str = ""; // Empty string represents "no name"
 const SENTINEL_PRIORITY: u32 = u32::MAX; // MAX value represents "no priority"
 const SENTINEL_SCORE: i32 = -1; // -1 represents "no score"
+const SENTINEL_DATE_TIMESTAMP: i64 = -30610224000; // Timestamp for year 1000-01-01 00:00:00 UTC
+
+/// Helper function to create the sentinel date
+fn create_sentinel_date() -> DateTimeWrapper {
+    DateTimeWrapper(
+        DateTime::<Utc>::from_timestamp(SENTINEL_DATE_TIMESTAMP, 0)
+            .expect("Failed to create sentinel date")
+    )
+}
 
 /// Test demonstrating the sentinel value approach as an alternative to Option<T>
 /// for handling "null" values in secondary indexes.
@@ -1200,6 +1226,9 @@ fn test_sentinel_value_approach() {
         .create(&models, tf.path("test").as_std_path())
         .unwrap();
 
+    // Create sentinel date using helper function
+    let sentinel_date = create_sentinel_date();
+
     // Insert test data using sentinel values to represent "null"
     let rw = db.rw_transaction().unwrap();
 
@@ -1209,6 +1238,7 @@ fn test_sentinel_value_approach() {
         name: SENTINEL_NAME.to_string(),
         priority: SENTINEL_PRIORITY,
         score: SENTINEL_SCORE,
+        date: sentinel_date.clone(),
     })
     .unwrap();
 
@@ -1218,6 +1248,7 @@ fn test_sentinel_value_approach() {
         name: SENTINEL_NAME.to_string(), // No name
         priority: 100,                   // Has priority
         score: 85,                       // Has score
+        date: DateTimeWrapper(DateTime::parse_from_rfc3339("2024-01-15T10:00:00Z").unwrap().with_timezone(&Utc)), // Has date
     })
     .unwrap();
 
@@ -1227,6 +1258,7 @@ fn test_sentinel_value_approach() {
         name: "Alice".to_string(),
         priority: 50,
         score: 92,
+        date: DateTimeWrapper(DateTime::parse_from_rfc3339("2024-03-10T14:30:00Z").unwrap().with_timezone(&Utc)),
     })
     .unwrap();
 
@@ -1236,6 +1268,7 @@ fn test_sentinel_value_approach() {
         name: "Bob".to_string(),
         priority: SENTINEL_PRIORITY, // No priority
         score: SENTINEL_SCORE,       // No score
+        date: sentinel_date.clone(),         // No date
     })
     .unwrap();
 
@@ -1244,6 +1277,7 @@ fn test_sentinel_value_approach() {
         name: "Charlie".to_string(),
         priority: 75,
         score: SENTINEL_SCORE, // No score
+        date: DateTimeWrapper(DateTime::parse_from_rfc3339("2024-06-20T08:15:00Z").unwrap().with_timezone(&Utc)),
     })
     .unwrap();
 
@@ -1330,7 +1364,58 @@ fn test_sentinel_value_approach() {
     assert!(ids.contains(&4), "Should find item 4");
     assert!(ids.contains(&5), "Should find item 5");
 
-    // Test 4: Range query including sentinel values
+    // Test 4: Query for items with "no date" (NaiveDate::MIN sentinel)
+    println!("\nQuerying for items with no date (NaiveDate::MIN sentinel):");
+
+    let items_with_no_date: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .secondary(ItemWithSentinelValuesKey::date)
+        .unwrap()
+        .range(sentinel_date.clone()..=sentinel_date.clone())
+        .unwrap()
+        .try_collect()
+        .unwrap();
+
+    println!("Found {} items with no date", items_with_no_date.len());
+    let ids: Vec<u32> = items_with_no_date.iter().map(|item| item.id).collect();
+    println!("IDs of items with no date: {:?}", ids);
+
+    assert_eq!(
+        items_with_no_date.len(),
+        2,
+        "Should find 2 items with sentinel date"
+    );
+    assert!(ids.contains(&1), "Should find item 1");
+    assert!(ids.contains(&4), "Should find item 4");
+
+    // Test 5: Date range query demonstrating sentinel behavior
+    println!("\nDate range query from year 2024 onwards:");
+    
+    let date_2024 = DateTimeWrapper(DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z").unwrap().with_timezone(&Utc));
+    let date_max = DateTimeWrapper(DateTime::parse_from_rfc3339("9999-12-31T23:59:59Z").unwrap().with_timezone(&Utc));
+    let date_range_items: Vec<ItemWithSentinelValues> = r
+        .scan()
+        .secondary(ItemWithSentinelValuesKey::date)
+        .unwrap()
+        .range(date_2024..=date_max)
+        .unwrap()
+        .try_collect()
+        .unwrap();
+    
+    println!("Found {} items with dates >= 2024-01-01", date_range_items.len());
+    for item in &date_range_items {
+        println!("  ID: {}, date: {:?}", item.id, item.date);
+    }
+    
+    // Should find items 2, 3, and 5 which have dates in 2024
+    // Items 1 and 4 have SENTINEL_DATE (MIN) which is far before 2024
+    assert_eq!(
+        date_range_items.len(),
+        3,
+        "Should find 3 items with dates in 2024"
+    );
+
+    // Test 6: Range query including sentinel values
     // This demonstrates that sentinels participate in normal range queries
     println!("\nRange query from real value to sentinel:");
 
@@ -1364,7 +1449,7 @@ fn test_sentinel_value_approach() {
         "Should find 4 items in range (75, 100, and 2x MAX)"
     );
 
-    // Test 5: Demonstrate helper functions for cleaner code
+    // Test 7: Demonstrate helper functions for cleaner code
     println!("\n=== Using Helper Functions ===");
 
     // In practice, you'd typically wrap sentinel checks in helper methods
@@ -1385,18 +1470,23 @@ fn test_sentinel_value_approach() {
 
     let has_score = |item: &ItemWithSentinelValues| -> bool { item.score != SENTINEL_SCORE };
 
+    let has_date = |item: &ItemWithSentinelValues| -> bool { item.date != sentinel_date };
+
     // Count items with real values
     let items_with_names = all_items.iter().filter(|i| has_name(i)).count();
     let items_with_priorities = all_items.iter().filter(|i| has_priority(i)).count();
     let items_with_scores = all_items.iter().filter(|i| has_score(i)).count();
+    let items_with_dates = all_items.iter().filter(|i| has_date(i)).count();
 
     println!("Items with real names: {}", items_with_names);
     println!("Items with real priorities: {}", items_with_priorities);
     println!("Items with real scores: {}", items_with_scores);
+    println!("Items with real dates: {}", items_with_dates);
 
     assert_eq!(items_with_names, 3, "3 items have real names");
     assert_eq!(items_with_priorities, 3, "3 items have real priorities");
     assert_eq!(items_with_scores, 2, "2 items have real scores");
+    assert_eq!(items_with_dates, 3, "3 items have real dates");
 
     println!("\n✅ Sentinel value approach successfully demonstrates queryable 'null' values!");
 }
