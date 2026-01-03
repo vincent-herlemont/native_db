@@ -27,6 +27,7 @@
 //! - [`Database`] - Database instance.
 //!    - [`compact`](crate::Database::compact) - Compact the database.
 //!    - [`check_integrity`](crate::Database::check_integrity) - Check the integrity of the database.
+//!    - [`snapshot`](crate::Database::snapshot) - Create a point-in-time snapshot of the database.
 //!    - [`rw_transaction`](crate::Database::rw_transaction) - Create a read-write transaction.
 //!       - [`insert`](crate::transaction::RwTransaction::insert) - Insert a item, fail if the item already exists.
 //!       - [`upsert`](crate::transaction::RwTransaction::upsert) - Upsert a item, update if the item already exists.
