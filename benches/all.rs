@@ -5,6 +5,7 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use itertools::Itertools;
 use native_db::db_type::{KeyDefinition, KeyOptions, ToKeyDefinition};
 use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+use native_db::transaction::ReadTransactionTrait;
 use redb::ReadableDatabase;
 use rusqlite::TransactionBehavior;
 use setup::*;

@@ -31,6 +31,7 @@ impl Key {
 /// use native_db::native_model::{native_model, Model};
 /// use serde::{Deserialize, Serialize};
 ///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+/// use crate::native_db::transaction::ReadTransactionTrait;
 
 /// #[derive(Debug, Deserialize, Serialize)]
 /// struct City(String);
@@ -81,6 +82,7 @@ impl Key {
 /// use native_db::native_model::{native_model, Model};
 /// use serde::{Deserialize, Serialize};
 ///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+/// use crate::native_db::transaction::ReadTransactionTrait;
 
 /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
 /// struct Uuid(uuid::Uuid);
@@ -130,6 +132,7 @@ impl Key {
 /// use serde::{Deserialize, Serialize};
 /// use itertools::Itertools;
 ///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+/// use crate::native_db::transaction::ReadTransactionTrait;
 
 /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
 /// struct DateTime(chrono::DateTime<chrono::Utc>);

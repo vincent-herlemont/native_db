@@ -1,9 +1,9 @@
 use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+use native_db::transaction::ReadTransactionTrait;
 use native_db::{
     db_type::{Key, ToKey},
     native_db, Builder, Models,
 };
-
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 use shortcut_assert_fs::TmpFs;

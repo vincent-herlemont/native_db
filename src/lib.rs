@@ -140,6 +140,7 @@
 //! # }
 //! use native_db::*;
 //! use once_cell::sync::Lazy;
+//! use crate::native_db::transaction::ReadTransactionTrait;
 //!
 //! // Define the models
 //! // The lifetime of the models needs to be longer or equal to the lifetime of the database.
@@ -189,6 +190,7 @@
 //! use native_db::*;
 //! use once_cell::sync::Lazy;
 //! use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+//! use crate::native_db::transaction::ReadTransactionTrait;
 //! #
 //! # static MODELS: Lazy<Models> = Lazy::new(|| {
 //! #    let mut models = Models::new();

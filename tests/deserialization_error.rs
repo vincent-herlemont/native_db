@@ -26,6 +26,8 @@ static PROJECT_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/tests/data");
 #[test]
 #[ignore = "TODO: Update test to handle version upgrade errors. This test uses old database files (0.7.1) that now trigger upgrade errors."]
 fn create_local_database_for_tests() {
+    use native_db::transaction::ReadTransactionTrait;
+
     let tmp = TmpFs::new().unwrap();
     tmp.copy_assets(&PROJECT_DIR).unwrap();
     tmp.display_dir_entries();

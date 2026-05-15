@@ -325,7 +325,7 @@ impl RwTransaction<'_> {
     /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
     /// use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
-    ///
+    /// use crate::native_db::transaction::ReadTransactionTrait;
     /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
     /// #[native_model(id=1, version=1)]
     /// #[native_db]

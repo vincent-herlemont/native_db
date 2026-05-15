@@ -72,6 +72,8 @@ struct Item2 {
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 #[test]
 fn create_local_database_for_tests() {
+    use native_db::transaction::ReadTransactionTrait;
+
     let root_project_path = env!("CARGO_MANIFEST_DIR");
     let tmp_data_dir_path = format!("{}/tests/data", root_project_path);
 

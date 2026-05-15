@@ -3,8 +3,8 @@ use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
 
+use native_db::transaction::ReadTransactionTrait;
 use shortcut_assert_fs::TmpFs;
-
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]
 #[native_db]
