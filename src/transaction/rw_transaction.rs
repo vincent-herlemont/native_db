@@ -1,9 +1,10 @@
 use crate::db_type::{Input, Result, ToInput};
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
-use crate::transaction::query::RwGet;
-use crate::transaction::query::RwLen;
 use crate::transaction::query::RwScan;
+use crate::transaction::query::{RGet, RwGet};
+use crate::transaction::query::{RScan, RwLen};
 use crate::transaction::query::{RwDrain, ScanTrait};
+use crate::transaction::ReadTransactionTrait;
 use crate::watch;
 use crate::watch::Event;
 use std::cell::RefCell;
@@ -18,37 +19,35 @@ pub struct RwTransaction<'db> {
     pub(crate) internal: InternalRwTransaction<'db>,
 }
 
-impl<'db> RwTransaction<'db> {
-    /// Get a value from the database.
-    ///
-    /// - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
-    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
-    pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
+impl<'db, 'txn> ReadTransactionTrait<'db, 'txn> for RwTransaction<'db>
+where
+    'db: 'txn,
+{
+    type Get = RwGet<'db, 'txn>;
+
+    type Scan = RwScan<'db, 'txn>;
+
+    type Len = RwLen<'db, 'txn>;
+    fn get(&'txn self) -> Self::Get {
         RwGet {
             internal: &self.internal,
         }
     }
 
-    /// Get values from the database.
-    ///
-    /// - [`primary`](crate::transaction::query::RScan::primary) - Scan items by primary key.
-    /// - [`secondary`](crate::transaction::query::RScan::secondary) - Scan items by secondary key.
-    pub fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
+    fn scan(&'txn self) -> Self::Scan {
         RwScan {
             internal: &self.internal,
         }
     }
 
-    /// Get the number of values in the database.
-    ///
-    /// - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
-    /// - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.
-    pub fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
+    fn len(&'txn self) -> Self::Len {
         RwLen {
             internal: &self.internal,
         }
     }
+}
 
+impl<'db> RwTransaction<'db> {
     /// Drain values from the database.
     ///
     /// **TODO: needs to be improved, so don't use it yet.**
