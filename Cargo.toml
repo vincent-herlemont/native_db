@@ -18,7 +18,7 @@ redb = "=3.0.2"
 native_db_macro = { version = "0.8.1", path = "native_db_macro" }
 thiserror = "2.0.0"
 serde = { version = "1.0" }
-native_model = { version = "0.6.2" }
+native_model = {git="https://github.com/vincent-herlemont/native_model.git", package="native_model"}
 semver = "1"
 
 # Optional tokio support

@@ -5,6 +5,7 @@ use crate::table_definition::PrimaryTableDefinition;
 use crate::Model;
 use redb::ReadableTableMetadata;
 use redb::{ReadableMultimapTable, ReadableTable};
+use serde::Deserialize;
 use std::collections::HashMap;
 
 pub trait PrivateReadableTransaction<'db, 'txn> {
@@ -28,8 +29,15 @@ pub trait PrivateReadableTransaction<'db, 'txn> {
     fn get_by_primary_key(&'txn self, model: Model, key: impl ToKey) -> Result<Option<Output>> {
         let table = self.get_primary_table(&model)?;
         let key = key.to_key();
-        let item = table.get(key)?;
-        Ok(item.map(|item| item.value().into()))
+        let item_guard = table.get(key)?;
+        let value = if let Some(item_guard) = item_guard {
+            let value = item_guard.value();
+            let output = value.into();
+            output
+        } else {
+            return Ok(None);
+        };
+        Ok(Some(value))
     }
 
     fn get_by_secondary_key(

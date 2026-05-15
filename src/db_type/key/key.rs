@@ -30,7 +30,9 @@ impl Key {
 /// use native_db::*;
 /// use native_db::native_model::{native_model, Model};
 /// use serde::{Deserialize, Serialize};
-///
+///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+/// use crate::native_db::transaction::ReadTransactionTrait;
+
 /// #[derive(Debug, Deserialize, Serialize)]
 /// struct City(String);
 ///
@@ -58,10 +60,10 @@ impl Key {
 ///     let mut models = Models::new();
 ///     models.define::<Country>()?;
 ///     let db = Builder::new().create_in_memory(&models)?;
-///     
+///
 ///     // Open a read transaction
 ///     let r = db.r_transaction()?;
-///     
+///
 ///     // Get contry by the capital city (primary key)
 ///     let _us: Option<Country> = r.get().primary(City("Washington, D.C.".to_string()))?;
 ///
@@ -79,7 +81,9 @@ impl Key {
 /// use native_db::*;
 /// use native_db::native_model::{native_model, Model};
 /// use serde::{Deserialize, Serialize};
-///
+///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+/// use crate::native_db::transaction::ReadTransactionTrait;
+
 /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
 /// struct Uuid(uuid::Uuid);
 ///
@@ -105,7 +109,7 @@ impl Key {
 ///     let mut models = Models::new();
 ///     models.define::<Item>()?;
 ///     let db = Builder::new().create_in_memory(&models)?;
-///     
+///
 ///     let rw = db.rw_transaction()?;
 ///     let item = Item { uuid: Uuid(uuid::Uuid::new_v4()) };
 ///     rw.insert(item.clone())?;
@@ -127,7 +131,9 @@ impl Key {
 /// use native_db::native_model::{native_model, Model};
 /// use serde::{Deserialize, Serialize};
 /// use itertools::Itertools;
-///
+///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+/// use crate::native_db::transaction::ReadTransactionTrait;
+
 /// #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone, Hash)]
 /// struct DateTime(chrono::DateTime<chrono::Utc>);
 ///
@@ -155,7 +161,7 @@ impl Key {
 ///     let mut models = Models::new();
 ///     models.define::<Item>()?;
 ///     let db = Builder::new().create_in_memory(&models)?;
-///     
+///
 ///     let rw = db.rw_transaction()?;
 ///     let item1 = Item { id: 2, created_at: DateTime(chrono::Utc::now()) };
 ///     rw.insert(item1.clone())?;
@@ -163,8 +169,8 @@ impl Key {
 ///
 ///     let item2 = Item { id: 1, created_at: DateTime(chrono::Utc::now()) };
 ///     rw.insert(item2.clone())?;
-///     rw.commit()?;    
-///     
+///     rw.commit()?;
+///
 ///     let r = db.r_transaction()?;
 ///     let result_items: Vec<Item> = r.scan().secondary(ItemKey::created_at)?.all()?.try_collect()?;
 ///     assert_eq!(result_items.len(), 2);
@@ -270,42 +276,42 @@ macro_rules! impl_inner_key_value_for_tuple {
 // Implementations for tuples of different sizes
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
-    T0, 0 | 
+    T0, 0 |
     T1, 1
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1 | 
+    T0, 0, T1, 1 |
     T2, 2
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
+    T0, 0, T1, 1,
     T2, 2 | T3, 3
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
-    T2, 2, T3, 3 | 
+    T0, 0, T1, 1,
+    T2, 2, T3, 3 |
     T4, 4
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
     T0, 0, T1, 1,
-    T2, 2, T3, 3, 
+    T2, 2, T3, 3,
     T4, 4 | T5, 5
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
     T0, 0, T1, 1,
     T2, 2, T3, 3,
-    T4, 4, T5, 5 
+    T4, 4, T5, 5
     | T6, 6
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
     T0, 0, T1, 1,
-    T2, 2, T3, 3, 
+    T2, 2, T3, 3,
     T4, 4, T5, 5,
     T6, 6 | T7, 7
 );
@@ -314,12 +320,12 @@ impl_inner_key_value_for_tuple!(
     T0, 0, T1, 1,
     T2, 2, T3, 3,
     T4, 4, T5, 5,
-    T6, 6, T7, 7 | 
+    T6, 6, T7, 7 |
     T8, 8
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
+    T0, 0, T1, 1,
     T2, 2, T3, 3,
     T4, 4, T5, 5,
     T6, 6, T7, 7,
@@ -327,11 +333,11 @@ impl_inner_key_value_for_tuple!(
 );
 #[rustfmt::skip]
 impl_inner_key_value_for_tuple!(
-    T0, 0, T1, 1, 
+    T0, 0, T1, 1,
     T2, 2, T3, 3,
     T4, 4, T5, 5,
     T6, 6, T7, 7,
-    T8, 8, T9, 9 | 
+    T8, 8, T9, 9 |
     T10, 10
 );
 #[rustfmt::skip]

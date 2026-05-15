@@ -1,7 +1,8 @@
+use native_db::transaction::query::GetTrait;
+use native_db::transaction::ReadTransactionTrait;
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
-
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]
 #[native_db(

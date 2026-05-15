@@ -1,10 +1,11 @@
-use std::vec;
-
 use itertools::Itertools;
 use native_db::db_type::Result;
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+use native_db::transaction::ReadTransactionTrait;
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
+use std::vec;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 #[native_model(id = 1, version = 1)]

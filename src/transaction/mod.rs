@@ -11,3 +11,4 @@ mod rw_transaction;
 pub use r_transaction::*;
 /// Read-write transaction.
 pub use rw_transaction::*;
+pub mod inner;

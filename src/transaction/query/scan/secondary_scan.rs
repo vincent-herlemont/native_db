@@ -3,6 +3,7 @@ use crate::db_type::{
     KeyDefinition, KeyOptions, ToKey, ToKeyDefinition,
 };
 use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
+use crate::transaction::query::{GetTrait, LenTrait, ScanTrait};
 use redb::{self};
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
@@ -37,43 +38,6 @@ where
         }
     }
 
-    /// Iterate over all values by secondary key.
-    ///
-    /// If the secondary key is [`optional`](struct.Models.html#optional) you will
-    /// get all values that have the secondary key set.
-    ///
-    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
-    ///
-    /// # Example
-    /// ```rust
-    /// use native_db::*;
-    /// use native_db::native_model::{native_model, Model};
-    /// use serde::{Deserialize, Serialize};
-    /// use itertools::Itertools;
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[native_model(id=1, version=1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: u64,
-    ///     #[secondary_key(optional)]
-    ///     name: Option<String>,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///     
-    ///     // Get only values that have the secondary key set (name is not None)
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.all()?.try_collect()?;
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn all(&self) -> Result<SecondaryScanIterator<'_, PrimaryTable, T>> {
         let mut primary_keys = vec![];
         for keys in self.secondary_table.iter()? {
@@ -90,41 +54,6 @@ where
             _marker: PhantomData,
         })
     }
-
-    /// Iterate over all values by secondary key in a range.
-    ///
-    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
-    ///
-    /// # Example
-    /// ```rust
-    /// use native_db::*;
-    /// use native_db::native_model::{native_model, Model};
-    /// use serde::{Deserialize, Serialize};
-    /// use itertools::Itertools;
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[native_model(id=1, version=1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: u64,
-    ///     #[secondary_key]
-    ///     name: String,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///     
-    ///     // Get only values that have the secondary key name from C to the end
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.range("C"..)?.try_collect()?;
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn range<R: RangeBounds<impl ToKey>>(
         &self,
         range: R,
@@ -149,41 +78,6 @@ where
             _marker: PhantomData,
         })
     }
-
-    /// Iterate over all values by secondary key starting with a prefix.
-    ///
-    /// Anatomy of a secondary key it is a `enum` with the following structure: `<table_name>Key::<name>`.
-    ///
-    /// # Example
-    /// ```rust
-    /// use native_db::*;
-    /// use native_db::native_model::{native_model, Model};
-    /// use serde::{Deserialize, Serialize};
-    /// use itertools::Itertools;
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[native_model(id=1, version=1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: u64,
-    ///     #[secondary_key]
-    ///     name: String,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///     
-    ///     // Get only values that have the secondary key name starting with "hello"
-    ///     let _values: Vec<Data> = r.scan().secondary(DataKey::name)?.start_with("hello")?.try_collect()?;
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn start_with(
         &self,
         start_with: impl ToKey,
@@ -213,69 +107,6 @@ where
         })
     }
 
-    /// Iterate over all values by secondary key equal to the given value.
-    ///
-    /// Anatomy of a secondary key it is a `enum` with the following structure:
-    /// `<table_name>Key::<name>`.
-    ///
-    /// # Example
-    /// ```rust
-    /// use itertools::Itertools;
-    /// use native_db::native_model::{native_model, Model};
-    /// use native_db::*;
-    /// use serde::{Deserialize, Serialize};
-    ///
-    /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    /// #[native_model(id = 1, version = 1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: u64,
-    ///     #[secondary_key]
-    ///     name: String,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///
-    ///     // Add some rows
-    ///     let rw = db.rw_transaction()?;
-    ///     rw.insert(Data {
-    ///         id: 1,
-    ///         name: "C".into(),
-    ///     })?;
-    ///     rw.insert(Data {
-    ///         id: 2,
-    ///         name: "CC".into(),
-    ///     })?;
-    ///     rw.insert(Data {
-    ///         id: 3,
-    ///         name: "CCC".into(),
-    ///     })?;
-    ///     rw.commit()?;
-    ///
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///
-    ///     // Get only values that have the secondary key name equal to "CC"
-    ///     let values: Vec<Data> = r
-    ///         .scan()
-    ///         .secondary(DataKey::name)?
-    ///         .equal("CC")?
-    ///         .try_collect()?;
-    ///
-    ///     assert_eq!(
-    ///         values,
-    ///         vec![Data {
-    ///             id: 2,
-    ///             name: "CC".into()
-    ///         }]
-    ///     );
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn equal(
         &self,
         key: impl ToKey + Clone,
@@ -348,7 +179,9 @@ where
     /// use native_db::native_model::{native_model, Model};
     /// use native_db::*;
     /// use serde::{Deserialize, Serialize};
-    ///
+    /// use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+    /// use crate::native_db::transaction::ReadTransactionTrait;
+
     /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
     /// #[native_model(id = 1, version = 1)]
     /// #[native_db]
@@ -430,7 +263,8 @@ where
     /// use native_db::native_model::{native_model, Model};
     /// use native_db::*;
     /// use serde::{Deserialize, Serialize};
-    ///
+    ///use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+    ///use crate::native_db::transaction::ReadTransactionTrait;
     /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
     /// #[native_model(id = 1, version = 1)]
     /// #[native_db]
