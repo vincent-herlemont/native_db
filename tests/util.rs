@@ -1,3 +1,4 @@
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
 use native_db::*;
 use shortcut_assert_fs::TmpFs;
 

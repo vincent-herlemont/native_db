@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use native_db::native_model::{native_model, Model};
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
 use native_db::*;
 use serde::{Deserialize, Serialize};
 

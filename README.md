@@ -61,6 +61,8 @@ use serde::{Deserialize, Serialize};
 use native_db::*;
 use native_db::native_model::{native_model, Model};
 use once_cell::sync::Lazy;
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[native_model(id = 1, version = 1)]

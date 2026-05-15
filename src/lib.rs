@@ -51,7 +51,7 @@
 //!             - [`equal`](crate::transaction::query::SecondaryScan::range) - Scan items with a secondary key equal to a given value.
 //!       - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
 //!          - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
-//!          - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.    
+//!          - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.
 //!   - [`watch`](crate::Database::watch) - Watch items in real-time.  Works via [std channel](https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html) based or [tokio channel](https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.unbounded_channel.html) based depending on the feature `tokio`.
 //!       - [`get`](crate::watch::query::Watch::get) - Watch a item.
 //!          - [`primary`](crate::watch::query::WatchGet::primary) - Watch a item by primary key.
@@ -89,13 +89,15 @@
 //!         native_model::{self, native_model, Model},
 //!         ToKey,
 //!     };
+//! use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+
 //!     use serde::{Deserialize, Serialize};
 //!
 //!     pub type Person = v1::Person;
 //!
 //!     pub mod v1 {
 //!         use super::*;
-//!         
+//!
 //!         #[derive(Serialize, Deserialize, Debug)]
 //!         #[native_model(id = 1, version = 1)]
 //!         #[native_db]
@@ -126,7 +128,7 @@
 //! #
 //! #     pub mod v1 {
 //! #         use super::*;
-//! #         
+//! #
 //! #         #[derive(Serialize, Deserialize, Debug)]
 //! #         #[native_model(id = 1, version = 1)]
 //! #         #[native_db]
@@ -174,7 +176,7 @@
 //! #
 //! #     pub mod v1 {
 //! #         use super::*;
-//! #         
+//! #
 //! #         #[derive(Serialize, Deserialize, Debug)]
 //! #         #[native_model(id = 1, version = 1)]
 //! #         #[native_db]
@@ -186,6 +188,7 @@
 //! # }
 //! use native_db::*;
 //! use once_cell::sync::Lazy;
+//! use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
 //! #
 //! # static MODELS: Lazy<Models> = Lazy::new(|| {
 //! #    let mut models = Models::new();
@@ -229,7 +232,7 @@
 //! #         ToKey,
 //! #     };
 //! #    use serde::{Deserialize, Serialize};
-//!     
+//!
 //!     // Update the type alias to the latest version
 //!     pub type Person = v2::Person;
 //!
@@ -243,7 +246,7 @@
 //! #          #[primary_key]
 //! #          pub name: String,
 //! #       }
-//!         
+//!
 //!         impl From<v2::Person> for Person {
 //!            fn from(p: v2::Person) -> Self {
 //!               Self {
@@ -264,7 +267,7 @@
 //!            pub name: String,
 //!            pub age: u8,
 //!         }
-//!         
+//!
 //!         impl From<v1::Person> for Person {
 //!            fn from(p: v1::Person) -> Self {
 //!               Self {
@@ -290,7 +293,7 @@
 //! #         ToKey,
 //! #     };
 //! #    use serde::{Deserialize, Serialize};
-//! #    
+//! #
 //! #    // Update the type alias to the latest version
 //! #    pub type Person = v2::Person;
 //! #
@@ -304,7 +307,7 @@
 //! #          #[primary_key]
 //! #          pub name: String,
 //! #       }
-//! #         
+//! #
 //! #         impl From<v2::Person> for Person {
 //! #            fn from(p: v2::Person) -> Self {
 //! #               Self {
@@ -325,7 +328,7 @@
 //! #            pub name: String,
 //! #            pub age: u8,
 //! #         }
-//! #         
+//! #
 //! #         impl From<v1::Person> for Person {
 //! #            fn from(p: v1::Person) -> Self {
 //! #               Self {

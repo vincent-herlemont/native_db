@@ -1,6 +1,8 @@
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
+
 use shortcut_assert_fs::TmpFs;
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]

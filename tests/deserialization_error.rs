@@ -1,5 +1,6 @@
 use native_db::db_type::Error;
 use native_db::db_type::Result;
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
 use native_db::*;
 
 use itertools::Itertools;

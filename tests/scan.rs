@@ -1,6 +1,7 @@
 // TODO: refactor and move to query/ folder
 
 use itertools::Itertools;
+use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
 use native_db::*;
 use native_model::{native_model, Model};
 use serde::{Deserialize, Serialize};
