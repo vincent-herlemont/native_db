@@ -50,8 +50,10 @@ test_mobile_all_platforms:
     echo $env.ANDROID_NDK_HOME; \
     cargo dinghy all-platforms
 
+ios_platform := if arch() == "aarch64" { "auto-ios-aarch64-sim" } else { "auto-ios-x86_64" }
+
 [macos]
-test_ios_launch_simulator device="iPhone 14":
+test_ios_launch_simulator device="iPhone 16":
     xcrun simctl boot "{{device}}"
 
 [macos]
@@ -61,12 +63,12 @@ test_ios_list_simulators:
 # args: E.g. "--test modules watch::watch_multithreading"
 [macos]
 test_ios *args:
-    cargo dinghy -d iphone test {{args}}
+    cargo dinghy -p {{ios_platform}} -d iphone test {{args}}
 
 # Run iOS tests excluding doctests (for CI - avoids cargo-dinghy doctest packaging issues)
 [macos]
 test_ios_lib *args:
-    cargo dinghy -d iphone test --lib {{args}}
+    cargo dinghy -p {{ios_platform}} -d iphone test --lib {{args}}
 
 # List all available android emulators
 test_android_list_emulators:
