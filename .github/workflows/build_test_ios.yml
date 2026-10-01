@@ -14,19 +14,19 @@ env:
 
 jobs:
   build_test:
-    runs-on: macos-13
+    runs-on: macos-15
     strategy:
       fail-fast: true
       matrix:
         toolchain: [stable]
-        device: ["iPhone 14"]
+        device: ["iPhone 16"]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
-          targets: x86_64-apple-ios
+          targets: aarch64-apple-ios-sim
       # Install utilities
       - name: Cache cargo install
         uses: actions/cache@v4
@@ -34,9 +34,9 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: cargo-global-${{ matrix.toolchain }}-${{ github.ref }}-${{ hashFiles('**/Cargo.lock') }}
-      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.8.1 cargo-dinghy; fi
-      - run: if ! command -v just &> /dev/null; then cargo install --version 1.25.2 just; fi
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ github.ref }}-${{ hashFiles('**/Cargo.lock') }}
+      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --locked --version 0.8.6 cargo-dinghy; fi
+      - run: if ! command -v just &> /dev/null; then cargo install --locked --version 1.25.2 just; fi
       - run: just --version
       - uses: hustcer/setup-nu@v3.20
         with:

@@ -14,7 +14,9 @@ env:
 
 jobs:
   build_test:
-    runs-on: macos-13
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_AVD_HOME: /home/runner/.config/.android/avd
     strategy:
       fail-fast: true
       matrix:
@@ -36,19 +38,24 @@ jobs:
         if: always()
         with:
           path: |
-            /Users/runner/Library/Android/sdk/emulator
+            /usr/local/lib/android/sdk/emulator
           key: android-emulator-global
       - name: Cache system-images
         uses: actions/cache@v4
         if: always()
         with:
           path: |
-            /Users/runner/Library/Android/sdk/system-images
+            /usr/local/lib/android/sdk/system-images
           key: android-system-images-global-${{ matrix.profile.image }}
-      - run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
-      - run: echo "/Users/runner/Library/Android/sdk/emulator" >> $GITHUB_PATH
-      - run: echo "/Users/runner/Library/Android/sdk/platform-tools" >> $GITHUB_PATH
-      - run: echo "/Users/runner/Library/Android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - run: echo "/usr/local/lib/android/sdk/emulator" >> $GITHUB_PATH
+      - run: echo "/usr/local/lib/android/sdk/platform-tools" >> $GITHUB_PATH
+      - run: echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
       # Install utilities
       - name: Cache cargo install
         uses: actions/cache@v4
@@ -56,9 +63,9 @@ jobs:
         with:
           path: |
             ~/.cargo/bin/
-          key: cargo-global-${{ matrix.toolchain }}-${{ github.ref }}-${{ hashFiles('**/Cargo.lock') }}
-      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --version 0.8.1 cargo-dinghy; fi
-      - run: if ! command -v just &> /dev/null; then cargo install --version 1.25.2 just; fi
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ github.ref }}-${{ hashFiles('**/Cargo.lock') }}
+      - run: if ! command -v cargo-dinghy &> /dev/null; then cargo install --locked --version 0.8.6 cargo-dinghy; fi
+      - run: if ! command -v just &> /dev/null; then cargo install --locked --version 1.25.2 just; fi
       - run: just --version
       - uses: hustcer/setup-nu@v3.20
         with:
@@ -68,7 +75,7 @@ jobs:
       # End install utilities
       - run: adb start-server
       - run: sdkmanager emulator
-      - run: echo "/Users/runner/Library/Android/sdk/emulator" >> $GITHUB_PATH
+      - run: echo "/usr/local/lib/android/sdk/emulator" >> $GITHUB_PATH
       - run: yes | sdkmanager --install "${{ matrix.profile.image }}"
       # - run: sdkmanager --list_installed
       # - run: sdkmanager --list
