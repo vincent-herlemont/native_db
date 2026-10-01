@@ -26,6 +26,7 @@ Here's a drop-in, fast, embedded database for multi-platform apps (server, deskt
 - **Real-time** subscription with filters for `insert`, `update` and `delete` operations.
 - Compatible with all Rust types (`enum`, `struct`, `tuple` etc.).
 - **Hot snapshots**.
+- **Expiry (TTL)**: values older than a lifetime declared with `#[expire_after(seconds)]` are hidden from reads. See [documentation](https://docs.rs/native_db/latest/native_db/expiry/index.html).
 
 # Installation
 

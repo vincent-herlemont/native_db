@@ -55,6 +55,19 @@ impl Database<'_> {
     ///    - [`scan`](crate::transaction::RwTransaction::scan) - Scan items.
     ///    - [`len`](crate::transaction::RwTransaction::len) - Get the number of items.
     pub fn rw_transaction(&self) -> Result<RwTransaction<'_>> {
+        self.rw_transaction_at(None)
+    }
+
+    /// Creates a new read-write transaction that reads as of `observed_at`, a number of seconds.
+    ///
+    /// Values of a model declared with `expire_after` whose lifetime has elapsed at `observed_at`
+    /// are hidden from `get`, `scan` and `len`, see [`expiry`](crate::expiry).
+    /// They are still stored and can be removed.
+    pub fn rw_transaction_observed_at(&self, observed_at: u64) -> Result<RwTransaction<'_>> {
+        self.rw_transaction_at(Some(observed_at))
+    }
+
+    fn rw_transaction_at(&self, observed_at: Option<u64>) -> Result<RwTransaction<'_>> {
         let rw = self.instance.redb_database()?.begin_write()?;
         let write_txn = RwTransaction {
             watcher: &self.watchers,
@@ -63,6 +76,7 @@ impl Database<'_> {
                 redb_transaction: rw,
                 primary_table_definitions: &self.primary_table_definitions,
             },
+            observed_at,
         };
         Ok(write_txn)
     }
@@ -75,12 +89,25 @@ impl Database<'_> {
     ///   - [`scan`](crate::transaction::RTransaction::scan) - Scan items.
     ///   - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
     pub fn r_transaction(&self) -> Result<RTransaction<'_>> {
+        self.r_transaction_at(None)
+    }
+
+    /// Creates a new read-only transaction that reads as of `observed_at`, a number of seconds.
+    ///
+    /// Values of a model declared with `expire_after` whose lifetime has elapsed at `observed_at`
+    /// are hidden from `get`, `scan` and `len`, see [`expiry`](crate::expiry).
+    pub fn r_transaction_observed_at(&self, observed_at: u64) -> Result<RTransaction<'_>> {
+        self.r_transaction_at(Some(observed_at))
+    }
+
+    fn r_transaction_at(&self, observed_at: Option<u64>) -> Result<RTransaction<'_>> {
         let txn = self.instance.redb_database()?.begin_read()?;
         let read_txn = RTransaction {
             internal: InternalRTransaction {
                 redb_transaction: txn,
                 table_definitions: &self.primary_table_definitions,
             },
+            observed_at,
         };
         Ok(read_txn)
     }

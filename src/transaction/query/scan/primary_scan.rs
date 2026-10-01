@@ -9,6 +9,8 @@ where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
     pub(crate) primary_table: PrimaryTable,
+    pub(crate) model: crate::Model,
+    pub(crate) observed_at: Option<u64>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -16,9 +18,11 @@ impl<PrimaryTable, T: ToInput> PrimaryScan<PrimaryTable, T>
 where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
-    pub(crate) fn new(table: PrimaryTable) -> Self {
+    pub(crate) fn new(table: PrimaryTable, model: crate::Model, observed_at: Option<u64>) -> Self {
         Self {
             primary_table: table,
+            model,
+            observed_at,
             _marker: PhantomData,
         }
     }
@@ -57,6 +61,8 @@ where
         let range = self.primary_table.range::<Key>(..)?;
         Ok(PrimaryScanIterator {
             range,
+            model: self.model.clone(),
+            observed_at: self.observed_at,
             _marker: PhantomData,
         })
     }
@@ -103,6 +109,8 @@ where
             .range::<Key>(database_inner_key_value_range)?;
         Ok(PrimaryScanIterator {
             range,
+            model: self.model.clone(),
+            observed_at: self.observed_at,
             _marker: PhantomData,
         })
     }
@@ -149,6 +157,8 @@ where
         Ok(PrimaryScanIteratorStartWith {
             range,
             start_with,
+            model: self.model.clone(),
+            observed_at: self.observed_at,
             _marker: PhantomData,
         })
     }
@@ -156,6 +166,8 @@ where
 
 pub struct PrimaryScanIterator<'a, T: ToInput> {
     pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
+    pub(crate) model: crate::Model,
+    pub(crate) observed_at: Option<u64>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -163,17 +175,35 @@ impl<T: ToInput> Iterator for PrimaryScanIterator<'_, T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.range.next() {
-            Some(Ok((_, v))) => unwrap_item(Some(v)),
-            _ => None,
+        loop {
+            match self.range.next() {
+                Some(Ok((_, v))) => match unwrap_item::<T>(Some(v)) {
+                    Some(Ok(item)) => {
+                        if crate::expiry::visible_at(&self.model, &item, self.observed_at) {
+                            return Some(Ok(item));
+                        }
+                    }
+                    other => return other,
+                },
+                _ => return None,
+            }
         }
     }
 }
 impl<T: ToInput> DoubleEndedIterator for PrimaryScanIterator<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        match self.range.next_back() {
-            Some(Ok((_, v))) => unwrap_item(Some(v)),
-            _ => None,
+        loop {
+            match self.range.next_back() {
+                Some(Ok((_, v))) => match unwrap_item::<T>(Some(v)) {
+                    Some(Ok(item)) => {
+                        if crate::expiry::visible_at(&self.model, &item, self.observed_at) {
+                            return Some(Ok(item));
+                        }
+                    }
+                    other => return other,
+                },
+                _ => return None,
+            }
         }
     }
 }
@@ -181,6 +211,8 @@ impl<T: ToInput> DoubleEndedIterator for PrimaryScanIterator<'_, T> {
 pub struct PrimaryScanIteratorStartWith<'a, T: ToInput> {
     pub(crate) range: redb::Range<'a, Key, &'static [u8]>,
     pub(crate) start_with: Key,
+    pub(crate) model: crate::Model,
+    pub(crate) observed_at: Option<u64>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -188,16 +220,24 @@ impl<T: ToInput> Iterator for PrimaryScanIteratorStartWith<'_, T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.range.next() {
-            Some(Ok((k, v))) => {
-                let k = k.value();
-                if k.as_slice().starts_with(self.start_with.as_slice()) {
-                    unwrap_item(Some(v))
-                } else {
-                    None
+        loop {
+            match self.range.next() {
+                Some(Ok((k, v))) => {
+                    let k = k.value();
+                    if !k.as_slice().starts_with(self.start_with.as_slice()) {
+                        return None;
+                    }
+                    match unwrap_item::<T>(Some(v)) {
+                        Some(Ok(item)) => {
+                            if crate::expiry::visible_at(&self.model, &item, self.observed_at) {
+                                return Some(Ok(item));
+                            }
+                        }
+                        other => return other,
+                    }
                 }
+                _ => return None,
             }
-            _ => None,
         }
     }
 }

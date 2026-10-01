@@ -13,6 +13,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
         struct_name: struct_name.clone(),
         primary_key: None,
         secondary_keys: Default::default(),
+        expiry: None,
         do_export_keys: None,
     };
     let model_attributes_parser = syn::meta::parser(|meta| attrs.parse(meta));
@@ -39,6 +40,19 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
     let keys_enum = model_native_db.secondary_keys_enum();
     let keys_enum_database_key = model_native_db.keys_enum_database_key();
 
+    let native_db_recorded_at = match &attrs.expiry {
+        Some((field_ident, _)) => quote! {
+            fn native_db_recorded_at(&self) -> Option<u64> {
+                Some(self.#field_ident)
+            }
+        },
+        None => quote! {
+            fn native_db_recorded_at(&self) -> Option<u64> {
+                None
+            }
+        },
+    };
+
     let struct_name = struct_name.ident();
     let gen = quote! {
         #[derive(native_db::KeyAttributes)]
@@ -53,6 +67,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
                 Ok(native_db::bincode_decode_from_slice(slice)?.0)
             }
 
+            #native_db_recorded_at
             #native_db_model
             #native_db_pk
             #native_db_gks

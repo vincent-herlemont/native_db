@@ -13,6 +13,7 @@ pub(crate) struct ModelAttributes {
     pub(crate) primary_key: Option<KeyDefinition<()>>,
     pub(crate) secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
     pub(crate) do_export_keys: Option<LitBool>,
+    pub(crate) expiry: Option<(syn::Ident, u64)>,
 }
 
 impl ModelAttributes {
@@ -99,6 +100,15 @@ impl ModelAttributes {
                         .expect("Parsed field expected to have an ident for primary_key"),
                     field_type,
                     (),
+                ));
+            } else if attr.path().is_ident("expire_after") {
+                let seconds: syn::LitInt = attr.parse_args()?;
+                self.expiry = Some((
+                    field
+                        .ident
+                        .clone()
+                        .expect("Parsed field expected to have an ident for expire_after"),
+                    seconds.base10_parse::<u64>()?,
                 ));
             } else if attr.path().is_ident("secondary_key") {
                 let mut field_type_token_stream = TokenStream::new();

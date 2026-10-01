@@ -10,6 +10,7 @@ pub trait ToInput: Sized + native_model::Model {
     ) -> std::collections::HashMap<KeyDefinition<KeyOptions>, KeyEntry>;
     fn native_db_bincode_encode_to_vec(&self) -> Result<Vec<u8>>;
     fn native_db_bincode_decode_from_slice(slice: &[u8]) -> Result<Self>;
+    fn native_db_recorded_at(&self) -> Option<u64>;
 
     fn native_db_input(&self) -> Result<Input> {
         Ok(Input {

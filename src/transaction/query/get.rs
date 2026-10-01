@@ -9,6 +9,7 @@ use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 /// Get a value from the database.
 pub struct RGet<'db, 'txn> {
     pub(crate) internal: &'txn InternalRTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl RGet<'_, '_> {
@@ -44,9 +45,14 @@ impl RGet<'_, '_> {
     pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         check_key_type(&model, &key)?;
-        let result = self.internal.get_by_primary_key(model, key)?;
+        let result = self.internal.get_by_primary_key(model.clone(), key)?;
         if let Some(value) = result {
-            Ok(Some(value.inner()?))
+            let inner: T = value.inner()?;
+            if crate::expiry::visible_at(&model, &inner, self.observed_at) {
+                Ok(Some(inner))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }
@@ -95,9 +101,16 @@ impl RGet<'_, '_> {
     ) -> Result<Option<T>> {
         let model = T::native_db_model();
         check_key_type_from_key_definition(&key_def.key_definition(), &key)?;
-        let result = self.internal.get_by_secondary_key(model, key_def, key)?;
+        let result = self
+            .internal
+            .get_by_secondary_key(model.clone(), key_def, key)?;
         if let Some(value) = result {
-            Ok(Some(value.inner()?))
+            let inner: T = value.inner()?;
+            if crate::expiry::visible_at(&model, &inner, self.observed_at) {
+                Ok(Some(inner))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }
@@ -106,6 +119,7 @@ impl RGet<'_, '_> {
 
 pub struct RwGet<'db, 'txn> {
     pub(crate) internal: &'txn InternalRwTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl RwGet<'_, '_> {
@@ -115,9 +129,14 @@ impl RwGet<'_, '_> {
     pub fn primary<T: ToInput>(&self, key: impl ToKey) -> Result<Option<T>> {
         let model = T::native_db_model();
         check_key_type(&model, &key)?;
-        let result = self.internal.get_by_primary_key(model, key)?;
+        let result = self.internal.get_by_primary_key(model.clone(), key)?;
         if let Some(value) = result {
-            Ok(Some(value.inner()?))
+            let inner: T = value.inner()?;
+            if crate::expiry::visible_at(&model, &inner, self.observed_at) {
+                Ok(Some(inner))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }
@@ -133,9 +152,16 @@ impl RwGet<'_, '_> {
     ) -> Result<Option<T>> {
         check_key_type_from_key_definition(&key_def.key_definition(), &key)?;
         let model = T::native_db_model();
-        let result = self.internal.get_by_secondary_key(model, key_def, key)?;
+        let result = self
+            .internal
+            .get_by_secondary_key(model.clone(), key_def, key)?;
         if let Some(value) = result {
-            Ok(Some(value.inner()?))
+            let inner: T = value.inner()?;
+            if crate::expiry::visible_at(&model, &inner, self.observed_at) {
+                Ok(Some(inner))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }

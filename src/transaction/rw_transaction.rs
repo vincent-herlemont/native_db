@@ -16,6 +16,7 @@ pub struct RwTransaction<'db> {
     pub(crate) watcher: &'db Arc<RwLock<watch::Watchers>>,
     pub(crate) batch: RefCell<watch::Batch>,
     pub(crate) internal: InternalRwTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl<'db> RwTransaction<'db> {
@@ -26,6 +27,7 @@ impl<'db> RwTransaction<'db> {
     pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
         RwGet {
             internal: &self.internal,
+            observed_at: self.observed_at,
         }
     }
 
@@ -36,6 +38,7 @@ impl<'db> RwTransaction<'db> {
     pub fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
         RwScan {
             internal: &self.internal,
+            observed_at: self.observed_at,
         }
     }
 
@@ -46,6 +49,7 @@ impl<'db> RwTransaction<'db> {
     pub fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
         RwLen {
             internal: &self.internal,
+            observed_at: self.observed_at,
         }
     }
 

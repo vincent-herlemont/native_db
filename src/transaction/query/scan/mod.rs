@@ -12,6 +12,7 @@ use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 /// Get values from the database.
 pub struct RScan<'db, 'txn> {
     pub(crate) internal: &'txn InternalRTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl RScan<'_, '_> {
@@ -25,7 +26,7 @@ impl RScan<'_, '_> {
     ) -> Result<PrimaryScan<redb::ReadOnlyTable<Key, &'static [u8]>, T>> {
         let model = T::native_db_model();
         let table = self.internal.get_primary_table(&model)?;
-        let out = PrimaryScan::new(table);
+        let out = PrimaryScan::new(table, model, self.observed_at);
         Ok(out)
     }
 
@@ -49,13 +50,20 @@ impl RScan<'_, '_> {
         let primary_table = self.internal.get_primary_table(&model)?;
         let secondary_key = key_def.key_definition();
         let secondary_table = self.internal.get_secondary_table(&model, &secondary_key)?;
-        let out = SecondaryScan::new(primary_table, secondary_table, key_def);
+        let out = SecondaryScan::new(
+            primary_table,
+            secondary_table,
+            key_def,
+            model,
+            self.observed_at,
+        );
         Ok(out)
     }
 }
 
 pub struct RwScan<'db, 'txn> {
     pub(crate) internal: &'txn InternalRwTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl<'db, 'txn> RwScan<'db, 'txn>
@@ -72,7 +80,7 @@ where
     ) -> Result<PrimaryScan<redb::Table<'db, Key, &'static [u8]>, T>> {
         let model = T::native_db_model();
         let table = self.internal.get_primary_table(&model)?;
-        let out = PrimaryScan::new(table);
+        let out = PrimaryScan::new(table, model, self.observed_at);
         Ok(out)
     }
 
@@ -92,7 +100,13 @@ where
         let primary_table = self.internal.get_primary_table(&model)?;
         let secondary_key = key_def.key_definition();
         let secondary_table = self.internal.get_secondary_table(&model, &secondary_key)?;
-        let out = SecondaryScan::new(primary_table, secondary_table, key_def);
+        let out = SecondaryScan::new(
+            primary_table,
+            secondary_table,
+            key_def,
+            model,
+            self.observed_at,
+        );
         Ok(out)
     }
 }
