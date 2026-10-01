@@ -67,7 +67,7 @@ impl Builder {
             watchers_counter_id: AtomicU64::new(0),
         };
 
-        for (_, model_builder) in models.models_builder.iter() {
+        for model_builder in models.models_builder.values() {
             database.seed_model(model_builder)?;
         }
 
