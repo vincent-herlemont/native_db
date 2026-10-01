@@ -325,15 +325,15 @@ impl InternalRwTransaction<'_> {
             let table = self
                 .redb_transaction
                 .open_table(new_primary_table_definition.redb)?;
-            let len = table.len()?;
-            if len > 0 && old_table_definition.is_some() {
-                panic!(
-                    "Impossible to migrate the table {} because multiple old tables with data exist: {}, {}",
-                    T::native_db_model().primary_key.unique_table_name,
-                    new_primary_table_definition.redb.name(),
-                    old_table_definition.expect("Unreachable").redb.name()
-                );
-            } else if table.len()? > 0 {
+            if table.len()? > 0 {
+                if let Some(old_table_definition) = &old_table_definition {
+                    panic!(
+                        "Impossible to migrate the table {} because multiple old tables with data exist: {}, {}",
+                        T::native_db_model().primary_key.unique_table_name,
+                        new_primary_table_definition.redb.name(),
+                        old_table_definition.redb.name()
+                    );
+                }
                 old_table_definition = Some(new_primary_table_definition);
             }
         }
