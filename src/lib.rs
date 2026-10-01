@@ -52,6 +52,8 @@
 //!       - [`len`](crate::transaction::RTransaction::len) - Get the number of items.
 //!          - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
 //!          - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.    
+//!   - [`r_transaction_observed_at`](crate::Database::r_transaction_observed_at) - Create a read-only transaction that hides expired items, see [`expiry`](crate::expiry).
+//!   - [`rw_transaction_observed_at`](crate::Database::rw_transaction_observed_at) - Create a read-write transaction that hides expired items.
 //!   - [`watch`](crate::Database::watch) - Watch items in real-time.  Works via [std channel](https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html) based or [tokio channel](https://docs.rs/tokio/latest/tokio/sync/mpsc/fn.unbounded_channel.html) based depending on the feature `tokio`.
 //!       - [`get`](crate::watch::query::Watch::get) - Watch a item.
 //!          - [`primary`](crate::watch::query::WatchGet::primary) - Watch a item by primary key.
@@ -367,6 +369,7 @@
 mod database;
 mod database_builder;
 mod database_instance;
+pub mod expiry;
 
 /// A collection of type used by native_db internally (macro included).
 pub mod db_type;

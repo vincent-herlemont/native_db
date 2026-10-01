@@ -6,6 +6,7 @@ use std::collections::HashSet;
 pub struct Model {
     pub primary_key: KeyDefinition<()>,
     pub secondary_keys: HashSet<KeyDefinition<KeyOptions>>,
+    pub expiry: crate::expiry::ExpiryPolicy,
 }
 
 impl Model {

@@ -6,6 +6,7 @@ use crate::transaction::internal::rw_transaction::InternalRwTransaction;
 /// Get the number of values in the database.
 pub struct RLen<'db, 'txn> {
     pub(crate) internal: &'txn InternalRTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl RLen<'_, '_> {
@@ -40,7 +41,9 @@ impl RLen<'_, '_> {
     /// ```
     pub fn primary<T: ToInput>(&self) -> Result<u64> {
         let model = T::native_db_model();
-        let result = self.internal.primary_len(model)?;
+        let result = self
+            .internal
+            .primary_len_visible::<T>(model, self.observed_at)?;
         Ok(result)
     }
 
@@ -83,13 +86,16 @@ impl RLen<'_, '_> {
     /// ```
     pub fn secondary<T: ToInput>(&self, key_def: impl ToKeyDefinition<KeyOptions>) -> Result<u64> {
         let model = T::native_db_model();
-        let result = self.internal.secondary_len(model, key_def)?;
+        let result = self
+            .internal
+            .secondary_len_visible::<T>(model, key_def, self.observed_at)?;
         Ok(result)
     }
 }
 
 pub struct RwLen<'db, 'txn> {
     pub(crate) internal: &'txn InternalRwTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl RwLen<'_, '_> {
@@ -98,7 +104,9 @@ impl RwLen<'_, '_> {
     /// Same as [`RLen::primary()`](struct.RLen.html#method.primary).
     pub fn primary<T: ToInput>(&self) -> Result<u64> {
         let model = T::native_db_model();
-        let result = self.internal.primary_len(model)?;
+        let result = self
+            .internal
+            .primary_len_visible::<T>(model, self.observed_at)?;
         Ok(result)
     }
 
@@ -107,7 +115,9 @@ impl RwLen<'_, '_> {
     /// Same as [`RLen::secondary()`](struct.RLen.html#method.secondary).
     pub fn secondary<T: ToInput>(&self, key_def: impl ToKeyDefinition<KeyOptions>) -> Result<u64> {
         let model = T::native_db_model();
-        let result = self.internal.secondary_len(model, key_def)?;
+        let result = self
+            .internal
+            .secondary_len_visible::<T>(model, key_def, self.observed_at)?;
         Ok(result)
     }
 }

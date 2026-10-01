@@ -99,6 +99,18 @@ impl ModelNativeDB {
             })
             .collect::<Vec<_>>();
 
+        let expiry_policy = match &self.attrs.expiry {
+            Some((_, seconds)) => {
+                let seconds = *seconds;
+                quote! {
+                    native_db::expiry::ExpiryPolicy::of(native_db::expiry::Expiry::after(
+                        std::time::Duration::from_secs(#seconds),
+                    ))
+                }
+            }
+            None => quote! { native_db::expiry::ExpiryPolicy::none() },
+        };
+
         quote! {
             fn native_db_model() -> native_db::Model {
                 let mut secondary_tables_name = std::collections::HashSet::new();
@@ -106,6 +118,7 @@ impl ModelNativeDB {
                 native_db::Model {
                     primary_key: #primary_key,
                     secondary_keys: secondary_tables_name,
+                    expiry: #expiry_policy,
                 }
             }
         }

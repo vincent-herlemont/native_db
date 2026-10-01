@@ -16,6 +16,8 @@ where
     pub(crate) primary_table: PrimaryTable,
     pub(crate) secondary_table: SecondaryTable,
     pub(crate) key_def: KeyDefinition<KeyOptions>,
+    pub(crate) model: crate::Model,
+    pub(crate) observed_at: Option<u64>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -28,11 +30,15 @@ where
         primary_table: PrimaryTable,
         secondary_table: SecondaryTable,
         key_def: impl ToKeyDefinition<KeyOptions>,
+        model: crate::Model,
+        observed_at: Option<u64>,
     ) -> Self {
         Self {
             primary_table,
             secondary_table,
             key_def: key_def.key_definition(),
+            model,
+            observed_at,
             _marker: PhantomData,
         }
     }
@@ -87,6 +93,8 @@ where
         Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
+            model: self.model.clone(),
+            observed_at: self.observed_at,
             _marker: PhantomData,
         })
     }
@@ -146,6 +154,8 @@ where
         Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
+            model: self.model.clone(),
+            observed_at: self.observed_at,
             _marker: PhantomData,
         })
     }
@@ -209,6 +219,8 @@ where
         Ok(SecondaryScanIterator {
             primary_table: &self.primary_table,
             primary_keys: primary_keys.into_iter(),
+            model: self.model.clone(),
+            observed_at: self.observed_at,
             _marker: PhantomData,
         })
     }
@@ -292,6 +304,8 @@ where
 {
     pub(crate) primary_table: &'a PrimaryTable,
     pub(crate) primary_keys: IntoIter<redb::AccessGuard<'a, Key>>,
+    pub(crate) model: crate::Model,
+    pub(crate) observed_at: Option<u64>,
     pub(crate) _marker: PhantomData<T>,
 }
 
@@ -302,15 +316,24 @@ where
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.primary_keys.next() {
-            Some(primary_key) => {
-                if let Ok(value) = self.primary_table.get(primary_key.value()) {
-                    unwrap_item(value)
-                } else {
-                    None
+        loop {
+            match self.primary_keys.next() {
+                Some(primary_key) => {
+                    if let Ok(value) = self.primary_table.get(primary_key.value()) {
+                        match unwrap_item::<T>(value) {
+                            Some(Ok(item)) => {
+                                if crate::expiry::visible_at(&self.model, &item, self.observed_at) {
+                                    return Some(Ok(item));
+                                }
+                            }
+                            other => return other,
+                        }
+                    } else {
+                        return None;
+                    }
                 }
+                _ => return None,
             }
-            _ => None,
         }
     }
 }
@@ -320,15 +343,24 @@ where
     PrimaryTable: redb::ReadableTable<Key, &'static [u8]>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        match self.primary_keys.next_back() {
-            Some(primary_key) => {
-                if let Ok(value) = self.primary_table.get(primary_key.value()) {
-                    unwrap_item(value)
-                } else {
-                    None
+        loop {
+            match self.primary_keys.next_back() {
+                Some(primary_key) => {
+                    if let Ok(value) = self.primary_table.get(primary_key.value()) {
+                        match unwrap_item::<T>(value) {
+                            Some(Ok(item)) => {
+                                if crate::expiry::visible_at(&self.model, &item, self.observed_at) {
+                                    return Some(Ok(item));
+                                }
+                            }
+                            other => return other,
+                        }
+                    } else {
+                        return None;
+                    }
                 }
+                _ => return None,
             }
-            _ => None,
         }
     }
 }

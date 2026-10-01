@@ -5,6 +5,7 @@ use crate::transaction::query::RScan;
 
 pub struct RTransaction<'db> {
     pub(crate) internal: InternalRTransaction<'db>,
+    pub(crate) observed_at: Option<u64>,
 }
 
 impl<'db> RTransaction<'db> {
@@ -15,6 +16,7 @@ impl<'db> RTransaction<'db> {
     pub fn get<'txn>(&'txn self) -> RGet<'db, 'txn> {
         RGet {
             internal: &self.internal,
+            observed_at: self.observed_at,
         }
     }
 
@@ -25,6 +27,7 @@ impl<'db> RTransaction<'db> {
     pub fn scan<'txn>(&'txn self) -> RScan<'db, 'txn> {
         RScan {
             internal: &self.internal,
+            observed_at: self.observed_at,
         }
     }
 
@@ -35,6 +38,7 @@ impl<'db> RTransaction<'db> {
     pub fn len<'txn>(&'txn self) -> RLen<'db, 'txn> {
         RLen {
             internal: &self.internal,
+            observed_at: self.observed_at,
         }
     }
 }

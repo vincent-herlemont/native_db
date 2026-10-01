@@ -15,7 +15,7 @@ pub fn native_db(args: TokenStream, input: TokenStream) -> TokenStream {
     native_db_impl(args, input)
 }
 
-#[proc_macro_derive(KeyAttributes, attributes(primary_key, secondary_key))]
+#[proc_macro_derive(KeyAttributes, attributes(primary_key, secondary_key, expire_after))]
 pub fn key_attributes(_input: TokenStream) -> TokenStream {
     let gen = quote::quote! {};
     gen.into()
