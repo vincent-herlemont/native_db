@@ -1,5 +1,6 @@
 use crate::db_type::{check_key_type, check_range_key_range_bounds, ToKey};
 use crate::db_type::{unwrap_item, Key, KeyRange, Result, ToInput};
+use crate::transaction::inner::GetInner;
 use std::marker::PhantomData;
 use std::ops::RangeBounds;
 
@@ -23,36 +24,6 @@ where
         }
     }
 
-    /// Iterate over all values.
-    ///
-    /// # Example
-    /// ```rust
-    /// use native_db::*;
-    /// use native_db::native_model::{native_model, Model};
-    /// use serde::{Deserialize, Serialize};
-    /// use itertools::Itertools;
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[native_model(id=1, version=1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: u64,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///     
-    ///     // Get all values
-    ///     let _values: Vec<Data> = r.scan().primary()?.all()?.try_collect()?;
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn all(&self) -> Result<PrimaryScanIterator<'_, T>> {
         let range = self.primary_table.range::<Key>(..)?;
         Ok(PrimaryScanIterator {
@@ -61,36 +32,6 @@ where
         })
     }
 
-    /// Iterate over all values in a range.
-    ///
-    /// # Example
-    /// ```rust
-    /// use native_db::*;
-    /// use native_db::native_model::{native_model, Model};
-    /// use serde::{Deserialize, Serialize};
-    /// use itertools::Itertools;
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[native_model(id=1, version=1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: u64,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///     
-    ///     // Get the values from 5 to the end
-    ///     let _values: Vec<Data> = r.scan().primary()?.range(5u64..)?.try_collect()?;
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn range<R: RangeBounds<impl ToKey>>(
         &self,
         range: R,
@@ -107,36 +48,6 @@ where
         })
     }
 
-    /// Iterate over all values starting with a prefix.
-    ///
-    /// # Example
-    /// ```rust
-    /// use native_db::*;
-    /// use native_db::native_model::{native_model, Model};
-    /// use serde::{Deserialize, Serialize};
-    /// use itertools::Itertools;
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[native_model(id=1, version=1)]
-    /// #[native_db]
-    /// struct Data {
-    ///     #[primary_key]
-    ///     id: String,
-    /// }
-    ///
-    /// fn main() -> Result<(), db_type::Error> {
-    ///     let mut models = Models::new();
-    ///     models.define::<Data>()?;
-    ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
-    ///     // Open a read transaction
-    ///     let r = db.r_transaction()?;
-    ///     
-    ///     // Get the values starting with "victor"
-    ///     let _values: Vec<Data> = r.scan().primary()?.start_with("victor")?.try_collect()?;
-    ///     Ok(())
-    /// }
-    /// ```
     pub fn start_with(
         &self,
         start_with: impl ToKey,

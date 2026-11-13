@@ -1,9 +1,10 @@
 use crate::db_type::{Input, Result, ToInput};
 use crate::transaction::internal::rw_transaction::InternalRwTransaction;
-use crate::transaction::query::RwDrain;
-use crate::transaction::query::RwGet;
-use crate::transaction::query::RwLen;
 use crate::transaction::query::RwScan;
+use crate::transaction::query::{RGet, RwGet};
+use crate::transaction::query::{RScan, RwLen};
+use crate::transaction::query::{RwDrain, ScanTrait};
+use crate::transaction::ReadTransactionTrait;
 use crate::watch;
 use crate::watch::Event;
 use std::cell::RefCell;
@@ -18,37 +19,35 @@ pub struct RwTransaction<'db> {
     pub(crate) internal: InternalRwTransaction<'db>,
 }
 
-impl<'db> RwTransaction<'db> {
-    /// Get a value from the database.
-    ///
-    /// - [`primary`](crate::transaction::query::RGet::primary) - Get a item by primary key.
-    /// - [`secondary`](crate::transaction::query::RGet::secondary) - Get a item by secondary key.
-    pub fn get<'txn>(&'txn self) -> RwGet<'db, 'txn> {
+impl<'db, 'txn> ReadTransactionTrait<'db, 'txn> for RwTransaction<'db>
+where
+    'db: 'txn,
+{
+    type Get = RwGet<'db, 'txn>;
+
+    type Scan = RwScan<'db, 'txn>;
+
+    type Len = RwLen<'db, 'txn>;
+    fn get(&'txn self) -> Self::Get {
         RwGet {
             internal: &self.internal,
         }
     }
 
-    /// Get values from the database.
-    ///
-    /// - [`primary`](crate::transaction::query::RScan::primary) - Scan items by primary key.
-    /// - [`secondary`](crate::transaction::query::RScan::secondary) - Scan items by secondary key.
-    pub fn scan<'txn>(&'txn self) -> RwScan<'db, 'txn> {
+    fn scan(&'txn self) -> Self::Scan {
         RwScan {
             internal: &self.internal,
         }
     }
 
-    /// Get the number of values in the database.
-    ///
-    /// - [`primary`](crate::transaction::query::RLen::primary) - Get the number of items by primary key.
-    /// - [`secondary`](crate::transaction::query::RLen::secondary) - Get the number of items by secondary key.
-    pub fn len<'txn>(&'txn self) -> RwLen<'db, 'txn> {
+    fn len(&'txn self) -> Self::Len {
         RwLen {
             internal: &self.internal,
         }
     }
+}
 
+impl<'db> RwTransaction<'db> {
     /// Drain values from the database.
     ///
     /// **TODO: needs to be improved, so don't use it yet.**
@@ -71,7 +70,7 @@ impl RwTransaction<'_> {
     /// fn main() -> Result<(), db_type::Error> {
     ///     let mut models = Models::new();
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
     ///     // Do some stuff..
@@ -117,7 +116,7 @@ impl RwTransaction<'_> {
     ///     let mut models = Models::new();
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
     ///
@@ -163,7 +162,7 @@ impl RwTransaction<'_> {
     ///     let mut models = Models::new();
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
     ///
@@ -231,7 +230,7 @@ impl RwTransaction<'_> {
     ///     let mut models = Models::new();
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read/write transaction
     ///     let rw = db.rw_transaction()?;
     ///     // Insert a value
@@ -283,7 +282,7 @@ impl RwTransaction<'_> {
     ///     let mut models = Models::new();
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read/write transaction
     ///     let rw = db.rw_transaction()?;
     ///     // Insert a value
@@ -325,7 +324,8 @@ impl RwTransaction<'_> {
     /// use native_db::*;
     /// use native_db::native_model::{native_model, Model};
     /// use serde::{Deserialize, Serialize};
-    ///
+    /// use native_db::transaction::query::{GetTrait, LenTrait, ScanTrait};
+    /// use crate::native_db::transaction::ReadTransactionTrait;
     /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
     /// #[native_model(id=1, version=1)]
     /// #[native_db]
@@ -339,22 +339,22 @@ impl RwTransaction<'_> {
     ///     let mut models = Models::new();
     ///     models.define::<Data>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read/write transaction
     ///     let rw = db.rw_transaction()?;
-    ///     
+    ///
     ///     // Try to auto-update a non-existent value
     ///     let old_value: Option<Data> = rw.auto_update(Data { id: 1, name: "new".to_string() })?;
     ///     assert!(old_value.is_none()); // Returns None because the value does not exist
-    ///     
+    ///
     ///     // Insert a value first
     ///     rw.insert(Data { id: 1, name: "initial".to_string() })?;
-    ///     
+    ///
     ///     // Now auto-update will work and change the name
     ///     let old_value: Option<Data> = rw.auto_update(Data { id: 1, name: "updated".to_string() })?;
     ///     assert!(old_value.is_some()); // Returns Some because the value exists
     ///     assert_eq!(old_value.unwrap().name, "initial"); // Contains the old value
-    ///     
+    ///
     ///     // Check that the value was actually updated
     ///     let current: Data = rw.get().primary(1u64)?.unwrap();
     ///     assert_eq!(current.name, "updated");
@@ -437,7 +437,7 @@ impl RwTransaction<'_> {
     ///     models.define::<Dog>()?;
     ///     models.define::<Animal>()?;
     ///     let db = Builder::new().create_in_memory(&models)?;
-    ///     
+    ///
     ///     // Open a read transaction
     ///     let rw = db.rw_transaction()?;
     ///
